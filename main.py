@@ -132,7 +132,7 @@ async def echo(websocket, path):
                                         )
                                     if (
                                         datetime.datetime.now().day == 25
-                                        and group_id in setting.admin_group_list
+                                        and group_id in setting.admin_group_list and sender["user_id"] not in setting.developers_list
                                     ):
                                         if (
                                             "喵"
