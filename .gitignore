@@ -1,7 +1,8 @@
-/meme
+/meme/*
 /log
 bot.db
 my.log
 nohup.out
 easter_egg.py
-/vcode
+/vcode/*
+setting.py
