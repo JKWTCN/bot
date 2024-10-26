@@ -4,16 +4,16 @@ import bot_database
 
 choice_list = [200, 100, 50, 10, -10, -20, 444, 555, 666, 777]
 choice_probability = [
-    0.025,#200
-    0.05,#100
-    0.1,#50
-    0.2,#10
-    0.25,#-10
-    0.25,#-20
-    0.01,#*2
-    0.01,#/2
-    0.001,#*10
-    0.001,#0
+    0.025,  # 200 0
+    0.05,  # 100 1
+    0.1,  # 50 2
+    0.2,  # 10 3
+    0.25,  # -10 4
+    0.25,  # -20 5
+    0.01,  # *2 6
+    0.01,  # /2 7
+    0.001,  # *10 8
+    0.001,  # 0 9
 ]
 
 
@@ -54,98 +54,105 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
             "message": [],
         },
     }
-    for i in range(nums):
-        now_point = bot_database.find_point(user_id)
-        if now_point >= 5:
-            bot_database.add_gambling_times(user_id, 1)
-            now_point = now_point - 5
-            choice = random.choices(choice_list, choice_probability)
-            if choice[0] == 666:
-                changed_point = now_point * 10
-                payload["params"]["message"].append(
-                    {
-                        "type": "text",
-                        "data": {
-                            "text": "{},积分{}->{},10倍大奖喵。\n".format(
-                                sender_name, now_point, changed_point
-                            )
-                        },
-                    }
-                )
-            elif choice[0] == 777:
-                changed_point = 0
-                payload["params"]["message"].append(
-                    {
-                        "type": "text",
-                        "data": {
-                            "text": "{},赌狗好似喵,积分清零喵。\n".format(sender_name)
-                        },
-                    }
-                )
-            elif choice[0] == 444:
-                changed_point = now_point * 2
-                payload["params"]["message"].append(
-                    {
-                        "type": "text",
-                        "data": {
-                            "text": "{},积分{}->{},二倍奖喵。\n".format(
-                                sender_name, now_point, changed_point
-                            )
-                        },
-                    }
-                )
-            elif choice[0] == 555:
-                changed_point = now_point / 2
-                payload["params"]["message"].append(
-                    {
-                        "type": "text",
-                        "data": {
-                            "text": "{},积分{}->{},折半奖喵。\n".format(
-                                sender_name, now_point, changed_point
-                            )
-                        },
-                    }
-                )
-            else:
-                changed_point = now_point + choice[0]
-                if changed_point >= 0:
+    luck_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    start_point = bot_database.find_point(user_id)
+    now_point=start_point
+    if start_point >= 5:
+        for i in range(nums):
+            # now_point = bot_database.find_point(user_id)
+            if now_point >= 5:
+                bot_database.add_gambling_times(user_id, 1)
+                now_point = now_point - 5
+                choice = random.choices(choice_list, choice_probability)
+                match choice[0]:
+                    case 200:
+                        luck_list[0] = luck_list[0] + 1
+                        now_point = now_point + 200
+                    case 100:
+                        luck_list[1] = luck_list[1] + 1
+                        now_point = now_point + 100
+                    case 50:
+                        luck_list[2] = luck_list[2] + 1
+                        now_point = now_point + 50
+                    case 10:
+                        luck_list[3] = luck_list[3] + 1
+                        now_point = now_point + 10
+                    case -10:
+                        luck_list[4] = luck_list[4] + 1
+                        now_point = now_point - 10
+                    case -20:
+                        luck_list[5] = luck_list[5] + 1
+                        now_point = now_point - 20
+                    case 444:
+                        luck_list[6] = luck_list[6] + 1
+                        now_point = now_point * 2
+                    case 555:
+                        luck_list[7] = luck_list[7] + 1
+                        now_point = now_point / 2
+                    case 666:
+                        luck_list[8] = luck_list[8] + 1
+                        now_point = now_point * 10
+                    case 777:
+                        luck_list[9] = luck_list[9] + 1
+                        now_point = 0
+                bot_database.change_point(user_id, now_point)
+                if now_point <= 0:
                     payload["params"]["message"].append(
                         {
                             "type": "text",
                             "data": {
-                                "text": "{},抽奖成功喵,积分{}->{}。\n".format(
-                                    sender_name, now_point, changed_point
+                                "text": "{},抽奖统计如下：\n200积分奖:{}次\n100积分奖:{}次\n50积分奖:{}次\n10积分奖:{}次\n-10积分奖:{}次\n-20积分奖:{}次\n双倍积分奖:{}次\n折半积分奖:{}次\n十倍积分奖:{}次\n积分清零奖:{}次\n积分总额:{}->{}\n乐可:十赌九输喵，赌狗好似喵。".format(
+                                    sender_name,
+                                    luck_list[0],
+                                    luck_list[1],
+                                    luck_list[2],
+                                    luck_list[3],
+                                    luck_list[4],
+                                    luck_list[5],
+                                    luck_list[6],
+                                    luck_list[7],
+                                    luck_list[8],
+                                    luck_list[9],
+                                    start_point,
+                                    now_point,
                                 )
                             },
                         }
                     )
-                else:
-                    payload["params"]["message"].append(
-                        {
-                            "type": "text",
-                            "data": {
-                                "text": "{},积分{}->{},十赌九输喵,负债累累喵。\n".format(
-                                    sender_name, now_point, changed_point
-                                )
-                            },
-                        }
+                    return payload
+        payload["params"]["message"].append(
+            {
+                "type": "text",
+                "data": {
+                    "text": "{},抽奖统计如下：\n200积分奖:{}次\n100积分奖:{}次\n50积分奖:{}次\n10积分奖:{}次\n-10积分奖:{}次\n-20积分奖:{}次\n双倍积分奖:{}次\n折半积分奖:{}次\n十倍积分奖:{}次\n积分清零奖:{}次\n积分总额:{}->{}\n乐可:这次运气不错喵。".format(
+                        sender_name,
+                        luck_list[0],
+                        luck_list[1],
+                        luck_list[2],
+                        luck_list[3],
+                        luck_list[4],
+                        luck_list[5],
+                        luck_list[6],
+                        luck_list[7],
+                        luck_list[8],
+                        luck_list[9],
+                        start_point,
+                        now_point,
                     )
-            bot_database.change_point(user_id, changed_point)
-            if changed_point <= 0:
-                return payload
-        else:
-            payload["params"]["message"].append(
-                {
-                    "type": "text",
-                    "data": {
-                        "text": "{},抽奖失败喵，至少要5积分喵。您当前积分为：{}。\n".format(
-                            sender_name, now_point
-                        )
-                    },
-                }
-            )
-            return payload
-    # print(payload)
+                },
+            }
+        )
+    else:
+        payload["params"]["message"].append(
+            {
+                "type": "text",
+                "data": {
+                    "text": "{},抽奖失败喵，至少要5积分喵。您当前积分为：{}。\n".format(
+                        sender_name, start_point
+                    )
+                },
+            }
+        )
     return payload
 
 
@@ -209,4 +216,3 @@ def luck_choice(user_id: int, sender_name: str, group_id: int):
         }
     # print(payload)
     return payload
-
