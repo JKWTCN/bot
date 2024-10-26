@@ -1,6 +1,5 @@
 import base64
 
-
 def return_function(user_id: int, group_id: int):
     with open("res/function.png", "rb") as image_file:
         image_data = image_file.read()
@@ -28,6 +27,30 @@ def ban_new(user_id: int, group_id: int, duration: int):
     }
     return payload
 
+def new_group_vcode(user_id: int, group_id: int):
+    with open("vcode/{}.jpg".format(user_id), "rb") as image_file:
+        image_data = image_file.read()
+    image_base64 = base64.b64encode(image_data)
+    payload = {
+        "action": "send_msg",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "at", "data": {"qq": user_id}},
+                {
+                    "type": "text",
+                    "data": {
+                        "text": "验证码已发送，请输入验证码。你有三次机会回答喵。如果看不清，请说<乐可，看不清>，乐可会给你换一张验证码喵！"
+                    },
+                },
+                {
+                    "type": "image",
+                    "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                },
+            ],
+        },
+    }
+    return payload
 
 def welcome_new(user_id: int, group_id: int):
     with open("res/welcome.jpg", "rb") as image_file:

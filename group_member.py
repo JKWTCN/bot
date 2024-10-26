@@ -1,4 +1,3 @@
-
 def get_group_member_info(group_id: int):
     payload = {
         "action": "send_msg",
@@ -9,6 +8,7 @@ def get_group_member_info(group_id: int):
     }
     return payload
 
+
 def get_group_member_list(group_id: int):
     payload = {
         "action": "get_group_member_list",
@@ -16,4 +16,16 @@ def get_group_member_list(group_id: int):
             "group_id": group_id,
         },
     }
+    return payload
+
+
+def kick_member(user_id: int, group_id: int):
+    payload = {
+        "action": "set_group_kick",
+        "params": {
+            "user_id": user_id,
+            "group_id": group_id,
+        },
+    }
+    # print(payload)
     return payload
