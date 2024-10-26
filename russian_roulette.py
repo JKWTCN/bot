@@ -253,5 +253,3 @@ def russian(message: str, user_id: int, group_id: int):
             }
     return payload
 
-
-# print(russian("乐可，装弹", 1992508716, 123))
