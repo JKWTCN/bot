@@ -98,6 +98,18 @@ async def echo(websocket, path):
                                     },
                                 }
                                 await websocket.send(json.dumps(payload))
+                            if message["raw_message"]=="[CQ:at,qq={}]".format(setting.developers_list[0]) or message["raw_message"]=="[CQ:at,qq={}]".format(setting.developers_list[1]) :
+                                if sender["user_id"] not in setting.developers_list and sender["user_id"] not in setting.admin_list and group_id in setting.admin_group_list:
+                                    await websocket.send(
+                                                        json.dumps(
+                                                            ban_new(sender["user_id"], group_id, 60)
+                                                        )
+                                                    )
+                                    await  websocket.send(
+                                                        json.dumps(
+                                                            say(group_id, "{},不要随便艾特☁️喵，禁言你了喵。".format(sender_name))
+                                                        )
+                                                    )
                             # 新入群验证
                             if "{}_{}.jpg".format(sender["user_id"],group_id) in os.listdir("./vcode"):
                                 if("看不清"in message["raw_message"]):
