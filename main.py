@@ -329,7 +329,7 @@ async def echo(websocket, path):
                                                 )
                                             elif("今天吃" in message["message"][0]["data"]["text"]):
                                                 await websocket.send(json.dumps(ban_new(sender["user_id"],group_id,60)))
-                                                await websocket.send(json.dumps(SayAndAt(sender["user_id"],group_id,",今天吃大嘴巴子🖐喵。")))
+                                                await websocket.send(json.dumps(SayAndAt(sender["user_id"],group_id,"今天吃大嘴巴子🖐喵。")))
                                             elif (
                                                 "挑战你"
                                                 in message["message"][0]["data"]["text"]
