@@ -6,13 +6,14 @@ import sqlite3
 import time
 import os
 from setting import setting
+import logging
 
 
 # 创建验证码并写入数据库
 def create_vcode(user_id: int, group_id: int):
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
-    chr_all = string.ascii_letters + string.digits
+    chr_all = string.ascii_uppercase + string.digits
     chr_4 = "".join(random.sample(chr_all, 4))
     image = ImageCaptcha().generate_image(chr_4)
     image.save("./vcode/{}_{}.jpg".format(user_id, group_id))
@@ -35,7 +36,7 @@ def create_vcode(user_id: int, group_id: int):
 def update_vcode(user_id: int, group_id: int):
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
-    chr_all = string.ascii_letters + string.digits
+    chr_all = string.ascii_uppercase + string.digits
     chr_4 = "".join(random.sample(chr_all, 4))
     image = ImageCaptcha().generate_image(chr_4)
     image.save("./vcode/{}_{}.jpg".format(user_id, group_id))
@@ -154,6 +155,9 @@ def update_times(user_id: int, group_id: int, times: int):
 # 验证 返回(验证结果，剩余验证次数)
 def verify(user_id: int, group_id: int, text: str):
     (mod, vcode_str) = find_vcode(user_id, group_id)
+    logging.info(
+        "{}在{}群里验证,发送{},实际{}".format(user_id, group_id, text, vcode_str)
+    )
     if not mod:
         return (False, -1)
     else:
@@ -188,7 +192,7 @@ def welcome_verify(user_id: int, group_id: int):
                 {
                     "type": "text",
                     "data": {
-                        "text": "\n请在{}分钟内输入以下验证码喵,你有三次输入机会喵,如果看不清说<乐可，看不清>,乐可会给你换一张验证码的喵。".format(
+                        "text": '\n请在{}分钟内输入以下验证码喵,注意是全大写字符喵。你有三次输入机会喵,如果看不清说"乐可，看不清",乐可会给你换一张验证码的喵。'.format(
                             setting.timeout
                         )
                     },

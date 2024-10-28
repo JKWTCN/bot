@@ -133,7 +133,7 @@ async def echo(websocket, path):
                                     elif  times>0:
                                         await websocket.send(
                                                     json.dumps(
-                                                        say(group_id, "{},验证码输入错误，你还有{}次机会喵。如果看不清记得说<乐可，看不清>喵。".format(sender_name,times))
+                                                        say(group_id, "{},验证码输入错误，你还有{}次机会喵。如果看不清记得说\"乐可，看不清\"喵。".format(sender_name,times))
                                                     )
                                                 )
                                     elif times<=0:
