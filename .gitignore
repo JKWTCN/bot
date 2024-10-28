@@ -7,3 +7,5 @@ nohup.out
 easter_egg.py
 /vcode/*
 setting.py
+/__pycache__
+/.vscode

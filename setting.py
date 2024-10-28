@@ -17,4 +17,4 @@ class setting:
     # miaomiao群友
     miaomiao_group_member = 2325333054
     test_group = 116177178
-    timeout = 30
+    timeout = 5
