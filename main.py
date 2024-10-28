@@ -327,6 +327,9 @@ async def echo(websocket, path):
                                                         )
                                                     )
                                                 )
+                                            elif("今天吃" in message["message"][0]["data"]["text"]):
+                                                await websocket.send(json.dumps(ban_new(sender["user_id"],group_id,60)))
+                                                await websocket.send(json.dumps(SayAndAt(sender["user_id"],group_id,"今天吃大嘴巴子🖐喵。")))
                                             elif (
                                                 "挑战你"
                                                 in message["message"][0]["data"]["text"]
@@ -1086,6 +1089,19 @@ def say(group_id: int, text: str):
         "params": {
             "group_id": group_id,
             "message": text,
+        },
+    }
+    return payload
+
+def SayAndAt(user_id:int,group_id: int, text: str):
+    payload = {
+        "action": "send_msg",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "at", "data": {"qq": user_id}},
+                {"type": "text", "data": {"text": text}},
+            ],
         },
     }
     return payload
