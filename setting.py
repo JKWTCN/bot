@@ -13,7 +13,8 @@ class setting:
     ]
     bot_id = 3443801350
     admin_group_main = 868030377
-    admin_group_list = [868030377,116177178]
+    admin_group_list = [868030377, 116177178]
+    blacklist = {"2564163440": "辱骂行为", "2689752704": "多种辱骂、嘲讽、拱火行为"}
     # miaomiao群友
     miaomiao_group_member = 2325333054
     test_group = 116177178
