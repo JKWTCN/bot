@@ -19,7 +19,7 @@ def chat(group_id: int, nick_name: str, text: str):
                 "content": "你叫乐可，现在你将模仿一只傲娇的猫娘，与我对话每一句话后面都要加上“喵”",
             },
             {
-                "role": "system",
+                "role": "User",
                 "content": text,
             },
         ],
