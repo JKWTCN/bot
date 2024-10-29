@@ -7,6 +7,7 @@ import time
 import websockets
 import json
 import bot_database
+from chat import chat
 from group_member import get_group_member_list, kick_member
 import luck_dog
 from easter_egg import (
@@ -702,21 +703,24 @@ async def echo(websocket, path):
                                             else:
                                                 # print(sender["user_id"])
                                                 # print(type(sender["user_id"]))
-                                                match sender["user_id"]:
-                                                    case 3011745967:
-                                                        await websocket.send(
-                                                            json.dumps(cxxm(group_id))
-                                                        )
-                                                    case _:
-                                                        payload = {
-                                                            "action": "send_group_msg",
-                                                            "params": {
-                                                                "group_id": group_id,
-                                                                "message": "我在！",
-                                                            },
-                                                        }
-                                                        await websocket.send(
-                                                            json.dumps(payload)
+                                                # match sender["user_id"]:
+                                                #     case 3011745967:
+                                                #         await websocket.send(
+                                                #             json.dumps(cxxm(group_id))
+                                                #         )
+                                                #     case _:
+                                                #         payload = {
+                                                #             "action": "send_group_msg",
+                                                #             "params": {
+                                                #                 "group_id": group_id,
+                                                #                 "message": "我在！",
+                                                #             },
+                                                #         }
+                                                #         await websocket.send(
+                                                #             json.dumps(payload)s
+                                                #         )
+                                                await websocket.send(
+                                                            json.dumps(chat(group_id, sender_name,message["message"][0]["data"]["text"]))
                                                         )
                                     case "at":
                                         print(
