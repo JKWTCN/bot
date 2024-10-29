@@ -10,11 +10,10 @@ import bot_database
 from group_member import get_group_member_list, kick_member
 import luck_dog
 from easter_egg import (
-    cxgl,
-    cxxm,
+    cute,
     kfc_v_me_50,
 )
-from setting import setting
+from setting import setting,cxgl,cxxm
 from poor import poor_point
 from random_meme import (
     send_meme_merge_forwarding,
@@ -1012,6 +1011,9 @@ async def echo(websocket, path):
                                                 ),
                                             )
                                         )
+                                # 2% 的概率乐可卖萌
+                                if random.random() < 0.02:
+                                    await websocket.send(json.dumps(cute(group_id)))
                             case _:
                                 print(message)
                     else:

@@ -3,7 +3,6 @@
 bot.db
 my.log
 nohup.out
-easter_egg.py
 /vcode/*
 setting.py
 /__pycache__
