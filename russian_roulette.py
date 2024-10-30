@@ -67,7 +67,7 @@ def russian_pve_shot(user_id: int, group_id: int,nick_name:str):
                 ],
             },
         }
-        bot_database.change_point(user_id, 0)
+        bot_database.change_point(user_id,group_id, 0)
         bot_database.delete_russian_pve(user_id)
         return payload
     now_shots=now_shots-1
@@ -95,7 +95,7 @@ def russian_pve_shot(user_id: int, group_id: int,nick_name:str):
                 ],
             },
         }
-        bot_database.change_point(user_id, bot_database.find_point(user_id)*10)
+        bot_database.change_point(user_id, group_id,bot_database.find_point(user_id)*10)
         bot_database.delete_russian_pve(user_id)
         return payload
     now_shots=now_shots-1

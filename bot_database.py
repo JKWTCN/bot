@@ -3,7 +3,8 @@ from datetime import datetime
 import random
 import json
 import time
-
+from rankings import  update_value
+from Ranking import Ranking
 
 # 统计群友抽奖次数
 def find_gambling_times(user_id: int):
@@ -130,7 +131,7 @@ def write_message(message: json):
 
 def recharge(user_id: int, group_id: int, point: int):
     now_point = find_point(user_id)
-    change_point(user_id, now_point + point)
+    change_point(user_id, group_id, now_point + point)
     payload = {
         "action": "send_msg",
         "params": {
@@ -141,9 +142,9 @@ def recharge(user_id: int, group_id: int, point: int):
     return payload
 
 
-def recharge_privte(user_id: int, point: int):
+def recharge_privte(user_id: int, group_id: int, point: int):
     now_point = find_point(user_id)
-    change_point(user_id, now_point + point)
+    change_point(user_id, group_id, now_point + point)
     payload = {
         "action": "send_msg",
         "params": {
@@ -157,9 +158,7 @@ def recharge_privte(user_id: int, point: int):
 def changed_russian_pve(user_id: int, shots: int):
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
-    cur.execute(
-        "UPDATE russian_pve SET shots=? WHERE user_id=?", (shots, user_id)
-    )
+    cur.execute("UPDATE russian_pve SET shots=? WHERE user_id=?", (shots, user_id))
     conn.commit()
     conn.close()
 
@@ -186,7 +185,8 @@ def check_russian_pve(user_id: int):
         return data[0][1]
 
 
-def change_point(user_id: int, point: int):
+def change_point(user_id: int, group_id: int, point: int):
+    update_value(Ranking(user_id, group_id, point, time.time(), 1))
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
     cur.execute(
@@ -197,7 +197,7 @@ def change_point(user_id: int, point: int):
     conn.close()
 
 
-def check_in(user_id):
+def check_in(user_id: int, group_id: int):
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
     cur.execute("SELECT * FROM user_point where user_id=?", (user_id,))
@@ -206,6 +206,7 @@ def check_in(user_id):
     now_time = 0
     # print(len(data))
     if len(data) == 0:
+        update_value(Ranking(user_id, group_id, 0, time.time(), 1))
         cur.execute("INSERT INTO user_point VALUES(?,?,?)", (user_id, 0, 0))
         conn.commit()
         now_point = 0
@@ -219,6 +220,7 @@ def check_in(user_id):
             "UPDATE user_point SET point=?,time=? WHERE user_id=?",
             (now_point, datetime.timestamp(datetime.now()), user_id),
         )
+        update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
         conn.commit()
         conn.close()
         return (1, now_point)
@@ -251,7 +253,7 @@ def get_statistics(user_id: int, group_id: int):
 
 
 def daily_check_in(user_id: int, sender_name: str, group_id: int):
-    result = check_in(user_id)
+    result = check_in(user_id,group_id)
     if result[0] == 1:
         payload = {
             "action": "send_msg",
@@ -273,4 +275,3 @@ def daily_check_in(user_id: int, sender_name: str, group_id: int):
             },
         }
     return payload
-

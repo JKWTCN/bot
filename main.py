@@ -6,7 +6,6 @@ import random
 import time
 import websockets
 import json
-import bot_database
 from chat import chat
 from group_member import get_group_member_list, kick_member
 import luck_dog
@@ -14,6 +13,7 @@ from easter_egg import (
     cute,
     kfc_v_me_50,
 )
+from rankings import ranking_point_payload
 from setting import setting,cxgl,cxxm
 from poor import poor_point
 from random_meme import (
@@ -44,6 +44,7 @@ from welcome_to_newyork import (
     welcom_new_no_admin,
     welcome_new,
 )
+import bot_database
 
 
 import re
@@ -89,7 +90,7 @@ async def echo(websocket, path):
                                 )
                             )
                             # 5% 的概率复读
-                            if random.random() < 0.05:
+                            if random.random() < 0.005:
                                 payload = {
                                     "action": "send_group_msg",
                                     "params": {
@@ -194,7 +195,7 @@ async def echo(websocket, path):
                                                     sender["user_id"]
                                                 )
                                                 bot_database.change_point(
-                                                    sender["user_id"], now_point + 50
+                                                    sender["user_id"], group_id,now_point + 50
                                                 )
                                                 payload = {
                                                     "action": "send_group_msg",
@@ -367,6 +368,15 @@ async def echo(websocket, path):
                                                         bot_database.get_statistics(
                                                             sender["user_id"], group_id
                                                         )
+                                                    )
+                                                )
+                                            elif(
+                                                "排名"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                await websocket.send(
+                                                    json.dumps(
+                                                        ranking_point_payload(group_id)
                                                     )
                                                 )
                                             elif (
@@ -867,7 +877,7 @@ async def echo(websocket, path):
                                         await websocket.send(
                                             json.dumps(
                                                 bot_database.recharge_privte(
-                                                    message["user_id"],
+                                                    message["user_id"],group_id,
                                                     int(result.group()),
                                                 )
                                             )

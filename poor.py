@@ -4,7 +4,7 @@ import bot_database
 def poor_point(user_id: int, group_id: int, sender_name: str):
     now_point = bot_database.find_point(user_id)
     if now_point <= 0:
-        bot_database.change_point(user_id, 5)
+        bot_database.change_point(user_id,group_id, 5)
         payload = {
             "action": "send_msg",
             "params": {

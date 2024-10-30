@@ -25,7 +25,7 @@ def chat(group_id: int, nick_name: str, text: str):
         ],
     }
     try:
-        response = requests.post(url, json=data, headers=headers, timeout=8)
+        response = requests.post(url, json=data, headers=headers, timeout=30)
         res = response.json()
         # print(len(response.text))
         # print(res["message"])

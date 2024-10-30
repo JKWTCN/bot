@@ -95,7 +95,7 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
                     case 777:
                         luck_list[9] = luck_list[9] + 1
                         now_point = 0
-                bot_database.change_point(user_id, now_point)
+                bot_database.change_point(user_id, group_id,now_point)
                 if now_point <= 0:
                     payload["params"]["message"].append(
                         {
@@ -203,7 +203,7 @@ def luck_choice(user_id: int, sender_name: str, group_id: int):
                         sender_name, now_point, changed_point
                     )
                 )
-        bot_database.change_point(user_id, changed_point)
+        bot_database.change_point(user_id, group_id,changed_point)
     else:
         payload = {
             "action": "send_msg",
