@@ -2,6 +2,7 @@ from enum import Enum
 import sqlite3
 import time
 
+from Group_member import get_user_info
 from Ranking import Ranking
 from User_point import User_point
 
@@ -92,27 +93,38 @@ def ranking_point_payload(group_id: int):
     # print(points_list)
     if is_exist:
         for i in range(10):
+            res, user_info = get_user_info(points_list[i].user_id, group_id)
+            name = ""
+            if user_info.card != "":
+                name = user_info.card
+            else:
+                name = user_info.nickname
             payload["params"]["message"].append(
                 {
                     "type": "text",
                     "data": {
-                        "text": "NO.{}=>{}:{}分\n".format(
-                            i + 1, points_list[i].user_id, points_list[i].point
+                        "text": "NO.{}:{},{}分\n".format(
+                            i + 1, name, points_list[i].point
                         )
                     },
                 },
             )
     (is_exist, ranking) = find_value(1)
     if is_exist:
+        res, user_info = get_user_info(ranking.user_id, group_id)
+        if user_info.card != "":
+                name = user_info.card
+        else:
+                name = user_info.nickname
         payload["params"]["message"].append(
             {
                 "type": "text",
                 "data": {
-                    "text": "积分最高为{}分,由{}于{}创造喵。".format(
+                    "text": "本群积分历史最高为{}分,由{}于{}创造喵。".format(
                         ranking.max_value,
-                        ranking.user_id,
+                        name,
                         time.strftime(
-                            "%Y-%m-%d %H:%M:%S", time.localtime(ranking.time)
+                            "%Y年%m月%d日%H:%M:%S", time.localtime(ranking.time)
                         ),
                     )
                 },

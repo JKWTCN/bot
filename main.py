@@ -1,21 +1,22 @@
 import asyncio
 import datetime
 import logging
+import math
 import os
 import random
 import time
 import websockets
 import json
+from Group_member import Group_member, updata_user_info
 from chat import chat
-from group_member import get_group_member_list, kick_member
 import luck_dog
 from easter_egg import (
     cute,
     kfc_v_me_50,
 )
 from rankings import ranking_point_payload
-from setting import setting,cxgl,cxxm
-from poor import poor_point
+from setting import setting, cxgl, cxxm
+from group_operate import poor_point, get_group_member_list, kick_member
 from random_meme import (
     send_meme_merge_forwarding,
     send_radom_http_cat,
@@ -56,13 +57,9 @@ new_user_test_time = {}
 async def echo(websocket, path):
     async for message in websocket:
         message = json.loads(message)
-        # print(message)
         if "post_type" in message:
-            # print("post_type:{}".format(message["post_type"]))
             match message["post_type"]:
                 case "message":
-                    # print("user_id:{}".format(message["user_id"]))
-                    # print("message_type:{}".format(message["message_type"]))
                     match message["message_type"]:
                         # 群聊消息
                         case "group":
@@ -89,7 +86,7 @@ async def echo(websocket, path):
                                     message["raw_message"],
                                 )
                             )
-                            # 5% 的概率复读
+                            # 0.5% 的概率复读
                             if random.random() < 0.005:
                                 payload = {
                                     "action": "send_group_msg",
@@ -195,7 +192,9 @@ async def echo(websocket, path):
                                                     sender["user_id"]
                                                 )
                                                 bot_database.change_point(
-                                                    sender["user_id"], group_id,now_point + 50
+                                                    sender["user_id"],
+                                                    group_id,
+                                                    now_point + 50,
                                                 )
                                                 payload = {
                                                     "action": "send_group_msg",
@@ -328,9 +327,28 @@ async def echo(websocket, path):
                                                         )
                                                     )
                                                 )
-                                            elif("今天吃" in message["message"][0]["data"]["text"]):
-                                                await websocket.send(json.dumps(ban_new(sender["user_id"],group_id,60)))
-                                                await websocket.send(json.dumps(SayAndAt(sender["user_id"],group_id,",今天吃大嘴巴子🖐喵。")))
+                                            elif (
+                                                "今天吃"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                await websocket.send(
+                                                    json.dumps(
+                                                        ban_new(
+                                                            sender["user_id"],
+                                                            group_id,
+                                                            60,
+                                                        )
+                                                    )
+                                                )
+                                                await websocket.send(
+                                                    json.dumps(
+                                                        SayAndAt(
+                                                            sender["user_id"],
+                                                            group_id,
+                                                            ",今天吃大嘴巴子🖐喵。",
+                                                        )
+                                                    )
+                                                )
                                             elif (
                                                 "挑战你"
                                                 in message["message"][0]["data"]["text"]
@@ -370,7 +388,7 @@ async def echo(websocket, path):
                                                         )
                                                     )
                                                 )
-                                            elif(
+                                            elif (
                                                 "排名"
                                                 in message["message"][0]["data"]["text"]
                                             ):
@@ -485,7 +503,7 @@ async def echo(websocket, path):
                                                     )
                                                 else:
                                                     nums = int(result.group())
-                                                    for i in range(int(nums / 20)):
+                                                    for i in range(math.trunc(nums / 20.0)):
                                                         await websocket.send(
                                                             json.dumps(
                                                                 send_meme_merge_forwarding(
@@ -493,13 +511,14 @@ async def echo(websocket, path):
                                                                 )
                                                             )
                                                         )
-                                                    await websocket.send(
-                                                        json.dumps(
-                                                            send_meme_merge_forwarding(
-                                                                group_id, nums % 20
+                                                    if nums > 20:
+                                                        await websocket.send(
+                                                            json.dumps(
+                                                                send_meme_merge_forwarding(
+                                                                    group_id, nums % 20
+                                                                )
                                                             )
                                                         )
-                                                    )
                                                     await websocket.send(
                                                         json.dumps(
                                                             say(
@@ -730,8 +749,16 @@ async def echo(websocket, path):
                                                 #             json.dumps(payload)s
                                                 #         )
                                                 await websocket.send(
-                                                            json.dumps(chat(group_id, sender_name,message["message"][0]["data"]["text"]))
+                                                    json.dumps(
+                                                        chat(
+                                                            group_id,
+                                                            sender_name,
+                                                            message["message"][0][
+                                                                "data"
+                                                            ]["text"],
                                                         )
+                                                    )
+                                                )
                                     case "at":
                                         print(
                                             "{}:{}({})@ {}".format(
@@ -877,7 +904,8 @@ async def echo(websocket, path):
                                         await websocket.send(
                                             json.dumps(
                                                 bot_database.recharge_privte(
-                                                    message["user_id"],group_id,
+                                                    message["user_id"],
+                                                    group_id,
                                                     int(result.group()),
                                                 )
                                             )
@@ -906,7 +934,8 @@ async def echo(websocket, path):
                                                 say(
                                                     group_id,
                                                     "{},你已因{}被本群拉黑，无法加入本群".format(
-                                                        user_id,setting.blacklist[str(user_id)]
+                                                        user_id,
+                                                        setting.blacklist[str(user_id)],
                                                     ),
                                                 )
                                             )
@@ -1025,8 +1054,8 @@ async def echo(websocket, path):
                                                 ),
                                             )
                                         )
-                                # 2% 的概率乐可卖萌
-                                if random.random() < 0.02:
+                                # 0.2% 的概率乐可卖萌
+                                if random.random() < 0.002:
                                     await websocket.send(json.dumps(cute(group_id)))
                             case _:
                                 print(message)
@@ -1035,29 +1064,23 @@ async def echo(websocket, path):
                 case "request":
                     # 请求事件
                     print(message)
-        else:
-            if "status" in message:
-                match message["status"]:
-                    case "ok":
-                        # print(message["data"])
-                        if "data" in message:
-                            print("{}:开始更新群友列表！".format(time.time()))
-                            if message["data"] is not None:
-                                for group_member in message["data"]:
-                                    if "last_sent_time" in group_member:
-                                        last_sent_time = group_member["last_sent_time"]
-                                        join_time = group_member["join_time"]
-                                        user_id = group_member["user_id"]
-                                        if (
-                                            time.time() - last_sent_time > 5184000
-                                            and join_time == last_sent_time
-                                        ) or time.time() - last_sent_time > 7776000:
+        elif "echo" in message:
+            match message["echo"]:
+                case "update_group_member_list":
+                        print("{}:开始更新群友列表！".format(time.time()))
+                        for group_member in message["data"]:
+                            # print(group_member)
+                            user=Group_member(group_member)
+                            updata_user_info(user)
+                            if (time.time() - user.last_sent_time > 5184000
+                                            and user.join_time == user.last_sent_time
+                                        ) or time.time() - user.last_sent_time > 7776000:
                                             print(
-                                                "QQ:{},最后发言时间:{}".format(
-                                                    user_id,
+                                                "{}({}),最后发言时间:{}".format(
+                                                    user.nickname,user.user_id,
                                                     time.strftime(
                                                         "%Y-%m-%d %H:%M:%S",
-                                                        time.localtime(last_sent_time),
+                                                        time.localtime(user.last_sent_time),
                                                     ),
                                                 )
                                             )
@@ -1080,19 +1103,25 @@ async def echo(websocket, path):
                                                 json.dumps(
                                                     say(
                                                         setting.admin_group_main,
-                                                        "{}，乐可要踢掉你了喵！\n原因:三个月无活跃或两个月未活跃且从未活跃过。\n其最后发言时间为:{}".format(
-                                                            user_id,
+                                                        "{}({})，乐可要踢掉你了喵！\n原因:三个月无活跃或两个月未活跃且从未活跃过。\n其最后发言时间为:{}".format(
+                                                            user.nickname,user.user_id,
                                                             time.strftime(
                                                                 "%Y-%m-%d %H:%M:%S",
                                                                 time.localtime(
-                                                                    last_sent_time
+                                                                    user.last_sent_time
                                                                 ),
                                                             ),
                                                         ),
                                                     )
                                                 )
                                             )
-                                bot_database.updata_last_time_get_group_member_list()
+                case _:
+                    print(message)
+        else:
+            if "status" in message:
+                match message["status"]:
+                    case "ok":
+                        pass
                     case "_":
                         print(message)
             else:
@@ -1106,10 +1135,12 @@ def say(group_id: int, text: str):
             "group_id": group_id,
             "message": text,
         },
+        "echo": "123",
     }
     return payload
 
-def SayAndAt(user_id:int,group_id: int, text: str):
+
+def SayAndAt(user_id: int, group_id: int, text: str):
     payload = {
         "action": "send_msg",
         "params": {
@@ -1123,12 +1154,12 @@ def SayAndAt(user_id:int,group_id: int, text: str):
     return payload
 
 
-def beijing(sec, what):
-    beijing_time = datetime.datetime.now() + datetime.timedelta(hours=8)
-    return beijing_time.timetuple()
+# def beijing(sec, what):
+#     beijing_time = datetime.datetime.now() + datetime.timedelta(hours=8)
+#     return beijing_time.timetuple()
 
 
-logging.Formatter.converter = beijing
+# logging.Formatter.converter = beijing
 
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
