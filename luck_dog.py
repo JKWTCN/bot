@@ -1,6 +1,9 @@
+import base64
 from datetime import date
 import random
 import bot_database
+import matplotlib.pyplot as plt
+import numpy as np
 
 choice_list = [200, 100, 50, 10, -10, -20, 444, 555, 666, 777]
 choice_probability = [
@@ -56,8 +59,12 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
     }
     luck_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     start_point = bot_database.find_point(user_id)
-    now_point=start_point
+    now_point = start_point
+    x = []
+    y = []
     if start_point >= 5:
+        x.append(0)
+        y.append(start_point)
         for i in range(nums):
             # now_point = bot_database.find_point(user_id)
             if now_point >= 5:
@@ -95,7 +102,9 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
                     case 777:
                         luck_list[9] = luck_list[9] + 1
                         now_point = 0
-                bot_database.change_point(user_id, group_id,now_point)
+                x.append(i + 1)
+                y.append(now_point)
+                bot_database.change_point(user_id, group_id, now_point)
                 if now_point <= 0:
                     payload["params"]["message"].append(
                         {
@@ -115,6 +124,17 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
                                     luck_list[9],
                                     start_point,
                                     now_point,
+                                )
+                            },
+                        }
+                    )
+                    payload["params"]["message"].append(
+                        {
+                            "type": "image",
+                            "data": {
+                                "file": "base64://"
+                                + open_chart_by_base64(user_id, group_id, x, y).decode(
+                                    "utf-8"
                                 )
                             },
                         }
@@ -139,6 +159,15 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
                         start_point,
                         now_point,
                     )
+                },
+            }
+        )
+        payload["params"]["message"].append(
+            {
+                "type": "image",
+                "data": {
+                    "file": "base64://"
+                    + open_chart_by_base64(user_id, group_id, x, y).decode("utf-8")
                 },
             }
         )
@@ -203,7 +232,7 @@ def luck_choice(user_id: int, sender_name: str, group_id: int):
                         sender_name, now_point, changed_point
                     )
                 )
-        bot_database.change_point(user_id, group_id,changed_point)
+        bot_database.change_point(user_id, group_id, changed_point)
     else:
         payload = {
             "action": "send_msg",
@@ -216,3 +245,15 @@ def luck_choice(user_id: int, sender_name: str, group_id: int):
         }
     # print(payload)
     return payload
+
+
+def open_chart_by_base64(user_id: int, group_id: int, x, y):
+    plt.plot(x, y)
+    plt.savefig("figs/{}_{}.jpg".format(user_id, group_id))
+    plt.close()
+    with open("figs/{}_{}.jpg".format(user_id, group_id), "rb") as image_file:
+        image_data = image_file.read()
+    return base64.b64encode(image_data)
+
+
+# create_line_chart(1,2,[1,2,3],[1,2,3])

@@ -422,10 +422,11 @@ async def echo(websocket, path):
                                                     )
                                                 )
                                             elif (
-                                                "抽奖"
+                                                "抽"
                                                 in message["message"][0]["data"]["text"]
                                                 and "连"
                                                 in message["message"][0]["data"]["text"]
+                                                and "梗图" not in message["message"][0]["data"]["text"]
                                             ):
                                                 result = re.search(
                                                     "\d+", message["raw_message"]
@@ -889,13 +890,14 @@ async def echo(websocket, path):
                                     if message["raw_message"].startswith(
                                         "更新群友列表"
                                     ):
+                                        # for group_one in setting.group_list:
                                         await websocket.send(
-                                            json.dumps(
-                                                get_group_member_list(
-                                                    setting.admin_group_main
+                                                json.dumps(
+                                                    get_group_member_list(
+                                                        setting.admin_group_main
+                                                    )
                                                 )
                                             )
-                                        )
                                     if message["raw_message"].startswith("积分"):
                                         result = re.search(
                                             "\d+", message["raw_message"]

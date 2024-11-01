@@ -1,3 +1,5 @@
 websockets
 requests
 captcha
+numpy
+matplotlib

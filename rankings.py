@@ -94,11 +94,15 @@ def ranking_point_payload(group_id: int):
     if is_exist:
         for i in range(10):
             res, user_info = get_user_info(points_list[i].user_id, group_id)
-            name = ""
-            if user_info.card != "":
-                name = user_info.card
+            if res:
+                name = ""
+                # print(user_info.card)
+                if user_info.card != "":
+                    name = user_info.card
+                else:
+                    name = user_info.nickname
             else:
-                name = user_info.nickname
+                name = points_list[i].user_id
             payload["params"]["message"].append(
                 {
                     "type": "text",
@@ -112,10 +116,13 @@ def ranking_point_payload(group_id: int):
     (is_exist, ranking) = find_value(1)
     if is_exist:
         res, user_info = get_user_info(ranking.user_id, group_id)
-        if user_info.card != "":
+        if res:
+            if user_info.card != "":
                 name = user_info.card
-        else:
+            else:
                 name = user_info.nickname
+        else:
+            name = ranking.user_id
         payload["params"]["message"].append(
             {
                 "type": "text",
