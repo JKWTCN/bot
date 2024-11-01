@@ -18,41 +18,26 @@ class Group_member:
     title_expire_time: int  # 专属头衔过期时间戳
     card_changeable: bool  # 是否允许修改群名片
 
-    # def __init__(
-    #     self,
-    #     group_id: int,
-    #     user_id: int,
-    #     nickname: str,
-    #     card: str,
-    #     sex: str,
-    #     age: int,
-    #     area: str,
-    #     join_time: int,
-    #     last_sent_time: int,
-    #     level: int,
-    #     role: int,
-    #     unfriendly: bool,
-    #     title: str,
-    #     title_expire_time: int,
-    #     card_changeable: bool,
-    # ):
-    #     self.group_id = group_id
-    #     self.user_id = user_id
-    #     self.nickname = nickname
-    #     self.card = card
-    #     self.sex = sex
-    #     self.age = age
-    #     self.area = area
-    #     self.join_time = join_time
-    #     self.last_sent_time = last_sent_time
-    #     self.level = level
-    #     self.role = role
-    #     self.unfriendly = unfriendly
-    #     self.title = title
-    #     self.title_expire_time = title_expire_time
-    #     self.card_changeable = card_changeable
+    def init_by_dict(self, member_info: dict):
+        self.group_id = member_info["group_id"]
+        self.user_id = member_info["user_id"]
+        self.nickname = member_info["nickname"]
+        self.card = member_info["card"]
+        self.sex = member_info["sex"]
+        self.age = member_info["age"]
+        self.area = member_info["area"]
+        self.join_time = member_info["join_time"]
+        self.last_sent_time = member_info["last_sent_time"]
+        self.level = member_info["level"]
+        self.role = member_info["role"]
+        self.unfriendly = member_info["unfriendly"]
+        self.title = member_info["title"]
+        self.title_expire_time = member_info["title_expire_time"]
+        self.card_changeable = member_info["card_changeable"]
 
-    def __init__(self, list):
+    def __init__(self, list: list = []):
+        if len(list) == 0:
+            return
         self.group_id = list[0]
         self.user_id = list[1]
         self.nickname = list[2]
@@ -74,7 +59,7 @@ def get_user_info(user_id: int, group_id: int):
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
     cur.execute(
-        "SELECT *,card FROM group_member_info where user_id=? and group_id=?",
+        "SELECT * FROM group_member_info where user_id=? and group_id=?",
         (
             user_id,
             group_id,

@@ -96,10 +96,11 @@ async def echo(websocket, path):
                                     },
                                 }
                                 await websocket.send(json.dumps(payload))
-                            if message["raw_message"] == "[CQ:at,qq={}]".format(
-                                setting.developers_list[0]
-                            ) or message["raw_message"] == "[CQ:at,qq={}]".format(
-                                setting.developers_list[1]
+                            if (
+                                "[CQ:at,qq={}]".format(setting.developers_list[0])
+                                == message["raw_message"]
+                                or "[CQ:at,qq={}]".format(setting.developers_list[1])
+                                == message["raw_message"]
                             ):
                                 if (
                                     sender["user_id"] not in setting.developers_list
@@ -121,6 +122,36 @@ async def echo(websocket, path):
                                             )
                                         )
                                     )
+                                elif (
+                                    sender["user_id"] not in setting.developers_list
+                                    and sender["user_id"] in setting.admin_list
+                                    and group_id in setting.admin_group_list
+                                ):
+                                    for i in range(100):
+                                        time.sleep(0.1)
+                                        result = re.search(
+                                            "\d+", message["raw_message"]
+                                        )
+                                        payload = {
+                                                "action": "send_msg",
+                                                "params": {
+                                                    "group_id": group_id,
+                                                    "message": [
+                                                        {
+                                                            "type": "at",
+                                                            "data": {"qq": sender["user_id"]},
+                                                        },
+                                                        {
+                                                            "type": "text",
+                                                            "data": {
+                                                                "text": "不要随便艾特☁️喵。"
+                                                            },
+                                                        },
+                                                    ],
+                                                },
+                                                "echo":"defense"
+                                            }
+                                        await websocket.send(json.dumps(payload))
                             # 新入群验证
                             if "{}_{}.jpg".format(
                                 sender["user_id"], group_id
@@ -426,7 +457,10 @@ async def echo(websocket, path):
                                                 in message["message"][0]["data"]["text"]
                                                 and "连"
                                                 in message["message"][0]["data"]["text"]
-                                                and "梗图" not in message["message"][0]["data"]["text"]
+                                                and "梗图"
+                                                not in message["message"][0]["data"][
+                                                    "text"
+                                                ]
                                             ):
                                                 result = re.search(
                                                     "\d+", message["raw_message"]
@@ -504,7 +538,9 @@ async def echo(websocket, path):
                                                     )
                                                 else:
                                                     nums = int(result.group())
-                                                    for i in range(math.trunc(nums / 20.0)):
+                                                    for i in range(
+                                                        math.trunc(nums / 20.0)
+                                                    ):
                                                         await websocket.send(
                                                             json.dumps(
                                                                 send_meme_merge_forwarding(
@@ -545,6 +581,40 @@ async def echo(websocket, path):
                                                         )
                                                     )
                                                 )
+                                            elif (
+                                                "反击"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                if (
+                                                    sender["user_id"]
+                                                    in setting.developers_list
+                                                ):
+                                                    for i in range(100):
+                                                        time.sleep(0.1)
+                                                        result = re.search(
+                                                            "\d+",
+                                                            message["raw_message"],
+                                                        )
+                                                        qq = int(result.group())
+                                                        if qq is not None:
+                                                            payload = {
+                                                                "action": "send_msg",
+                                                                "params": {
+                                                                    "group_id": group_id,
+                                                                    "message": [
+                                                                        {
+                                                                            "type": "at",
+                                                                            "data": {
+                                                                                "qq": qq
+                                                                            },
+                                                                        },
+                                                                    ],
+                                                                },
+                                                                "echo":"defense"
+                                                            }
+                                                            await websocket.send(
+                                                                json.dumps(payload)
+                                                            )
                                             elif (
                                                 "随机梗图"
                                                 in message["message"][0]["data"]["text"]
@@ -890,13 +960,9 @@ async def echo(websocket, path):
                                     if message["raw_message"].startswith(
                                         "更新群友列表"
                                     ):
-                                        # for group_one in setting.group_list:
-                                        await websocket.send(
-                                                json.dumps(
-                                                    get_group_member_list(
-                                                        setting.admin_group_main
-                                                    )
-                                                )
+                                        for group in setting.group_list:
+                                            await websocket.send(
+                                                json.dumps(get_group_member_list(group))
                                             )
                                     if message["raw_message"].startswith("积分"):
                                         result = re.search(
@@ -1069,54 +1135,57 @@ async def echo(websocket, path):
         elif "echo" in message:
             match message["echo"]:
                 case "update_group_member_list":
-                        print("{}:开始更新群友列表！".format(time.time()))
-                        for group_member in message["data"]:
-                            # print(group_member)
-                            user=Group_member(group_member)
-                            updata_user_info(user)
-                            if (time.time() - user.last_sent_time > 5184000
-                                            and user.join_time == user.last_sent_time
-                                        ) or time.time() - user.last_sent_time > 7776000:
-                                            print(
-                                                "{}({}),最后发言时间:{}".format(
-                                                    user.nickname,user.user_id,
-                                                    time.strftime(
-                                                        "%Y-%m-%d %H:%M:%S",
-                                                        time.localtime(user.last_sent_time),
-                                                    ),
-                                                )
-                                            )
-                                            logging.info(
-                                                "{}因两个月未活跃被请出群聊".format(
-                                                    user_id
-                                                )
-                                            )
-                                            payload = {
-                                                "action": "set_group_kick",
-                                                "params": {
-                                                    "group_id": group_member[
-                                                        "group_id"
-                                                    ],
-                                                    "user_id": user_id,
-                                                },
-                                            }
-                                            await websocket.send(json.dumps(payload))
-                                            await websocket.send(
-                                                json.dumps(
-                                                    say(
-                                                        setting.admin_group_main,
-                                                        "{}({})，乐可要踢掉你了喵！\n原因:三个月无活跃或两个月未活跃且从未活跃过。\n其最后发言时间为:{}".format(
-                                                            user.nickname,user.user_id,
-                                                            time.strftime(
-                                                                "%Y-%m-%d %H:%M:%S",
-                                                                time.localtime(
-                                                                    user.last_sent_time
-                                                                ),
-                                                            ),
-                                                        ),
-                                                    )
-                                                )
-                                            )
+                    print("{}:开始更新群友列表！".format(time.time()))
+                    for group_member in message["data"]:
+                        # print(group_member)
+                        user = Group_member()
+                        user.init_by_dict(group_member)
+                        updata_user_info(user)
+                        if (
+                            (
+                                time.time() - user.last_sent_time > 5184000
+                                and user.join_time == user.last_sent_time
+                            )
+                            or time.time() - user.last_sent_time > 7776000
+                        ) and user.group_id in setting.admin_group_list:
+                            print(
+                                "{}({}),最后发言时间:{}".format(
+                                    user.nickname,
+                                    user.user_id,
+                                    time.strftime(
+                                        "%Y-%m-%d %H:%M:%S",
+                                        time.localtime(user.last_sent_time),
+                                    ),
+                                )
+                            )
+                            logging.info(
+                                "{}因两个月未活跃被请出群聊".format(user.user_id)
+                            )
+                            payload = {
+                                "action": "set_group_kick",
+                                "params": {
+                                    "group_id": group_member["group_id"],
+                                    "user_id": user.user_id,
+                                },
+                            }
+                            await websocket.send(json.dumps(payload))
+                            await websocket.send(
+                                json.dumps(
+                                    say(
+                                        setting.admin_group_main,
+                                        "{}({})，乐可要踢掉你了喵！\n原因:三个月无活跃或两个月未活跃且从未活跃过。\n其最后发言时间为:{}".format(
+                                            user.nickname,
+                                            user.user_id,
+                                            time.strftime(
+                                                "%Y-%m-%d %H:%M:%S",
+                                                time.localtime(user.last_sent_time),
+                                            ),
+                                        ),
+                                    )
+                                )
+                            )
+                case "defense":
+                    delete_msg(message['data']["message_id"])
                 case _:
                     print(message)
         else:
@@ -1151,6 +1220,14 @@ def SayAndAt(user_id: int, group_id: int, text: str):
                 {"type": "at", "data": {"qq": user_id}},
                 {"type": "text", "data": {"text": text}},
             ],
+        },
+    }
+    return payload
+def delete_msg(message_id: int):
+    payload = {
+        "action": "delete_msg",
+        "params": {
+            "message_id": message_id,
         },
     }
     return payload
