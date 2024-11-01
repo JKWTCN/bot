@@ -7,7 +7,7 @@ import random
 import time
 import websockets
 import json
-from Group_member import Group_member, updata_user_info
+from Group_member import Group_member, get_user_info, updata_user_info
 from chat import chat
 import luck_dog
 from easter_egg import (
@@ -133,25 +133,46 @@ async def echo(websocket, path):
                                             "\d+", message["raw_message"]
                                         )
                                         payload = {
-                                                "action": "send_msg",
-                                                "params": {
-                                                    "group_id": group_id,
-                                                    "message": [
-                                                        {
-                                                            "type": "at",
-                                                            "data": {"qq": sender["user_id"]},
+                                            "action": "send_msg",
+                                            "params": {
+                                                "group_id": group_id,
+                                                "message": [
+                                                    {
+                                                        "type": "at",
+                                                        "data": {
+                                                            "qq": sender["user_id"]
                                                         },
-                                                        {
-                                                            "type": "text",
-                                                            "data": {
-                                                                "text": "不要随便艾特☁️喵。"
-                                                            },
+                                                    },
+                                                    {
+                                                        "type": "text",
+                                                        "data": {
+                                                            "text": "不要随便艾特☁️喵。"
                                                         },
-                                                    ],
-                                                },
-                                                "echo":"defense"
-                                            }
+                                                    },
+                                                ],
+                                            },
+                                            "echo": "defense",
+                                        }
                                         await websocket.send(json.dumps(payload))
+                            if (
+                                re.search(
+                                    r"CQ:reply,id=\d+]好好好", message["raw_message"]
+                                )
+                                and group_id in setting.admin_group_list
+                                and sender["user_id"] in setting.developers_list
+                            ):
+                                message_id = re.search(
+                                    r"\d+", message["raw_message"]
+                                ).group()
+                                payload = {
+                                    "action": "get_msg",
+                                    "params": {
+                                        "message_id": message_id,
+                                    },
+                                    "echo": "applaud",
+                                }
+                                await websocket.send(json.dumps(payload))
+
                             # 新入群验证
                             if "{}_{}.jpg".format(
                                 sender["user_id"], group_id
@@ -610,7 +631,7 @@ async def echo(websocket, path):
                                                                         },
                                                                     ],
                                                                 },
-                                                                "echo":"defense"
+                                                                "echo": "defense",
                                                             }
                                                             await websocket.send(
                                                                 json.dumps(payload)
@@ -1185,7 +1206,36 @@ async def echo(websocket, path):
                                 )
                             )
                 case "defense":
-                    delete_msg(message['data']["message_id"])
+                    delete_msg(message["data"]["message_id"])
+                case "applaud":
+                    sender_id = message["data"]["sender"]["user_id"]
+                    message_id = message["data"]["message_id"]
+                    group_id = message["data"]["group_id"]
+                    now_point = bot_database.find_point(sender_id)
+                    bot_database.change_point(sender_id, group_id, now_point + 100)
+                    res, user_info = get_user_info(sender_id, group_id)
+                    if user_info.card != "":
+                        sender_name = user_info.card
+                    else:
+                        sender_name = user_info.nickname
+                    payload = {
+                        "action": "send_group_msg",
+                        "params": {
+                            "group_id": group_id,
+                            "message": [
+                                {"type": "reply", "data": {"id": message_id}},
+                                {
+                                    "type": "text",
+                                    "data": {
+                                        "text": "{},受到☁️赞扬,积分:{}->{}".format(
+                                            sender_name, now_point, now_point + 100
+                                        )
+                                    },
+                                },
+                            ],
+                        },
+                    }
+                    await websocket.send(json.dumps(payload))
                 case _:
                     print(message)
         else:
@@ -1223,6 +1273,8 @@ def SayAndAt(user_id: int, group_id: int, text: str):
         },
     }
     return payload
+
+
 def delete_msg(message_id: int):
     payload = {
         "action": "delete_msg",
