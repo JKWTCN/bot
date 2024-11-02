@@ -7,7 +7,7 @@ import random
 import time
 import websockets
 import json
-from Group_member import Group_member, get_user_info, updata_user_info
+from Group_member import Group_member, get_user_info, get_user_name, updata_user_info
 from chat import chat
 import luck_dog
 from easter_egg import (
@@ -15,7 +15,7 @@ from easter_egg import (
     kfc_v_me_50,
 )
 from rankings import ranking_point_payload
-from setting import setting, cxgl, cxxm
+from setting import nomoral_qq_avatar, red_qq_avatar, setting, cxgl, cxxm
 from group_operate import poor_point, get_group_member_list, kick_member
 from random_meme import (
     send_meme_merge_forwarding,
@@ -843,6 +843,63 @@ async def echo(websocket, path):
                                                     )
                                                 )
                                             elif (
+                                                "打响指"
+                                                in message["message"][0]["data"]["text"]
+                                            ) and sender[
+                                                "user_id"
+                                            ] in setting.admin_list:
+                                                await websocket.send(
+                                                    json.dumps(
+                                                        say(
+                                                            group_id,
+                                                            "{},你确定吗？此功能会随机清除一半的群友,如果确定的话,请在5分钟内说“乐可,清楚明白”。如果取消的话,请说“乐可,取消”。".format(
+                                                                get_user_name(
+                                                                    sender["user_id"],
+                                                                    group_id,
+                                                                )
+                                                            ),
+                                                        )
+                                                    )
+                                                )
+                                                await websocket.send(
+                                                    json.dumps(red_qq_avatar())
+                                                )
+                                                setting.thanos_time = time.time()
+                                                setting.is_thanos = True
+                                            elif (
+                                                "清楚明白"
+                                                in message["message"][0]["data"]["text"]
+                                                and sender["user_id"]
+                                                in setting.admin_list
+                                                and setting.is_thanos
+                                            ):
+                                                await websocket.send(
+                                                    json.dumps(
+                                                        setting.cxgl(
+                                                            sender["user_id"], group_id
+                                                        )
+                                                    )
+                                                )
+                                            elif (
+                                                "取消"
+                                                in message["message"][0]["data"]["text"]
+                                                and sender["user_id"]
+                                                in setting.admin_list
+                                                and setting.is_thanos
+                                            ):
+                                                await websocket.send(
+                                                    json.dumps(nomoral_qq_avatar())
+                                                )
+                                                setting.is_thanos = False
+                                                await websocket.send(
+                                                    json.dumps(
+                                                        say(
+                                                            group_id,
+                                                            "乐可不是紫薯精喵。",
+                                                        )
+                                                    )
+                                                )
+                                            elif (
                                                 "早"
                                                 in message["message"][0]["data"]["text"]
                                             ):
@@ -859,24 +916,6 @@ async def echo(websocket, path):
                                                     json.dumps(payload)
                                                 )
                                             else:
-                                                # print(sender["user_id"])
-                                                # print(type(sender["user_id"]))
-                                                # match sender["user_id"]:
-                                                #     case 3011745967:
-                                                #         await websocket.send(
-                                                #             json.dumps(cxxm(group_id))
-                                                #         )
-                                                #     case _:
-                                                #         payload = {
-                                                #             "action": "send_group_msg",
-                                                #             "params": {
-                                                #                 "group_id": group_id,
-                                                #                 "message": "我在！",
-                                                #             },
-                                                #         }
-                                                #         await websocket.send(
-                                                #             json.dumps(payload)s
-                                                #         )
                                                 await websocket.send(
                                                     json.dumps(
                                                         chat(
@@ -1148,6 +1187,18 @@ async def echo(websocket, path):
                                     case _:
                                         pass
                             case "heartbeat":
+                                if (
+                                    time.time() - setting.thanos_time > 300
+                                    and setting.is_thanos
+                                ):
+                                    await websocket.send(
+                                        json.dumps(nomoral_qq_avatar())
+                                    )
+                                    setting.is_thanos = False
+                                    setting.thanos_time = time.time()
+                                    await websocket.send(
+                                        json.dumps(say(group_id, "乐可不是紫薯精喵。"))
+                                    )
                                 if (
                                     time.time()
                                     - bot_database.get_last_time_get_group_member_list()

@@ -1,3 +1,4 @@
+import re
 import sqlite3
 
 
@@ -71,6 +72,17 @@ def get_user_info(user_id: int, group_id: int):
         return (False, None)
     else:
         return (True, Group_member(data[0]))
+
+
+def get_user_name(user_id: int, group_id: int):
+    res, user = get_user_info(user_id, group_id)
+    if res:
+        if user.card != "":
+            return user.card
+        else:
+            return user.nickname
+    else:
+        return user_id
 
 
 def updata_user_info(group_member: Group_member):

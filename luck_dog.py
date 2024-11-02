@@ -256,4 +256,6 @@ def open_chart_by_base64(user_id: int, group_id: int, x, y):
     return base64.b64encode(image_data)
 
 
+
+
 # create_line_chart(1,2,[1,2,3],[1,2,3])
