@@ -380,6 +380,43 @@ async def echo(websocket, path):
                                                     )
                                                 )
                                             elif (
+                                                "查询黑名单"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                user_id = re.search(
+                                                    r"\d+",
+                                                    message["message"][0]["data"][
+                                                        "text"
+                                                    ],
+                                                ).group()
+                                                if user_id in list(
+                                                    setting.blacklist.keys()
+                                                ):
+                                                    await websocket.send(
+                                                        json.dumps(
+                                                            say(
+                                                                group_id,
+                                                                "{}在黑名单中，原因:{}。".format(
+                                                                    user_id,
+                                                                    setting.blacklist[
+                                                                        user_id
+                                                                    ],
+                                                                ),
+                                                            )
+                                                        )
+                                                    )
+                                                else:
+                                                    await websocket.send(
+                                                        json.dumps(
+                                                            say(
+                                                                group_id,
+                                                                "{}不在黑名单中".format(
+                                                                    user_id
+                                                                ),
+                                                            )
+                                                        )
+                                                    )
+                                            elif (
                                                 "今天吃"
                                                 in message["message"][0]["data"]["text"]
                                             ):
