@@ -8,6 +8,7 @@ import time
 import websockets
 import json
 from Group_member import Group_member, get_user_info, get_user_name, updata_user_info
+from bot_database import add_unwelcome, change_point, daily_check_in, find_point, get_last_time_get_group_member_list, get_statistics, in_unwelcome, recharge_privte, write_message
 from chat import chat
 import luck_dog
 from easter_egg import (
@@ -46,7 +47,6 @@ from welcome_to_newyork import (
     welcom_new_no_admin,
     welcome_new,
 )
-import bot_database
 
 
 import re
@@ -69,7 +69,7 @@ async def echo(websocket, path):
                             group_id = message["group_id"]
                             if len(sender["card"]) == 0:
                                 sender_name = sender["nickname"]
-                            bot_database.write_message(message)
+                            write_message(message)
                             print(
                                 "{}:{}({})在{}群里说:{}".format(
                                     message["time"],
@@ -241,10 +241,10 @@ async def echo(websocket, path):
                                         if group_id in setting.admin_group_list:
                                             # 2%的概率派发50积分
                                             if random.random() < 0.02:
-                                                now_point = bot_database.find_point(
+                                                now_point = find_point(
                                                     sender["user_id"]
                                                 )
-                                                bot_database.change_point(
+                                                change_point(
                                                     sender["user_id"],
                                                     group_id,
                                                     now_point + 50,
@@ -473,7 +473,7 @@ async def echo(websocket, path):
                                             ):
                                                 await websocket.send(
                                                     json.dumps(
-                                                        bot_database.get_statistics(
+                                                        get_statistics(
                                                             sender["user_id"], group_id
                                                         )
                                                     )
@@ -776,7 +776,7 @@ async def echo(websocket, path):
                                             ):
                                                 await websocket.send(
                                                     json.dumps(
-                                                        bot_database.daily_check_in(
+                                                        daily_check_in(
                                                             sender["user_id"],
                                                             sender_name,
                                                             group_id,
@@ -967,7 +967,7 @@ async def echo(websocket, path):
                                                         ]["text"].startswith(" 签到"):
                                                             await websocket.send(
                                                                 json.dumps(
-                                                                    bot_database.daily_check_in(
+                                                                    daily_check_in(
                                                                         sender[
                                                                             "user_id"
                                                                         ],
@@ -1082,7 +1082,7 @@ async def echo(websocket, path):
                                         # print(result.group())
                                         await websocket.send(
                                             json.dumps(
-                                                bot_database.recharge_privte(
+                                                recharge_privte(
                                                     message["user_id"],
                                                     group_id,
                                                     int(result.group()),
@@ -1121,7 +1121,7 @@ async def echo(websocket, path):
                                         )
                                     else:
                                         (is_in_unwelcome, quit_time) = (
-                                            bot_database.in_unwelcome(user_id, group_id)
+                                            in_unwelcome(user_id, group_id)
                                         )
                                         if is_in_unwelcome:
                                             await websocket.send(
@@ -1176,7 +1176,7 @@ async def echo(websocket, path):
                                         message["time"], user_id, group_id
                                     )
                                 )
-                                bot_database.add_unwelcome(
+                                add_unwelcome(
                                     user_id, message["time"], group_id
                                 )
                                 await websocket.send(
@@ -1215,7 +1215,7 @@ async def echo(websocket, path):
                                     )
                                 if (
                                     time.time()
-                                    - bot_database.get_last_time_get_group_member_list()
+                                    - get_last_time_get_group_member_list()
                                     > 86400
                                 ):
                                     await websocket.send(
@@ -1313,8 +1313,8 @@ async def echo(websocket, path):
                     sender_id = message["data"]["sender"]["user_id"]
                     message_id = message["data"]["message_id"]
                     group_id = message["data"]["group_id"]
-                    now_point = bot_database.find_point(sender_id)
-                    bot_database.change_point(sender_id, group_id, now_point + 100)
+                    now_point =find_point(sender_id)
+                    change_point(sender_id, group_id, now_point + 100)
                     res, user_info = get_user_info(sender_id, group_id)
                     if user_info.card != "":
                         sender_name = user_info.card
