@@ -2,7 +2,7 @@ from enum import Enum
 import sqlite3
 import time
 
-from Group_member import get_user_info
+from Group_member import get_user_info, is_in_group
 from Ranking import Ranking
 from User_point import User_point
 
@@ -11,10 +11,10 @@ class Type(Enum):
     point_max = 1
 
 
-def find_value(type: int):
+def find_value(type: int, group_id: int):
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
-    cur.execute("SELECT * FROM rankings where type=?", (type,))
+    cur.execute("SELECT * FROM rankings where type=? and group_id=?", (type, group_id))
     data = cur.fetchall()
     if len(data) == 0:
         return (False, None)
@@ -24,7 +24,7 @@ def find_value(type: int):
 
 
 def update_value(new_ranking: Ranking):
-    (is_exist, ranking) = find_value(new_ranking.type)
+    (is_exist, ranking) = find_value(new_ranking.type, new_ranking.group_id)
     if (
         is_exist
         and new_ranking.type is Type.point_max.value
@@ -44,11 +44,7 @@ def update_value(new_ranking: Ranking):
         )
         conn.commit()
         conn.close()
-    elif (
-        not is_exist
-        and new_ranking.type is Type.point_max.value
-        and new_ranking.max_value > ranking.max_value
-    ):
+    elif not is_exist:
         conn = sqlite3.connect("bot.db")
         cur = conn.cursor()
         cur.execute(
@@ -90,11 +86,18 @@ def ranking_point_payload(group_id: int):
         },
     }
     (is_exist, points_list) = find_points_ranking()
-    # print(points_list)
+    true_points_list = []
+    for points_info in points_list:
+        if is_in_group(points_info.user_id, group_id):
+            true_points_list.append(points_info)
     if is_exist:
         i = 0
-        j=0
-        while j < 10:
+        j = 0
+        if len(true_points_list) < 10:
+            num = len(true_points_list)
+        else:
+            num = 10
+        while j < num:
             res, user_info = get_user_info(points_list[i].user_id, group_id)
             if res:
                 name = ""
@@ -113,10 +116,10 @@ def ranking_point_payload(group_id: int):
                         },
                     },
                 )
-                j+=1
+                j += 1
             i += 1
 
-    (is_exist, ranking) = find_value(1)
+    (is_exist, ranking) = find_value(1, group_id)
     if is_exist:
         res, user_info = get_user_info(ranking.user_id, group_id)
         if res:

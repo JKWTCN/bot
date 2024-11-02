@@ -83,6 +83,10 @@ def get_user_name(user_id: int, group_id: int):
             return user.nickname
     else:
         return user_id
+    
+def is_in_group(user_id: int, group_id: int):
+    res, user = get_user_info(user_id, group_id)
+    return res
 
 
 def updata_user_info(group_member: Group_member):

@@ -13,6 +13,7 @@ import luck_dog
 from easter_egg import (
     cute,
     kfc_v_me_50,
+    sex_img,
 )
 from rankings import ranking_point_payload
 from setting import nomoral_qq_avatar, red_qq_avatar, setting, cxgl, cxxm
@@ -682,6 +683,19 @@ async def echo(websocket, path):
                                                 await websocket.send(
                                                     json.dumps(
                                                         send_random_meme(group_id)
+                                                    )
+                                                )
+                                            elif (
+                                                "涩"
+                                                in message["message"][0]["data"]["text"]
+                                                and "兑换"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                await websocket.send(
+                                                    json.dumps(
+                                                        sex_img(
+                                                            sender["user_id"], group_id
+                                                        )
                                                     )
                                                 )
                                             elif (
