@@ -8,7 +8,17 @@ import time
 import websockets
 import json
 from Group_member import Group_member, get_user_info, get_user_name, updata_user_info
-from bot_database import add_unwelcome, change_point, daily_check_in, find_point, get_last_time_get_group_member_list, get_statistics, in_unwelcome, recharge_privte, write_message
+from bot_database import (
+    add_unwelcome,
+    change_point,
+    daily_check_in,
+    find_point,
+    get_last_time_get_group_member_list,
+    get_statistics,
+    in_unwelcome,
+    recharge_privte,
+    write_message,
+)
 from chat import chat
 import luck_dog
 from easter_egg import (
@@ -159,7 +169,6 @@ async def echo(websocket, path):
                                 re.search(
                                     r"CQ:reply,id=\d+]好好好", message["raw_message"]
                                 )
-                                and group_id in setting.admin_group_list
                                 and sender["user_id"] in setting.developers_list
                             ):
                                 message_id = re.search(
@@ -1120,8 +1129,8 @@ async def echo(websocket, path):
                                             )
                                         )
                                     else:
-                                        (is_in_unwelcome, quit_time) = (
-                                            in_unwelcome(user_id, group_id)
+                                        (is_in_unwelcome, quit_time) = in_unwelcome(
+                                            user_id, group_id
                                         )
                                         if is_in_unwelcome:
                                             await websocket.send(
@@ -1176,9 +1185,7 @@ async def echo(websocket, path):
                                         message["time"], user_id, group_id
                                     )
                                 )
-                                add_unwelcome(
-                                    user_id, message["time"], group_id
-                                )
+                                add_unwelcome(user_id, message["time"], group_id)
                                 await websocket.send(
                                     json.dumps(
                                         say(
@@ -1214,8 +1221,7 @@ async def echo(websocket, path):
                                         json.dumps(say(group_id, "乐可不是紫薯精喵。"))
                                     )
                                 if (
-                                    time.time()
-                                    - get_last_time_get_group_member_list()
+                                    time.time() - get_last_time_get_group_member_list()
                                     > 86400
                                 ):
                                     await websocket.send(
@@ -1313,7 +1319,7 @@ async def echo(websocket, path):
                     sender_id = message["data"]["sender"]["user_id"]
                     message_id = message["data"]["message_id"]
                     group_id = message["data"]["group_id"]
-                    now_point =find_point(sender_id)
+                    now_point = find_point(sender_id)
                     change_point(sender_id, group_id, now_point + 100)
                     res, user_info = get_user_info(sender_id, group_id)
                     if user_info.card != "":

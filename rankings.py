@@ -33,7 +33,7 @@ def update_value(new_ranking: Ranking):
         conn = sqlite3.connect("bot.db")
         cur = conn.cursor()
         cur.execute(
-            "UPDATE rankings SET max_value=?,time=? where user_id=? and group_id=? and type=?",
+            "UPDATE rankings SET max_value=?,time=? ,user_id=? where  group_id=? and type=?",
             (
                 new_ranking.max_value,
                 time.time(),

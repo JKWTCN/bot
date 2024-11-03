@@ -28,6 +28,8 @@ def twenty_random_meme(group_id: int):
     for i in range(20):
         dir = choice(all_file)
         print(dir)
+        while dir.endswith(".mp4"):
+            dir = choice(all_file)
         logging.info("乐可发送了图片:{}".format(dir))
         with open(dir, "rb") as image_file:
             image_data = image_file.read()
@@ -52,6 +54,8 @@ def ten_random_meme(group_id: int):
     all_file = find_all_file("meme")
     for i in range(10):
         dir = choice(all_file)
+        while dir.endswith(".mp4"):
+            dir = choice(all_file)
         print(dir)
         logging.info("乐可发送了图片:{}".format(dir))
         with open(dir, "rb") as image_file:
@@ -65,7 +69,8 @@ def ten_random_meme(group_id: int):
         )
     return payload
 
-def send_meme_merge_forwarding(group_id:int,nums:int):
+
+def send_meme_merge_forwarding(group_id: int, nums: int):
     payload = {
         "action": "send_msg",
         "params": {
@@ -76,6 +81,8 @@ def send_meme_merge_forwarding(group_id:int,nums:int):
     all_file = find_all_file("meme")
     for i in range(nums):
         dir = choice(all_file)
+        while dir.endswith(".mp4"):
+            dir = choice(all_file)
         print(dir)
         logging.info("乐可发送了图片:{}".format(dir))
         with open(dir, "rb") as image_file:
@@ -89,11 +96,15 @@ def send_meme_merge_forwarding(group_id:int,nums:int):
         )
     return payload
 
+
 def send_random_meme(group_id: int):
     # s = find_all_file("./meme")
     # files = os.listdir("meme/unchoise")
     # path = "{}/{}".format("meme/unchoise", choice(files))
-    path = choice(find_all_file("meme"))
+    all_file=find_all_file("meme")
+    path = choice(all_file)
+    while path.endswith(".mp4"):
+        path = choice(all_file)
     print(path)
     logging.info("乐可发送了图片:{}".format(path))
     with open(path, "rb") as image_file:

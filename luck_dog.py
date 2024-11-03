@@ -1,9 +1,13 @@
 import base64
 from datetime import date
 import random
+import time
+from Ranking import Ranking
 import bot_database
 import matplotlib.pyplot as plt
 import numpy as np
+
+from rankings import update_value
 
 choice_list = [200, 100, 50, 10, -10, -20, 444, 555, 666, 777]
 choice_probability = [
@@ -105,6 +109,7 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
                 x.append(i + 1)
                 y.append(now_point)
                 bot_database.change_point(user_id, group_id, now_point)
+                update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
                 if now_point <= 0:
                     payload["params"]["message"].append(
                         {
@@ -139,6 +144,7 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
                             },
                         }
                     )
+                    update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
                     return payload
         payload["params"]["message"].append(
             {
@@ -182,6 +188,7 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
                 },
             }
         )
+    update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
     return payload
 
 
@@ -232,6 +239,7 @@ def luck_choice(user_id: int, sender_name: str, group_id: int):
                         sender_name, now_point, changed_point
                     )
                 )
+        update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
         bot_database.change_point(user_id, group_id, changed_point)
     else:
         payload = {
@@ -254,8 +262,6 @@ def open_chart_by_base64(user_id: int, group_id: int, x, y):
     with open("figs/{}_{}.jpg".format(user_id, group_id), "rb") as image_file:
         image_data = image_file.read()
     return base64.b64encode(image_data)
-
-
 
 
 # create_line_chart(1,2,[1,2,3],[1,2,3])
