@@ -7,7 +7,12 @@ import random
 import time
 import websockets
 import json
-from Group_member import Group_member, get_user_info, get_user_name, updata_user_info
+from Class.Group_member import (
+    Group_member,
+    get_user_info,
+    get_user_name,
+    updata_user_info,
+)
 from bot_database import (
     add_unwelcome,
     change_point,
@@ -27,7 +32,7 @@ from easter_egg import (
     sex_img,
 )
 from rankings import ranking_point_payload
-from setting import nomoral_qq_avatar, red_qq_avatar, setting, cxgl, cxxm
+from private import cxgl
 from group_operate import poor_point, get_group_member_list, kick_member
 from random_meme import (
     send_meme_merge_forwarding,
@@ -37,7 +42,6 @@ from random_meme import (
     twenty_random_meme,
 )
 
-# from russian_roulette import russian
 from russian_roulette import russian, russian_pve, russian_pve_shot
 from tarot_cards import (
     daily_paper,
@@ -50,6 +54,7 @@ from tarot_cards import (
     radom_real,
     one_word,
 )
+from tools import dump_setting, load_setting, nomoral_qq_avatar, red_qq_avatar
 from vcode import check_validation_timeout, update_vcode, verify, welcome_verify
 from welcome_to_newyork import (
     ban_new,
@@ -58,16 +63,13 @@ from welcome_to_newyork import (
     welcome_new,
 )
 
-
 import re
-
-new_user_dict = {}
-new_user_test_time = {}
 
 
 async def echo(websocket, path):
     async for message in websocket:
         message = json.loads(message)
+        setting = load_setting()
         if "post_type" in message:
             match message["post_type"]:
                 case "message":
@@ -108,15 +110,15 @@ async def echo(websocket, path):
                                 }
                                 await websocket.send(json.dumps(payload))
                             if (
-                                "[CQ:at,qq={}]".format(setting.developers_list[0])
+                                "[CQ:at,qq={}]".format(setting["developers_list"][0])
                                 == message["raw_message"]
-                                or "[CQ:at,qq={}]".format(setting.developers_list[1])
+                                or "[CQ:at,qq={}]".format(setting["developers_list"][1])
                                 == message["raw_message"]
                             ):
                                 if (
-                                    sender["user_id"] not in setting.developers_list
-                                    and sender["user_id"] not in setting.admin_list
-                                    and group_id in setting.admin_group_list
+                                    sender["user_id"] not in setting["developers_list"]
+                                    and sender["user_id"] not in setting["admin_list"]
+                                    and group_id in setting["admin_group_list"]
                                 ):
                                     await websocket.send(
                                         json.dumps(
@@ -134,9 +136,9 @@ async def echo(websocket, path):
                                         )
                                     )
                                 elif (
-                                    sender["user_id"] not in setting.developers_list
-                                    and sender["user_id"] in setting.admin_list
-                                    and group_id in setting.admin_group_list
+                                    sender["user_id"] not in setting["developers_list"]
+                                    and sender["user_id"] in setting["admin_list"]
+                                    and group_id in setting["admin_group_list"]
                                 ):
                                     for i in range(100):
                                         time.sleep(0.1)
@@ -169,7 +171,7 @@ async def echo(websocket, path):
                                 re.search(
                                     r"CQ:reply,id=\d+]好好好", message["raw_message"]
                                 )
-                                and sender["user_id"] in setting.developers_list
+                                and sender["user_id"] in setting["developers_list"]
                             ):
                                 message_id = re.search(
                                     r"\d+", message["raw_message"]
@@ -247,7 +249,7 @@ async def echo(websocket, path):
                             else:
                                 match message["message"][0]["type"]:
                                     case "text":
-                                        if group_id in setting.admin_group_list:
+                                        if group_id in setting["admin_group_list"]:
                                             # 2%的概率派发50积分
                                             if random.random() < 0.02:
                                                 now_point = find_point(
@@ -275,7 +277,7 @@ async def echo(websocket, path):
                                         # print(message["message"][0]["data"]["text"])
                                         if (
                                             sender["user_id"]
-                                            == setting.miaomiao_group_member
+                                            == setting["miaomiao_group_member"]
                                             and "喵"
                                             not in message["message"][0]["data"]["text"]
                                         ):
@@ -305,9 +307,9 @@ async def echo(websocket, path):
                                             )
                                         if (
                                             datetime.datetime.now().day == 25
-                                            and group_id in setting.admin_group_list
+                                            and group_id in setting["admin_group_list"]
                                             and sender["user_id"]
-                                            not in setting.developers_list
+                                            not in setting["developers_list"]
                                         ):
                                             if (
                                                 "喵"
@@ -317,7 +319,7 @@ async def echo(websocket, path):
                                             ):
                                                 if (
                                                     sender["user_id"]
-                                                    not in setting.admin_list
+                                                    not in setting["admin_list"]
                                                 ):
                                                     await websocket.send(
                                                         json.dumps(
@@ -400,7 +402,7 @@ async def echo(websocket, path):
                                                     ],
                                                 ).group()
                                                 if user_id in list(
-                                                    setting.blacklist.keys()
+                                                    setting["blacklist"].keys()
                                                 ):
                                                     await websocket.send(
                                                         json.dumps(
@@ -408,9 +410,9 @@ async def echo(websocket, path):
                                                                 group_id,
                                                                 "{}在黑名单中，原因:{}。".format(
                                                                     user_id,
-                                                                    setting.blacklist[
-                                                                        user_id
-                                                                    ],
+                                                                    setting[
+                                                                        "blacklist"
+                                                                    ][user_id],
                                                                 ),
                                                             )
                                                         )
@@ -655,7 +657,7 @@ async def echo(websocket, path):
                                             ):
                                                 if (
                                                     sender["user_id"]
-                                                    in setting.developers_list
+                                                    in setting["developers_list"]
                                                 ):
                                                     for i in range(100):
                                                         time.sleep(0.1)
@@ -868,9 +870,9 @@ async def echo(websocket, path):
                                             elif (
                                                 "打响指"
                                                 in message["message"][0]["data"]["text"]
-                                            ) and sender[
-                                                "user_id"
-                                            ] in setting.admin_list:
+                                            ) and sender["user_id"] in setting[
+                                                "admin_list"
+                                            ]:
                                                 await websocket.send(
                                                     json.dumps(
                                                         say(
@@ -887,18 +889,19 @@ async def echo(websocket, path):
                                                 await websocket.send(
                                                     json.dumps(red_qq_avatar())
                                                 )
-                                                setting.thanos_time = time.time()
-                                                setting.is_thanos = True
+                                                setting["thanos_time"] = time.time()
+                                                setting["is_thanos"] = True
+                                                dump_setting(setting)
                                             elif (
                                                 "清楚明白"
                                                 in message["message"][0]["data"]["text"]
                                                 and sender["user_id"]
-                                                in setting.admin_list
-                                                and setting.is_thanos
+                                                in setting["admin_list"]
+                                                and setting["is_thanos"]
                                             ):
                                                 await websocket.send(
                                                     json.dumps(
-                                                        setting.cxgl(
+                                                        cxgl(
                                                             sender["user_id"], group_id
                                                         )
                                                     )
@@ -907,13 +910,14 @@ async def echo(websocket, path):
                                                 "取消"
                                                 in message["message"][0]["data"]["text"]
                                                 and sender["user_id"]
-                                                in setting.admin_list
-                                                and setting.is_thanos
+                                                in setting["admin_list"]
+                                                and setting["is_thanos"]
                                             ):
                                                 await websocket.send(
                                                     json.dumps(nomoral_qq_avatar())
                                                 )
-                                                setting.is_thanos = False
+                                                setting["is_thanos"] = False
+                                                dump_setting(setting)
                                                 await websocket.send(
                                                     json.dumps(
                                                         say(
@@ -951,111 +955,45 @@ async def echo(websocket, path):
                                                     )
                                                 )
                                     case "at":
+                                        rev_id = message["message"][0]["data"]["qq"]
+                                        group_id = message["group_id"]
                                         print(
                                             "{}:{}({})@ {}".format(
                                                 message["time"],
                                                 sender_name,
                                                 sender["user_id"],
-                                                message["message"][0]["data"]["qq"],
+                                                rev_id,
                                             )
                                         )
+
                                         logging.info(
                                             "{}({})@ {}".format(
                                                 sender_name,
                                                 sender["user_id"],
-                                                message["message"][0]["data"]["qq"],
+                                                rev_id,
                                             )
                                         )
-                                        if len(message["message"]) >= 1:
-                                            # print(type(message["message"][0]["data"]["qq"]))
-                                            match message["message"][0]["data"]["qq"]:
-                                                case setting.bot_id:
-                                                    if len(message["message"]) != 1:
-                                                        if message["message"][1][
-                                                            "data"
-                                                        ]["text"].startswith(" 签到"):
-                                                            await websocket.send(
-                                                                json.dumps(
-                                                                    daily_check_in(
-                                                                        sender[
-                                                                            "user_id"
-                                                                        ],
-                                                                        sender_name,
-                                                                        group_id,
-                                                                    )
-                                                                )
-                                                            )
-                                                        elif message["message"][1][
-                                                            "data"
-                                                        ]["text"].startswith(
-                                                            (" 运势", " 今日运势")
-                                                        ):
-                                                            await websocket.send(
-                                                                json.dumps(
-                                                                    luck_dog.luck_dog(
-                                                                        sender[
-                                                                            "user_id"
-                                                                        ],
-                                                                        sender_name,
-                                                                        group_id,
-                                                                    )
-                                                                )
-                                                            )
-                                                        elif message["message"][1][
-                                                            "data"
-                                                        ]["text"].startswith(" 随机梗图"):
-                                                            await websocket.send(
-                                                                json.dumps(
-                                                                    send_random_meme(
-                                                                        group_id
-                                                                    )
-                                                                )
-                                                            )
-                                                        elif message["message"][1][
-                                                            "data"
-                                                        ]["text"].startswith(
-                                                            (
-                                                                " 随机HTTP猫猫",
-                                                                " 随机http猫猫",
-                                                            )
-                                                        ):
-                                                            await websocket.send(
-                                                                json.dumps(
-                                                                    send_radom_http_cat()
-                                                                )
-                                                            )
-                                                        elif message["message"][1][
-                                                            "data"
-                                                        ]["text"].startswith(" 塔罗牌"):
-                                                            await websocket.send(
-                                                                json.dumps(
-                                                                    return_trarot_cards(
-                                                                        sender[
-                                                                            "user_id"
-                                                                        ],
-                                                                        group_id,
-                                                                    )
-                                                                )
-                                                            )
-                                                    else:
-                                                        match sender["user_id"]:
-                                                            case 3011745967:
-                                                                await websocket.send(
-                                                                    json.dumps(
-                                                                        cxxm(group_id)
-                                                                    )
-                                                                )
-                                                            case _:
-                                                                payload = {
-                                                                    "action": "send_group_msg",
-                                                                    "params": {
-                                                                        "group_id": group_id,
-                                                                        "message": "我在！",
-                                                                    },
-                                                                }
-                                                                await websocket.send(
-                                                                    json.dumps(payload)
-                                                                )
+                                        if str(rev_id) == str(setting["bot_id"]):
+                                            if (
+                                                group_id in setting["admin_group_list"]
+                                                and sender["user_id"]
+                                                not in setting["admin_list"]
+                                            ):
+                                                await websocket.send(
+                                                    ban_new(
+                                                        sender["user_id"],
+                                                        group_id,
+                                                        60,
+                                                    )
+                                                )
+                                            await websocket.send(
+                                                json.dumps(
+                                                    say(
+                                                        group_id,
+                                                        "请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，统计。”。",
+                                                    )
+                                                )
+                                            )
                                     case _:
                                         # print(message)
                                         pass
@@ -1075,29 +1013,24 @@ async def echo(websocket, path):
                                     message["raw_message"],
                                 )
                             )
-                            match message["user_id"]:
-                                case 1505617447 | 3070004098:
-                                    if message["raw_message"].startswith(
-                                        "更新群友列表"
-                                    ):
-                                        for group in setting.group_list:
-                                            await websocket.send(
-                                                json.dumps(get_group_member_list(group))
-                                            )
-                                    if message["raw_message"].startswith("积分"):
-                                        result = re.search(
-                                            "\d+", message["raw_message"]
-                                        )
-                                        # print(result.group())
+                            if message["user_id"] in setting["developers_list"]:
+                                if message["raw_message"].startswith("更新群友列表"):
+                                    for group in setting["group_list"]:
                                         await websocket.send(
-                                            json.dumps(
-                                                recharge_privte(
-                                                    message["user_id"],
-                                                    group_id,
-                                                    int(result.group()),
-                                                )
+                                            json.dumps(get_group_member_list(group))
+                                        )
+                                if message["raw_message"].startswith("积分"):
+                                    result = re.search("\d+", message["raw_message"])
+                                    # print(result.group())
+                                    await websocket.send(
+                                        json.dumps(
+                                            recharge_privte(
+                                                message["user_id"],
+                                                group_id,
+                                                int(result.group()),
                                             )
                                         )
+                                    )
 
                 case "notice":
                     match message["notice_type"]:
@@ -1111,9 +1044,9 @@ async def echo(websocket, path):
                                 )
                             )
                             logging.info("{}加入入群{}".format(user_id, group_id))
-                            if user_id != setting.bot_id:
-                                if group_id in setting.admin_group_list:
-                                    if str(user_id) in setting.blacklist.keys():
+                            if user_id != setting["bot_id"]:
+                                if group_id in setting["admin_group_list"]:
+                                    if str(user_id) in setting["blacklist"].keys():
                                         await websocket.send(
                                             json.dumps(kick_member(user_id, group_id))
                                         )
@@ -1123,7 +1056,9 @@ async def echo(websocket, path):
                                                     group_id,
                                                     "{},你已因{}被本群拉黑，无法加入本群".format(
                                                         user_id,
-                                                        setting.blacklist[str(user_id)],
+                                                        setting["blacklist"][
+                                                            str(user_id)
+                                                        ],
                                                     ),
                                                 )
                                             )
@@ -1155,7 +1090,9 @@ async def echo(websocket, path):
                                             payload = {
                                                 "action": "set_group_kick",
                                                 "params": {
-                                                    "group_id": setting.admin_group_main,
+                                                    "group_id": setting[
+                                                        "admin_group_main"
+                                                    ],
                                                     "user_id": user_id,
                                                 },
                                             }
@@ -1178,20 +1115,27 @@ async def echo(websocket, path):
                             group_id = message["group_id"]
                             if (
                                 message["sub_type"] == "leave"
-                                and group_id in setting.admin_group_list
+                                and group_id in setting["admin_group_list"]
                             ):
                                 print(
                                     "{}:{}离开了群{}。\n".format(
                                         message["time"], user_id, group_id
                                     )
                                 )
+                                res, user_info = get_user_info(
+                                    message["user_id"], group_id
+                                )
+                                if user_info.card != "":
+                                    sender_name = user_info.card
+                                else:
+                                    sender_name = user_info.nickname
                                 add_unwelcome(user_id, message["time"], group_id)
                                 await websocket.send(
                                     json.dumps(
                                         say(
                                             group_id,
-                                            "{}离开了群{}。\n十个小兵人，外出去吃饭；\n一个被呛死，还剩九个人。\n九个小兵人，熬夜熬得深；\n一个睡过头，还剩八个人。\n八个小兵人，动身去德文；\n一个要留下，还剩七个人。\n七个小兵人，一起去砍柴；\n一个砍自己，还剩六个人。\n六个小兵人，无聊玩蜂箱；\n一个被蛰死，还剩五个人。\n五个小兵人，喜欢学法律；\n一个当法官，还剩四个人。\n四个小兵人，下海去逞能；\n一个葬鱼腹，还剩三个人。\n三个小兵人，进了动物园；\n一个遭熊袭，还剩两个人。\n两个小兵人，外出晒太阳；\n一个被晒焦，还剩一个人。\n这个小兵人，孤单又影只；\n投缳上了吊，一个也没剩。".format(
-                                                user_id, group_id
+                                            "{}({})离开了群{}。\n十个小兵人，外出去吃饭；\n一个被呛死，还剩九个人。\n九个小兵人，熬夜熬得深；\n一个睡过头，还剩八个人。\n八个小兵人，动身去德文；\n一个要留下，还剩七个人。\n七个小兵人，一起去砍柴；\n一个砍自己，还剩六个人。\n六个小兵人，无聊玩蜂箱；\n一个被蛰死，还剩五个人。\n五个小兵人，喜欢学法律；\n一个当法官，还剩四个人。\n四个小兵人，下海去逞能；\n一个葬鱼腹，还剩三个人。\n三个小兵人，进了动物园；\n一个遭熊袭，还剩两个人。\n两个小兵人，外出晒太阳；\n一个被晒焦，还剩一个人。\n这个小兵人，孤单又影只；\n投缳上了吊，一个也没剩。".format(
+                                                sender_name, user_id, group_id
                                             ),
                                         )
                                     )
@@ -1209,14 +1153,15 @@ async def echo(websocket, path):
                                         pass
                             case "heartbeat":
                                 if (
-                                    time.time() - setting.thanos_time > 300
-                                    and setting.is_thanos
+                                    time.time() - setting["thanos_time"] > 300
+                                    and setting["is_thanos"]
                                 ):
                                     await websocket.send(
                                         json.dumps(nomoral_qq_avatar())
                                     )
-                                    setting.is_thanos = False
-                                    setting.thanos_time = time.time()
+                                    setting["is_thanos"] = False
+                                    setting["thanos_time"] = time.time()
+                                    dump_setting(setting)
                                     await websocket.send(
                                         json.dumps(say(group_id, "乐可不是紫薯精喵。"))
                                     )
@@ -1227,28 +1172,35 @@ async def echo(websocket, path):
                                     await websocket.send(
                                         json.dumps(
                                             get_group_member_list(
-                                                setting.admin_group_main
+                                                setting["admin_group_main"]
                                             )
                                         )
                                     )
                                 # 定期检测新入群友验证码
                                 for i in os.listdir("./vcode"):
+                                    user_id = i.split(".")[0].split("_")[0]
+                                    group_id = i.split(".")[0].split("_")[1]
                                     if check_validation_timeout(
-                                        i.split(".")[0].split("_")[0],
-                                        setting.admin_group_main,
+                                        user_id,
+                                        setting["admin_group_main"],
                                     ):
-                                        json.dumps(
-                                            ban_new(
-                                                i.split(".")[0].split("_")[0],
-                                                i.split(".")[0].split("_")[1],
-                                            )
+
+                                        res, user_info = get_user_info(
+                                            user_id, group_id
                                         )
-                                        json.dumps(
-                                            say(
-                                                setting.admin_group_main,
-                                                "{}的验证码已过期，已自动踢出喵！".format(
-                                                    i.split(".")[0].split("_")[0]
-                                                ),
+                                        if user_info.card != "":
+                                            sender_name = user_info.card
+                                        else:
+                                            sender_name = user_info.nickname
+                                        await websocket.send(
+                                            json.dumps(ban_new(user_id, group_id, 60))
+                                        )
+                                        await websocket.send(
+                                            json.dumps(
+                                                say(
+                                                    setting["admin_group_main"],
+                                                    "f{sender_name}的验证码已过期，已自动踢出喵！",
+                                                )
                                             )
                                         )
                                 # 0.2% 的概率乐可卖萌
@@ -1276,7 +1228,7 @@ async def echo(websocket, path):
                                 and user.join_time == user.last_sent_time
                             )
                             or time.time() - user.last_sent_time > 7776000
-                        ) and user.group_id in setting.admin_group_list:
+                        ) and user.group_id in setting["admin_group_list"]:
                             print(
                                 "{}({}),最后发言时间:{}".format(
                                     user.nickname,
@@ -1301,7 +1253,7 @@ async def echo(websocket, path):
                             await websocket.send(
                                 json.dumps(
                                     say(
-                                        setting.admin_group_main,
+                                        setting["admin_group_main"],
                                         "{}({})，乐可要踢掉你了喵！\n原因:三个月无活跃或两个月未活跃且从未活跃过。\n其最后发言时间为:{}".format(
                                             user.nickname,
                                             user.user_id,
@@ -1403,7 +1355,7 @@ def delete_msg(message_id: int):
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
 logging.basicConfig(
-    filename="my.log", level=logging.INFO, format=LOG_FORMAT, datefmt=DATE_FORMAT
+    filename="log/my.log", level=logging.INFO, format=LOG_FORMAT, datefmt=DATE_FORMAT
 )
 asyncio.get_event_loop().run_until_complete(websockets.serve(echo, "0.0.0.0", 27431))
 asyncio.get_event_loop().run_forever()

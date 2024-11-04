@@ -8,3 +8,5 @@ setting.py
 /__pycache__
 /.vscode
 /figs
+setting.json
+private.py

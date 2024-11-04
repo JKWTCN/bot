@@ -1,1 +1,1 @@
-nohup python main.py
+nohup python main.py > log/output.log

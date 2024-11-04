@@ -3,8 +3,9 @@ from datetime import datetime
 import random
 import json
 import time
-from rankings import  update_value
-from Ranking import Ranking
+from rankings import update_value
+from Class.Ranking import Ranking
+
 
 # 统计群友抽奖次数
 def find_gambling_times(user_id: int):
@@ -253,7 +254,7 @@ def get_statistics(user_id: int, group_id: int):
 
 
 def daily_check_in(user_id: int, sender_name: str, group_id: int):
-    result = check_in(user_id,group_id)
+    result = check_in(user_id, group_id)
     if result[0] == 1:
         payload = {
             "action": "send_msg",

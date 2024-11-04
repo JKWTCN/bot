@@ -1,4 +1,0 @@
-nohup python main.py
-
-lsof -i:27431
-kill -9 

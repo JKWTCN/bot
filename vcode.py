@@ -5,7 +5,6 @@ import string
 import sqlite3
 import time
 import os
-from setting import setting
 import logging
 
 
@@ -183,6 +182,9 @@ def welcome_verify(user_id: int, group_id: int):
     with open("./vcode/{}_{}.jpg".format(user_id, group_id), "rb") as image_file:
         image_data = image_file.read()
     image_base64 = base64.b64encode(image_data)
+    from tools import load_setting
+
+    setting = load_setting()
     payload = {
         "action": "send_msg",
         "params": {
@@ -193,7 +195,7 @@ def welcome_verify(user_id: int, group_id: int):
                     "type": "text",
                     "data": {
                         "text": '\n请在{}分钟内输入以下验证码喵,注意是全大写字符喵。你有三次输入机会喵,如果看不清说"乐可，看不清",乐可会给你换一张验证码的喵。'.format(
-                            setting.timeout
+                            setting["timeout"]
                         )
                     },
                 },
@@ -209,6 +211,9 @@ def welcome_verify(user_id: int, group_id: int):
 
 # 检测是否验证超时
 def check_validation_timeout(user_id: int, group_id: int):
+    from tools import load_setting
+
+    setting = load_setting()
     if find_last_time(user_id, group_id) - time.time() > setting.timeout * 60:
         return True
     else:

@@ -2,9 +2,9 @@ from enum import Enum
 import sqlite3
 import time
 
-from Group_member import get_user_info, is_in_group
-from Ranking import Ranking
-from User_point import User_point
+from Class.Group_member import get_user_info, is_in_group
+from Class.Ranking import Ranking
+from Class.User_point import User_point
 
 
 class Type(Enum):

@@ -2,7 +2,7 @@ import base64
 from datetime import date
 import random
 import time
-from Ranking import Ranking
+from Class.Ranking import Ranking
 import bot_database
 import matplotlib.pyplot as plt
 import numpy as np

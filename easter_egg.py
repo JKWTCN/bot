@@ -3,7 +3,7 @@ import logging
 import requests
 import json
 
-from Group_member import get_user_name
+from Class.Group_member import get_user_name
 from bot_database import change_point, find_point
 
 
