@@ -45,6 +45,13 @@ def open_img_by_base64(path: str):
     return base64.b64encode(image_data)
 
 
+def is_today(t1, t2, tz_count=28800):
+    if int((int(t1) + int(tz_count)) / 86400) == int((int(t2) + int(tz_count)) / 86400):
+        return True
+    else:
+        return False
+
+
 # red_qq_avatar()
 # setting = load_setting()
 # print(setting)
