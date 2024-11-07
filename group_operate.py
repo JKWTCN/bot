@@ -43,15 +43,15 @@ def poor_point(user_id: int, group_id: int, sender_name: str):
         if len(data) == 0:
             cur.execute(
                 "INSERT INTO poor (user_id,group_id,times,time)VALUES (?,?,?,?);",
-                (user_id, group_id, 1, time.time()),
+                (user_id, group_id, 0, time.time()),
             )
             conn.commit()
             cur.execute(
-            "SELECT * FROM poor where user_id=? and group_id=?;",
-            (
-                user_id,
-                group_id,
-            ),
+                "SELECT * FROM poor where user_id=? and group_id=?;",
+                (
+                    user_id,
+                    group_id,
+                ),
             )
             data = cur.fetchall()
         if data[0][2] < 3 and tools.is_today(time.time(), data[0][3]):

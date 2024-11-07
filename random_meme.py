@@ -2,9 +2,28 @@ import base64
 import logging
 import random
 from random import choice
-
-
 import glob
+from tools import GetDirSizeByUnit
+
+
+def MemeStatistics(group_id: int):
+    all_file = find_all_file("meme")
+    num, unit = GetDirSizeByUnit("meme")
+    payload = {
+        "action": "send_msg",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {
+                    "type": "text",
+                    "data": {
+                        "text": f"共有{len(all_file)}张图片,占用{num}{unit}空间喵!"
+                    },
+                },
+            ],
+        },
+    }
+    return payload
 
 
 def find_all_file(path: str):
@@ -101,7 +120,7 @@ def send_random_meme(group_id: int):
     # s = find_all_file("./meme")
     # files = os.listdir("meme/unchoise")
     # path = "{}/{}".format("meme/unchoise", choice(files))
-    all_file=find_all_file("meme")
+    all_file = find_all_file("meme")
     path = choice(all_file)
     while path.endswith(".mp4"):
         path = choice(all_file)

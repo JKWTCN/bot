@@ -52,6 +52,48 @@ def is_today(t1, t2, tz_count=28800):
         return False
 
 
-# red_qq_avatar()
-# setting = load_setting()
-# print(setting)
+def GetFileSize(filePath):
+    import os
+
+    fsize = os.path.getsize(filePath)  # 返回的是字节大小
+    if fsize < 1024:
+        return (round(fsize, 2), "Byte")
+    else:
+        KBX = fsize / 1024
+        if KBX < 1024:
+            return (round(KBX, 2), "KB")
+        else:
+            MBX = KBX / 1024
+            if MBX < 1024:
+                return (round(MBX, 2), "MB")
+            else:
+                return (round(MBX / 1024, 2), "GB")
+
+
+def GetDirSize(path="."):
+    import os
+
+    total = 0
+    with os.scandir(path) as it:
+        for entry in it:
+            if entry.is_file():
+                total += entry.stat().st_size
+            elif entry.is_dir():
+                total += GetDirSize(entry.path)
+    return total
+
+
+def GetDirSizeByUnit(path="."):
+    fsize = GetDirSize(path)
+    if fsize < 1024:
+        return (round(fsize, 2), "Byte")
+    else:
+        KBX = fsize / 1024
+        if KBX < 1024:
+            return (round(KBX, 2), "KB")
+        else:
+            MBX = KBX / 1024
+            if MBX < 1024:
+                return (round(MBX, 2), "MB")
+            else:
+                return (round(MBX / 1024, 2), "GB")

@@ -41,6 +41,7 @@ from random_meme import (
     send_random_meme,
     ten_random_meme,
     twenty_random_meme,
+    MemeStatistics,
 )
 
 from russian_roulette import russian, russian_pve, russian_pve_shot
@@ -480,6 +481,15 @@ async def echo(websocket, path):
                                                     )
                                                 )
                                             elif (
+                                                "梗图"
+                                                in message["message"][0]["data"]["text"]
+                                                and "统计"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                await websocket.send(
+                                                    json.dumps(MemeStatistics(group_id))
+                                                )
+                                            elif (
                                                 "统计"
                                                 in message["message"][0]["data"]["text"]
                                             ):
@@ -575,6 +585,7 @@ async def echo(websocket, path):
                                                 and "大头菜"
                                                 in message["message"][0]["data"]["text"]
                                             ):
+                                                user_id = sender["user_id"]
                                                 await websocket.send(
                                                     json.dumps(
                                                         say(

@@ -6,10 +6,32 @@ from Class.Group_member import get_user_name
 
 
 # B股股指
-def GetNowPrice():
+def GetBShock():
     ts.set_token(tushare_token)
     df = ts.realtime_quote(ts_code="000003.SH")
     return df.PRICE[0]
+
+
+# 狗狗币
+def GetDogeCoin():
+    import re
+    import requests
+
+    r = requests.get("https://bitcompare.net/zh-cn/coins/dogecoin")
+    with open("tmp.txt", "w", encoding="utf-8") as f:
+        f.write(r.text)
+    pattern = re.compile(
+        'placeholder="0.00" min="0" step="1" value="(.*?)"/>',
+    )
+    m = pattern.findall(r.text)
+    # print(m[0])
+    return m[0]
+
+
+# 获取大头菜价格
+def GetNowPrice():
+    now_price = GetDogeCoin()
+    return float(now_price) * 1000
 
 
 # 获取我的本周交易记录
