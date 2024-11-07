@@ -18,8 +18,8 @@ def GetDogeCoin():
     import requests
 
     r = requests.get("https://bitcompare.net/zh-cn/coins/dogecoin")
-    with open("tmp.txt", "w", encoding="utf-8") as f:
-        f.write(r.text)
+    # with open("tmp.txt", "w", encoding="utf-8") as f:
+    #     f.write(r.text)
     pattern = re.compile(
         'placeholder="0.00" min="0" step="1" value="(.*?)"/>',
     )
@@ -31,7 +31,7 @@ def GetDogeCoin():
 # 获取大头菜价格
 def GetNowPrice():
     now_price = GetDogeCoin()
-    return float(now_price) * 1000
+    return round(float(now_price) * 1000, 3)
 
 
 # 获取我的本周交易记录
