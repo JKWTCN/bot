@@ -3,6 +3,7 @@ from datetime import datetime
 import random
 import json
 import time
+from kohlrabi import GetMyKohlrabi, GetRecordKohlrabi
 from rankings import update_value
 from Class.Ranking import Ranking
 
@@ -233,6 +234,10 @@ def check_in(user_id: int, group_id: int):
 def get_statistics(user_id: int, group_id: int):
     now_point = find_point(user_id)
     gambling_times = find_gambling_times(user_id)
+    now_num = GetMyKohlrabi(user_id, group_id)
+    (all_buy, all_buy_cost, all_sell, all_sell_price) = GetRecordKohlrabi(
+        user_id, group_id
+    )
     payload = {
         "action": "send_msg",
         "params": {
@@ -242,14 +247,46 @@ def get_statistics(user_id: int, group_id: int):
                 {
                     "type": "text",
                     "data": {
-                        "text": ",您目前的积分为：{}，您的总抽奖次数为:{}".format(
+                        "text": ",您目前的积分为：{}，您的总抽奖次数为:{}次。\n".format(
                             now_point, gambling_times
                         )
+                    },
+                },
+                {
+                    "type": "text",
+                    "data": {
+                        "text": f"您目前的大头菜库存:{now_num},生涯买入了{all_buy}颗大头菜,共花费{all_buy_cost}积分;生涯卖出了{all_sell}颗大头菜,共获得{all_sell_price}积分。"
                     },
                 },
             ],
         },
     }
+    _check_num = all_sell_price - all_buy_cost
+    if _check_num > 0:
+        payload["params"]["message"].append(
+            {
+                "type": "text",
+                "data": {
+                    "text": f"你通过大头菜贸易总共赚取了{_check_num}积分,真不错喵。"
+                },
+            }
+        )
+    elif _check_num == 0:
+        payload["params"]["message"].append(
+            {
+                "type": "text",
+                "data": {"text": f"不亏就是赚喵。"},
+            }
+        )
+    elif _check_num < 0:
+        payload["params"]["message"].append(
+            {
+                "type": "text",
+                "data": {
+                    "text": f"你通过大头菜贸易总共亏损了{-_check_num}积分,倒狗好似喵。"
+                },
+            }
+        )
     return payload
 
 

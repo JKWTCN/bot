@@ -25,6 +25,7 @@ from bot_database import (
     write_message,
 )
 from chat import chat
+from kohlrabi import BuyKohlrabi, ClearKohlrabi, GetNowPrice, SellKohlrabi
 import luck_dog
 from easter_egg import (
     cute,
@@ -565,6 +566,56 @@ async def echo(websocket, path):
                                                             sender["user_id"],
                                                             sender_name,
                                                             group_id,
+                                                        )
+                                                    )
+                                                )
+                                            elif (
+                                                "价格"
+                                                in message["message"][0]["data"]["text"]
+                                                and "大头菜"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                await websocket.send(
+                                                    json.dumps(
+                                                        say(
+                                                            group_id,
+                                                            f"当前大头菜价格为:{GetNowPrice()}积分喵,你的积分为{find_point(user_id)}喵。",
+                                                        )
+                                                    )
+                                                )
+                                            elif (
+                                                "买入"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                num = FindNum(
+                                                    message["message"][0]["data"][
+                                                        "text"
+                                                    ]
+                                                )
+                                                await websocket.send(
+                                                    json.dumps(
+                                                        BuyKohlrabi(
+                                                            sender["user_id"],
+                                                            group_id,
+                                                            num,
+                                                        )
+                                                    )
+                                                )
+                                            elif (
+                                                "卖出"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                num = FindNum(
+                                                    message["message"][0]["data"][
+                                                        "text"
+                                                    ]
+                                                )
+                                                await websocket.send(
+                                                    json.dumps(
+                                                        SellKohlrabi(
+                                                            sender["user_id"],
+                                                            group_id,
+                                                            num,
                                                         )
                                                     )
                                                 )
@@ -1206,6 +1257,8 @@ async def echo(websocket, path):
                                 # 0.2% 的概率乐可卖萌
                                 if random.random() < 0.002:
                                     await websocket.send(json.dumps(cute(group_id)))
+                                # 定期清理过期的大头菜
+                                ClearKohlrabi()
                             case _:
                                 print(message)
                     else:
@@ -1343,6 +1396,12 @@ def delete_msg(message_id: int):
         },
     }
     return payload
+
+
+def FindNum(text: str):
+    result = re.search("\d+", text)
+    num = int(result.group())
+    return num
 
 
 # def beijing(sec, what):

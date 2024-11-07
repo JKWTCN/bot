@@ -3,3 +3,4 @@ requests
 captcha
 numpy
 matplotlib
+tushare
