@@ -72,7 +72,7 @@ def find_point(user_id):
     else:
         # print(data[0][1])
         conn.close()
-        return data[0][1]
+        return round(data[0][1], 3)
         # return cur.fetchall()
 
 
@@ -188,6 +188,7 @@ def check_russian_pve(user_id: int):
 
 
 def change_point(user_id: int, group_id: int, point: int):
+    point=round(point, 3)
     update_value(Ranking(user_id, group_id, point, time.time(), 1))
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
@@ -261,7 +262,7 @@ def get_statistics(user_id: int, group_id: int):
             ],
         },
     }
-    _check_num = all_sell_price - all_buy_cost
+    _check_num = round(all_sell_price - all_buy_cost,3)
     if _check_num > 0:
         payload["params"]["message"].append(
             {

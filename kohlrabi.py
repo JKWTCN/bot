@@ -1,8 +1,10 @@
+from venv import logger
 import tushare as ts
 from private import tushare_token
 import time
 import sqlite3
 from Class.Group_member import get_user_name
+from tools import load_setting, dump_setting
 
 
 # B股股指
@@ -17,15 +19,24 @@ def GetDogeCoin():
     import re
     import requests
 
-    r = requests.get("https://bitcompare.net/zh-cn/coins/dogecoin")
-    # with open("tmp.txt", "w", encoding="utf-8") as f:
-    #     f.write(r.text)
-    pattern = re.compile(
-        'placeholder="0.00" min="0" step="1" value="(.*?)"/>',
-    )
-    m = pattern.findall(r.text)
-    # print(m[0])
-    return m[0]
+    try:
+        r = requests.get("https://bitcompare.net/zh-cn/coins/dogecoin")
+        # with open("tmp.txt", "w", encoding="utf-8") as f:
+        #     f.write(r.text)
+        pattern = re.compile(
+            'placeholder="0.00" min="0" step="1" value="(.*?)"/>',
+        )
+        m = pattern.findall(r.text)
+        setting = load_setting()
+        setting["kohlrabi_price"] = float(m[0])
+        dump_setting(setting)
+        return m[0]
+    except:
+        setting = load_setting()
+        logger.info(
+            "获取大头菜价格失败，使用上一次的价格:{}".format(setting["kohlrabi_price"])
+        )
+        return setting["kohlrabi_price"]
 
 
 # 获取大头菜价格
@@ -83,20 +94,23 @@ def ChangeMyKohlrabi(user_id: int, group_id: int, nums: int):
     conn.commit()
 
 
-# 购买大头菜
-def BuyKohlrabi(user_id: int, group_id: int, num: int):
+# 梭哈
+def ShowHand(user_id: int, group_id: int):
     from bot_database import change_point, find_point
+    import math
 
     now_num = GetMyKohlrabi(user_id, group_id)
     now_point = find_point(user_id)
     now_price = GetNowPrice()
-    if now_point >= now_price * num:
+    if now_point > now_price:
+        num = math.trunc(now_point / now_price)
         (all_buy, all_buy_cost, all_sell, all_sell_price) = GetRecordKohlrabi(
             user_id, group_id
         )
         all_buy = all_buy + num
-        all_buy_cost = all_buy_cost + now_price * num
-        change_point(user_id, group_id, now_point - now_price * num)
+        get_point = round(now_price * num, 3)
+        all_buy_cost = round(all_buy_cost + get_point, 3)
+        change_point(user_id, group_id, now_point - get_point)
         ChangeMyKohlrabi(user_id, group_id, now_num + num)
         UpdateRecordKohlrabi(
             user_id, group_id, all_buy, all_buy_cost, all_sell, all_sell_price
@@ -109,7 +123,58 @@ def BuyKohlrabi(user_id: int, group_id: int, num: int):
                     {
                         "type": "text",
                         "data": {
-                            "text": f"{get_user_name(user_id, group_id)},买入成功喵,单价{now_price},您的大头菜数目:{now_num}->{now_num + num},积分:{now_point}->{now_point - now_price * num}。"
+                            "text": f"{get_user_name(user_id, group_id)},梭哈成功喵,单价{now_price},您的大头菜数目:{now_num}->{now_num + num},积分:{now_point}->{now_point - get_point}。"
+                        },
+                    },
+                ],
+            },
+        }
+    else:
+        payload = {
+            "action": "send_msg",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": f"{get_user_name(user_id, group_id)},没积分?没积分不要来买大头菜喵!"
+                        },
+                    },
+                ],
+            },
+        }
+    return payload
+
+
+# 购买大头菜
+def BuyKohlrabi(user_id: int, group_id: int, num: int):
+    from bot_database import change_point, find_point
+
+    now_num = GetMyKohlrabi(user_id, group_id)
+    now_point = find_point(user_id)
+    now_price = GetNowPrice()
+    if now_point >= now_price * num:
+        (all_buy, all_buy_cost, all_sell, all_sell_price) = GetRecordKohlrabi(
+            user_id, group_id
+        )
+        all_buy = all_buy + num
+        get_point = round(now_price * num, 3)
+        all_buy_cost = round(all_buy_cost + get_point, 3)
+        change_point(user_id, group_id, now_point - get_point)
+        ChangeMyKohlrabi(user_id, group_id, now_num + num)
+        UpdateRecordKohlrabi(
+            user_id, group_id, all_buy, all_buy_cost, all_sell, all_sell_price
+        )
+        payload = {
+            "action": "send_msg",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": f"{get_user_name(user_id, group_id)},买入成功喵,单价{now_price},您的大头菜数目:{now_num}->{now_num + num},积分:{now_point}->{now_point - get_point}。"
                         },
                     },
                 ],
@@ -180,10 +245,11 @@ def SellKohlrabi(user_id: int, group_id: int, num: int):
         (all_buy, all_buy_cost, all_sell, all_sell_price) = GetRecordKohlrabi(
             user_id, group_id
         )
-        change_point(user_id, group_id, now_point + now_price * num)
+        get_point = round(now_price * num, 3)
+        change_point(user_id, group_id, now_point + get_point)
         ChangeMyKohlrabi(user_id, group_id, now_num - num)
         all_sell = all_sell + num
-        all_sell_price = all_sell_price + now_price * num
+        all_sell_price = round(all_sell_price + get_point, 3)
         UpdateRecordKohlrabi(
             user_id, group_id, all_buy, all_buy_cost, all_sell, all_sell_price
         )
@@ -195,7 +261,7 @@ def SellKohlrabi(user_id: int, group_id: int, num: int):
                     {
                         "type": "text",
                         "data": {
-                            "text": f"{get_user_name(user_id, group_id)},售出成功喵,单价{now_price},你的大头菜库存:{now_num}->{now_num - num},积分:{now_point}->{now_point + now_price * num}喵!"
+                            "text": f"{get_user_name(user_id, group_id)},售出成功喵,单价{now_price},你的大头菜库存:{now_num}->{now_num - num},积分:{now_point}->{now_point + get_point}喵!"
                         },
                     },
                 ],

@@ -25,7 +25,7 @@ from bot_database import (
     write_message,
 )
 from chat import chat
-from kohlrabi import BuyKohlrabi, ClearKohlrabi, GetNowPrice, SellKohlrabi
+from kohlrabi import BuyKohlrabi, ClearKohlrabi, GetNowPrice, SellKohlrabi, ShowHand
 import luck_dog
 from easter_egg import (
     cute,
@@ -609,6 +609,18 @@ async def echo(websocket, path):
                                                             sender["user_id"],
                                                             group_id,
                                                             num,
+                                                        )
+                                                    )
+                                                )
+                                            elif (
+                                                "梭哈"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                await websocket.send(
+                                                    json.dumps(
+                                                        ShowHand(
+                                                            sender["user_id"],
+                                                            group_id,
                                                         )
                                                     )
                                                 )
