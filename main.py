@@ -113,9 +113,9 @@ async def echo(websocket, path):
                                 await websocket.send(json.dumps(payload))
                             if (
                                 "[CQ:at,qq={}]".format(setting["developers_list"][0])
-                                == message["raw_message"]
+                                in message["raw_message"]
                                 or "[CQ:at,qq={}]".format(setting["developers_list"][1])
-                                == message["raw_message"]
+                                in message["raw_message"]
                             ):
                                 if (
                                     sender["user_id"] not in setting["developers_list"]
@@ -543,10 +543,11 @@ async def echo(websocket, path):
                                                     "text"
                                                 ]
                                             ):
-                                                result = re.search(
-                                                    "\d+", message["raw_message"]
-                                                )
-                                                if int(result.group()) > 100:
+                                                num = FindNum(message["raw_message"])
+                                                import math
+
+                                                num = math.trunc(num)
+                                                if num > 100:
                                                     await websocket.send(
                                                         json.dumps(
                                                             say(
@@ -555,14 +556,13 @@ async def echo(websocket, path):
                                                         )
                                                     )
                                                 else:
-                                                    # print(result.group())
                                                     await websocket.send(
                                                         json.dumps(
                                                             luck_dog.luck_choice_mut(
                                                                 sender["user_id"],
                                                                 sender_name,
                                                                 group_id,
-                                                                int(result.group()),
+                                                                num,
                                                             )
                                                         )
                                                     )
@@ -572,10 +572,11 @@ async def echo(websocket, path):
                                             ):
                                                 await websocket.send(
                                                     json.dumps(
-                                                        luck_dog.luck_choice(
+                                                        luck_dog.luck_choice_mut(
                                                             sender["user_id"],
                                                             sender_name,
                                                             group_id,
+                                                            1,
                                                         )
                                                     )
                                                 )
@@ -603,15 +604,19 @@ async def echo(websocket, path):
                                                         "text"
                                                     ]
                                                 )
-                                                await websocket.send(
-                                                    json.dumps(
-                                                        BuyKohlrabi(
-                                                            sender["user_id"],
-                                                            group_id,
-                                                            num,
+                                                import math
+
+                                                num = math.trunc(num)
+                                                if num >= 1:
+                                                    await websocket.send(
+                                                        json.dumps(
+                                                            BuyKohlrabi(
+                                                                sender["user_id"],
+                                                                group_id,
+                                                                num,
+                                                            )
                                                         )
                                                     )
-                                                )
                                             elif (
                                                 "梭哈"
                                                 in message["message"][0]["data"]["text"]
@@ -633,22 +638,31 @@ async def echo(websocket, path):
                                                         "text"
                                                     ]
                                                 )
-                                                await websocket.send(
-                                                    json.dumps(
-                                                        SellKohlrabi(
-                                                            sender["user_id"],
-                                                            group_id,
-                                                            num,
+                                                import math
+
+                                                num = math.trunc(num)
+                                                if num >= 1:
+                                                    await websocket.send(
+                                                        json.dumps(
+                                                            SellKohlrabi(
+                                                                sender["user_id"],
+                                                                group_id,
+                                                                num,
+                                                            )
                                                         )
                                                     )
-                                                )
                                             elif (
                                                 "梗图二十"
                                                 in message["message"][0]["data"]["text"]
                                             ):
                                                 await websocket.send(
                                                     json.dumps(
-                                                        twenty_random_meme(group_id)
+                                                        luck_dog.luck_choice_mut(
+                                                            sender["user_id"],
+                                                            sender_name,
+                                                            group_id,
+                                                            20,
+                                                        )
                                                     )
                                                 )
                                             elif (
@@ -657,7 +671,12 @@ async def echo(websocket, path):
                                             ):
                                                 await websocket.send(
                                                     json.dumps(
-                                                        ten_random_meme(group_id)
+                                                        luck_dog.luck_choice_mut(
+                                                            sender["user_id"],
+                                                            sender_name,
+                                                            group_id,
+                                                            10,
+                                                        )
                                                     )
                                                 )
                                             elif (
@@ -666,11 +685,15 @@ async def echo(websocket, path):
                                                 and "连"
                                                 in message["message"][0]["data"]["text"]
                                             ):
-                                                result = re.search(
-                                                    "\d+", message["raw_message"]
+                                                num = FindNum(
+                                                    message["message"][0]["data"][
+                                                        "text"
+                                                    ]
                                                 )
-                                                # print(result.group())
-                                                if int(result.group()) > 100:
+                                                import math
+
+                                                num = math.trunc(num)
+                                                if num > 100:
                                                     # nums=100
                                                     await websocket.send(
                                                         json.dumps(
@@ -681,7 +704,7 @@ async def echo(websocket, path):
                                                         )
                                                     )
                                                 else:
-                                                    nums = int(result.group())
+                                                    nums = num
                                                     for i in range(
                                                         math.trunc(nums / 20.0)
                                                     ):

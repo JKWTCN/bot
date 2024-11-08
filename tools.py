@@ -8,6 +8,10 @@ def get_now_week() -> int:
     return int(time.strftime("%W"))
 
 
+def GetNowDay() -> int:
+    return int(time.strftime("%d"))
+
+
 def get_timestamp_week(timestamp) -> int:
     return int(datetime.datetime.fromtimestamp(timestamp).strftime("%W"))
 

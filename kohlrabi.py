@@ -126,6 +126,10 @@ def ShowHand(user_id: int, group_id: int):
                             "text": f"{get_user_name(user_id, group_id)},梭哈成功喵,单价{now_price},您的大头菜数目:{now_num}->{now_num + num},积分:{now_point}->{now_point - get_point}。"
                         },
                     },
+                    {
+                        "type": "text",
+                        "data": {"text": "大头菜会在本周末过期,请及时卖出喵。"},
+                    },
                 ],
             },
         }
@@ -176,6 +180,10 @@ def BuyKohlrabi(user_id: int, group_id: int, num: int):
                         "data": {
                             "text": f"{get_user_name(user_id, group_id)},买入成功喵,单价{now_price},您的大头菜数目:{now_num}->{now_num + num},积分:{now_point}->{now_point - get_point}。"
                         },
+                    },
+                    {
+                        "type": "text",
+                        "data": {"text": "大头菜会在本周末过期,请及时卖出喵。"},
                     },
                 ],
             },

@@ -8,6 +8,7 @@ from rankings import update_value
 from Class.Ranking import Ranking
 
 
+
 # 统计群友抽奖次数
 def find_gambling_times(user_id: int):
     conn = sqlite3.connect("bot.db")

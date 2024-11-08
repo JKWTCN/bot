@@ -6,8 +6,9 @@ from Class.Ranking import Ranking
 import bot_database
 import matplotlib.pyplot as plt
 import numpy as np
-
+from tools import GetNowDay, load_setting
 from rankings import update_value
+import sqlite3
 
 choice_list = [200, 100, 50, 10, -10, -20, 444, 555, 666, 777]
 choice_probability = [
@@ -22,6 +23,39 @@ choice_probability = [
     0.001,  # *10 8
     0.001,  # 0 9
 ]
+
+
+# 获取抽奖限制
+def GetGamblingTimesToday(user_id: int, group_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT today_num,today FROM gambling_today where user_id=? and group_id=?",
+        (
+            user_id,
+            group_id,
+        ),
+    )
+    data = cur.fetchall()
+    if len(data) == 0:
+        cur.execute(
+            "INSERT INTO gambling_today (user_id,group_id,today_num,today)VALUES (?,?,?,?);",
+            (user_id, group_id, 0, GetNowDay()),
+        )
+        conn.commit()
+        return (0, GetNowDay())
+    else:
+        return (data[0][0], data[0][1])
+
+
+def ChangeGameblingTimesToday(user_id: int, group_id: int, today_num: int, today: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE gambling_today SET today_num=?,today=? where user_id=? and group_id=?",
+        (today_num, today, user_id, group_id),
+    )
+    conn.commit()
 
 
 def ys_simple(ys):
@@ -54,6 +88,7 @@ def luck_dog(use_id: int, sender_name: str, group_id: int):
 
 
 def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
+    setting = load_setting()
     payload = {
         "action": "send_msg",
         "params": {
@@ -64,87 +99,113 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
     luck_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     start_point = bot_database.find_point(user_id)
     now_point = start_point
+    today_num, today = GetGamblingTimesToday(user_id, group_id)
     x = []
     y = []
-    if start_point >= 5:
+    if today != GetNowDay():
+        today = GetNowDay()
+        today_num = 0
+    if today_num <= setting["gambling_limit"] and start_point >= 5:
         x.append(0)
         y.append(start_point)
         for i in range(nums):
-            # now_point = bot_database.find_point(user_id)
+                # now_point = bot_database.find_point(user_id)
             if now_point >= 5:
                 bot_database.add_gambling_times(user_id, 1)
                 now_point = now_point - 5
                 choice = random.choices(choice_list, choice_probability)
+                today_num = today_num + 1
                 match choice[0]:
                     case 200:
-                        luck_list[0] = luck_list[0] + 1
-                        now_point = now_point + 200
+                            luck_list[0] = luck_list[0] + 1
+                            now_point = now_point + 200
                     case 100:
-                        luck_list[1] = luck_list[1] + 1
-                        now_point = now_point + 100
+                            luck_list[1] = luck_list[1] + 1
+                            now_point = now_point + 100
                     case 50:
-                        luck_list[2] = luck_list[2] + 1
-                        now_point = now_point + 50
+                            luck_list[2] = luck_list[2] + 1
+                            now_point = now_point + 50
                     case 10:
-                        luck_list[3] = luck_list[3] + 1
-                        now_point = now_point + 10
+                            luck_list[3] = luck_list[3] + 1
+                            now_point = now_point + 10
                     case -10:
-                        luck_list[4] = luck_list[4] + 1
-                        now_point = now_point - 10
+                            luck_list[4] = luck_list[4] + 1
+                            now_point = now_point - 10
                     case -20:
-                        luck_list[5] = luck_list[5] + 1
-                        now_point = now_point - 20
+                            luck_list[5] = luck_list[5] + 1
+                            now_point = now_point - 20
                     case 444:
-                        luck_list[6] = luck_list[6] + 1
-                        now_point = now_point * 2
+                            luck_list[6] = luck_list[6] + 1
+                            now_point = now_point * 2
                     case 555:
-                        luck_list[7] = luck_list[7] + 1
-                        now_point = now_point / 2
+                            luck_list[7] = luck_list[7] + 1
+                            now_point = now_point / 2
                     case 666:
-                        luck_list[8] = luck_list[8] + 1
-                        now_point = now_point * 10
+                            luck_list[8] = luck_list[8] + 1
+                            now_point = now_point * 10
                     case 777:
-                        luck_list[9] = luck_list[9] + 1
-                        now_point = 0
+                            luck_list[9] = luck_list[9] + 1
+                            now_point = 0
                 x.append(i + 1)
                 y.append(now_point)
                 bot_database.change_point(user_id, group_id, now_point)
                 update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
-                if now_point <= 0:
+                if now_point <= 0 or today_num > setting["gambling_limit"]:
                     payload["params"]["message"].append(
-                        {
-                            "type": "text",
-                            "data": {
-                                "text": "{},抽奖统计如下：\n200积分奖:{}次\n100积分奖:{}次\n50积分奖:{}次\n10积分奖:{}次\n-10积分奖:{}次\n-20积分奖:{}次\n双倍积分奖:{}次\n折半积分奖:{}次\n十倍积分奖:{}次\n积分清零奖:{}次\n积分总额:{}->{}\n乐可:十赌九输喵，赌狗好似喵。".format(
-                                    sender_name,
-                                    luck_list[0],
-                                    luck_list[1],
-                                    luck_list[2],
-                                    luck_list[3],
-                                    luck_list[4],
-                                    luck_list[5],
-                                    luck_list[6],
-                                    luck_list[7],
-                                    luck_list[8],
-                                    luck_list[9],
-                                    start_point,
-                                    now_point,
-                                )
-                            },
-                        }
-                    )
+                            {
+                                "type": "text",
+                                "data": {
+                                    "text": "{},抽奖统计如下：\n200积分奖:{}次\n100积分奖:{}次\n50积分奖:{}次\n10积分奖:{}次\n-10积分奖:{}次\n-20积分奖:{}次\n双倍积分奖:{}次\n折半积分奖:{}次\n十倍积分奖:{}次\n积分清零奖:{}次\n积分总额:{}->{}\n".format(
+                                        sender_name,
+                                        luck_list[0],
+                                        luck_list[1],
+                                        luck_list[2],
+                                        luck_list[3],
+                                        luck_list[4],
+                                        luck_list[5],
+                                        luck_list[6],
+                                        luck_list[7],
+                                        luck_list[8],
+                                        luck_list[9],
+                                        start_point,
+                                        now_point,
+                                    )
+                                },
+                            }
+                        )
+                    if today_num>1000:
+                        payload["params"]["message"].append(
+                            {
+                                "type": "text",
+                                "data": {
+                                    "text": "今日已超过{}次,请明日再来喵。".format(setting["gambling_limit"])
+                                },
+                            }
+                        )
+                    else:
+                        payload["params"]["message"].append(
+                            {
+                                "type": "text",
+                                "data": {
+                                    "text": "十赌九输喵,赌狗好似喵。"
+                                },
+                            }
+                        )
                     payload["params"]["message"].append(
-                        {
-                            "type": "image",
-                            "data": {
-                                "file": "base64://"
-                                + open_chart_by_base64(user_id, group_id, x, y).decode(
-                                    "utf-8"
-                                )
-                            },
-                        }
-                    )
-                    update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
+                            {
+                                "type": "image",
+                                "data": {
+                                    "file": "base64://"
+                                    + open_chart_by_base64(
+                                        user_id, group_id, x, y
+                                    ).decode("utf-8")
+                                },
+                            }
+                        )
+                    update_value(
+                            Ranking(user_id, group_id, now_point, time.time(), 1)
+                        )
+                    ChangeGameblingTimesToday(user_id, group_id, today_num, today)
                     return payload
         payload["params"]["message"].append(
             {
@@ -174,6 +235,16 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
                 "data": {
                     "file": "base64://"
                     + open_chart_by_base64(user_id, group_id, x, y).decode("utf-8")
+                },
+            }
+        )
+        ChangeGameblingTimesToday(user_id, group_id, today_num, today)
+    elif today_num > 1000:
+        payload["params"]["message"].append(
+            {
+                "type": "text",
+                "data": {
+                    "text": "{},抽奖失败喵,今天已经超过{}次了喵。".format(sender_name,setting["gambling_limit"])
                 },
             }
         )
