@@ -277,11 +277,12 @@ async def echo(websocket, path):
                                                     json.dumps(payload)
                                                 )
                                         # print(message["message"][0]["data"]["text"])
-                                        if (
-                                            sender["user_id"]
-                                            == setting["miaomiao_group_member"]
-                                            and "喵"
+                                        if sender["user_id"] == setting[
+                                            "miaomiao_group_member"
+                                        ] and (
+                                            "喵"
                                             not in message["message"][0]["data"]["text"]
+                                            or "喵" not in message["raw_message"]
                                         ):
                                             await websocket.send(
                                                 json.dumps(
@@ -1443,6 +1444,7 @@ def SayPrivte(user_id: int, text: str):
         "echo": "123",
     }
     return payload
+
 
 def say(group_id: int, text: str):
     payload = {
