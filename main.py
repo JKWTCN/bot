@@ -1104,6 +1104,34 @@ async def echo(websocket, path):
                                     message["raw_message"],
                                 )
                             )
+                            if (
+                                "抽" in message["raw_message"]
+                                and "连" in message["raw_message"]
+                            ):
+                                num = FindNum(message["raw_message"])
+                                import math
+
+                                num = math.trunc(num)
+                                if num > 100:
+                                    await websocket.send(
+                                        json.dumps(SayPrivte(group_id, "最大100连喵!"))
+                                    )
+                                else:
+                                    await websocket.send(
+                                        json.dumps(
+                                            luck_dog.LuckChoiceMutPrivate(
+                                                message["user_id"], num
+                                            )
+                                        )
+                                    )
+                            elif "抽奖" in message["raw_message"]:
+                                await websocket.send(
+                                    json.dumps(
+                                        luck_dog.LuckChoiceMutPrivate(
+                                            message["user_id"], 1
+                                        )
+                                    )
+                                )
                             if message["user_id"] in setting["developers_list"]:
                                 if message["raw_message"].startswith("更新群友列表"):
                                     for group in setting["group_list"]:
@@ -1404,6 +1432,17 @@ async def echo(websocket, path):
             else:
                 print(message)
 
+
+def SayPrivte(user_id: int, text: str):
+    payload = {
+        "action": "send_msg",
+        "params": {
+            "user_id": user_id,
+            "message": text,
+        },
+        "echo": "123",
+    }
+    return payload
 
 def say(group_id: int, text: str):
     payload = {
