@@ -116,7 +116,7 @@ async def echo(websocket, path):
                                 in message["raw_message"]
                                 or "[CQ:at,qq={}]".format(setting["developers_list"][1])
                                 in message["raw_message"]
-                            ):
+                            ) and "reply" not in message["raw_message"]:
                                 if (
                                     sender["user_id"] not in setting["developers_list"]
                                     and sender["user_id"] not in setting["admin_list"]
@@ -657,11 +657,8 @@ async def echo(websocket, path):
                                             ):
                                                 await websocket.send(
                                                     json.dumps(
-                                                        luck_dog.luck_choice_mut(
-                                                            sender["user_id"],
-                                                            sender_name,
-                                                            group_id,
-                                                            20,
+                                                        send_meme_merge_forwarding(
+                                                            group_id, 20
                                                         )
                                                     )
                                                 )
@@ -671,11 +668,8 @@ async def echo(websocket, path):
                                             ):
                                                 await websocket.send(
                                                     json.dumps(
-                                                        luck_dog.luck_choice_mut(
-                                                            sender["user_id"],
-                                                            sender_name,
-                                                            group_id,
-                                                            10,
+                                                        send_meme_merge_forwarding(
+                                                            group_id, 10
                                                         )
                                                     )
                                                 )
