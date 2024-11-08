@@ -279,11 +279,7 @@ async def echo(websocket, path):
                                         # print(message["message"][0]["data"]["text"])
                                         if sender["user_id"] == setting[
                                             "miaomiao_group_member"
-                                        ] and (
-                                            "喵"
-                                            not in message["message"][0]["data"]["text"]
-                                            or "喵" not in message["raw_message"]
-                                        ):
+                                        ] and "喵" not in message["raw_message"] and "[CQ:image" not in message["raw_message"]:
                                             await websocket.send(
                                                 json.dumps(
                                                     ban_new(
@@ -315,10 +311,7 @@ async def echo(websocket, path):
                                             not in setting["developers_list"]
                                         ):
                                             if (
-                                                "喵"
-                                                not in message["message"][0]["data"][
-                                                    "text"
-                                                ]
+                                                "喵" not in message["raw_message"] and "[CQ:image" not in message["raw_message"] and "[CQ:reply"not in message["raw_message"]
                                             ):
                                                 if (
                                                     sender["user_id"]
