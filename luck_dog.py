@@ -96,6 +96,18 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
             "message": [],
         },
     }
+    if group_id == setting["admin_group_main"]:
+        payload["params"]["message"].append(
+            {
+                "type": "text",
+                "data": {
+                    "text": "{},主群的抽奖权限关闭了喵,去分群吧,分区群号:{}。".format(
+                        sender_name, setting["sepcial_group"]
+                    )
+                },
+            }
+        )
+        return payload
     luck_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     start_point = bot_database.find_point(user_id)
     now_point = start_point
@@ -109,76 +121,79 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
         x.append(0)
         y.append(start_point)
         for i in range(nums):
-                # now_point = bot_database.find_point(user_id)
+            # now_point = bot_database.find_point(user_id)
             if now_point >= 5:
                 bot_database.add_gambling_times(user_id, 1)
                 now_point = now_point - 5
                 choice = random.choices(choice_list, choice_probability)
-                today_num = today_num + 1
+                if group_id not in setting["sepcial_group"]:
+                    today_num = today_num + 1
                 match choice[0]:
                     case 200:
-                            luck_list[0] = luck_list[0] + 1
-                            now_point = now_point + 200
+                        luck_list[0] = luck_list[0] + 1
+                        now_point = now_point + 200
                     case 100:
-                            luck_list[1] = luck_list[1] + 1
-                            now_point = now_point + 100
+                        luck_list[1] = luck_list[1] + 1
+                        now_point = now_point + 100
                     case 50:
-                            luck_list[2] = luck_list[2] + 1
-                            now_point = now_point + 50
+                        luck_list[2] = luck_list[2] + 1
+                        now_point = now_point + 50
                     case 10:
-                            luck_list[3] = luck_list[3] + 1
-                            now_point = now_point + 10
+                        luck_list[3] = luck_list[3] + 1
+                        now_point = now_point + 10
                     case -10:
-                            luck_list[4] = luck_list[4] + 1
-                            now_point = now_point - 10
+                        luck_list[4] = luck_list[4] + 1
+                        now_point = now_point - 10
                     case -20:
-                            luck_list[5] = luck_list[5] + 1
-                            now_point = now_point - 20
+                        luck_list[5] = luck_list[5] + 1
+                        now_point = now_point - 20
                     case 444:
-                            luck_list[6] = luck_list[6] + 1
-                            now_point = now_point * 2
+                        luck_list[6] = luck_list[6] + 1
+                        now_point = now_point * 2
                     case 555:
-                            luck_list[7] = luck_list[7] + 1
-                            now_point = now_point / 2
+                        luck_list[7] = luck_list[7] + 1
+                        now_point = now_point / 2
                     case 666:
-                            luck_list[8] = luck_list[8] + 1
-                            now_point = now_point * 10
+                        luck_list[8] = luck_list[8] + 1
+                        now_point = now_point * 10
                     case 777:
-                            luck_list[9] = luck_list[9] + 1
-                            now_point = 0
+                        luck_list[9] = luck_list[9] + 1
+                        now_point = 0
                 x.append(i + 1)
                 y.append(now_point)
                 bot_database.change_point(user_id, group_id, now_point)
                 update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
                 if now_point <= 0 or today_num > setting["gambling_limit"]:
                     payload["params"]["message"].append(
-                            {
-                                "type": "text",
-                                "data": {
-                                    "text": "{},抽奖统计如下：\n200积分奖:{}次\n100积分奖:{}次\n50积分奖:{}次\n10积分奖:{}次\n-10积分奖:{}次\n-20积分奖:{}次\n双倍积分奖:{}次\n折半积分奖:{}次\n十倍积分奖:{}次\n积分清零奖:{}次\n积分总额:{}->{}\n".format(
-                                        sender_name,
-                                        luck_list[0],
-                                        luck_list[1],
-                                        luck_list[2],
-                                        luck_list[3],
-                                        luck_list[4],
-                                        luck_list[5],
-                                        luck_list[6],
-                                        luck_list[7],
-                                        luck_list[8],
-                                        luck_list[9],
-                                        start_point,
-                                        now_point,
-                                    )
-                                },
-                            }
-                        )
-                    if today_num>1000:
+                        {
+                            "type": "text",
+                            "data": {
+                                "text": "{},抽奖统计如下：\n200积分奖:{}次\n100积分奖:{}次\n50积分奖:{}次\n10积分奖:{}次\n-10积分奖:{}次\n-20积分奖:{}次\n双倍积分奖:{}次\n折半积分奖:{}次\n十倍积分奖:{}次\n积分清零奖:{}次\n积分总额:{}->{}\n".format(
+                                    sender_name,
+                                    luck_list[0],
+                                    luck_list[1],
+                                    luck_list[2],
+                                    luck_list[3],
+                                    luck_list[4],
+                                    luck_list[5],
+                                    luck_list[6],
+                                    luck_list[7],
+                                    luck_list[8],
+                                    luck_list[9],
+                                    start_point,
+                                    now_point,
+                                )
+                            },
+                        }
+                    )
+                    if today_num > 1000:
                         payload["params"]["message"].append(
                             {
                                 "type": "text",
                                 "data": {
-                                    "text": "今日已超过{}次,请明日再来喵。".format(setting["gambling_limit"])
+                                    "text": "今日已超过{}次,请明日再来喵。".format(
+                                        setting["gambling_limit"]
+                                    )
                                 },
                             }
                         )
@@ -186,26 +201,23 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
                         payload["params"]["message"].append(
                             {
                                 "type": "text",
-                                "data": {
-                                    "text": "十赌九输喵,赌狗好似喵。"
-                                },
+                                "data": {"text": "十赌九输喵,赌狗好似喵。"},
                             }
                         )
                     payload["params"]["message"].append(
-                            {
-                                "type": "image",
-                                "data": {
-                                    "file": "base64://"
-                                    + open_chart_by_base64(
-                                        user_id, group_id, x, y
-                                    ).decode("utf-8")
-                                },
-                            }
-                        )
-                    update_value(
-                            Ranking(user_id, group_id, now_point, time.time(), 1)
-                        )
-                    ChangeGameblingTimesToday(user_id, group_id, today_num, today)
+                        {
+                            "type": "image",
+                            "data": {
+                                "file": "base64://"
+                                + open_chart_by_base64(user_id, group_id, x, y).decode(
+                                    "utf-8"
+                                )
+                            },
+                        }
+                    )
+                    update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
+                    if group_id not in setting["sepcial_group"]:
+                        ChangeGameblingTimesToday(user_id, group_id, today_num, today)
                     return payload
         payload["params"]["message"].append(
             {
@@ -238,13 +250,16 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
                 },
             }
         )
-        ChangeGameblingTimesToday(user_id, group_id, today_num, today)
+        if group_id not in setting["sepcial_group"]:
+            ChangeGameblingTimesToday(user_id, group_id, today_num, today)
     elif today_num > 1000:
         payload["params"]["message"].append(
             {
                 "type": "text",
                 "data": {
-                    "text": "{},抽奖失败喵,今天已经超过{}次了喵。".format(sender_name,setting["gambling_limit"])
+                    "text": "{},抽奖失败喵,今天已经超过{}次了喵。".format(
+                        sender_name, setting["gambling_limit"]
+                    )
                 },
             }
         )
