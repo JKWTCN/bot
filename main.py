@@ -1281,7 +1281,6 @@ async def echo(websocket, path):
                                         user_id,
                                         setting["admin_group_main"],
                                     ):
-
                                         res, user_info = get_user_info(
                                             user_id, group_id
                                         )
@@ -1323,11 +1322,15 @@ async def echo(websocket, path):
                         updata_user_info(user)
                         if (
                             (
-                                time.time() - user.last_sent_time > 5184000
-                                and user.join_time == user.last_sent_time
+                                (
+                                    time.time() - user.last_sent_time > 5184000
+                                    and user.join_time == user.last_sent_time
+                                )
+                                or time.time() - user.last_sent_time > 7776000
                             )
-                            or time.time() - user.last_sent_time > 7776000
-                        ) and user.group_id in setting["admin_group_list"]:
+                            and user.group_id in setting["admin_group_list"]
+                            and user.group_id not in setting["sepcial_group"]
+                        ):
                             print(
                                 "{}({}),最后发言时间:{}".format(
                                     user.nickname,
