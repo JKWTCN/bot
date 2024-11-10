@@ -7,8 +7,8 @@ from tools import GetDirSizeByUnit
 
 
 def MemeStatistics(group_id: int):
-    all_file = find_all_file("meme")
-    num, unit = GetDirSizeByUnit("meme")
+    all_file = find_all_file("../meme")
+    num, unit = GetDirSizeByUnit("../meme")
     payload = {
         "action": "send_msg",
         "params": {
@@ -43,7 +43,7 @@ def twenty_random_meme(group_id: int):
             "message": [],
         },
     }
-    all_file = find_all_file("meme")
+    all_file = find_all_file("../meme")
     for i in range(20):
         dir = choice(all_file)
         print(dir)
@@ -70,7 +70,7 @@ def ten_random_meme(group_id: int):
             "message": [],
         },
     }
-    all_file = find_all_file("meme")
+    all_file = find_all_file("../meme")
     for i in range(10):
         dir = choice(all_file)
         while dir.endswith(".mp4"):
@@ -97,7 +97,7 @@ def send_meme_merge_forwarding(group_id: int, nums: int):
             "message": [],
         },
     }
-    all_file = find_all_file("meme")
+    all_file = find_all_file("../meme")
     for i in range(nums):
         dir = choice(all_file)
         while dir.endswith(".mp4"):
@@ -120,7 +120,7 @@ def send_random_meme(group_id: int):
     # s = find_all_file("./meme")
     # files = os.listdir("meme/unchoise")
     # path = "{}/{}".format("meme/unchoise", choice(files))
-    all_file = find_all_file("meme")
+    all_file = find_all_file("../meme")
     path = choice(all_file)
     while path.endswith(".mp4"):
         path = choice(all_file)
