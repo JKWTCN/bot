@@ -11,6 +11,12 @@ def get_now_week() -> int:
 def GetNowDay() -> int:
     return int(time.strftime("%d"))
 
+def GetLogTime()->int:
+    return int(time.strftime("%Y%m%d"))
+
+def GetNowMonth() -> int:
+    return int(time.strftime("%m"))
+
 
 def get_timestamp_week(timestamp) -> int:
     return int(datetime.datetime.fromtimestamp(timestamp).strftime("%W"))

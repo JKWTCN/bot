@@ -214,7 +214,7 @@ def check_validation_timeout(user_id: int, group_id: int):
     from tools import load_setting
 
     setting = load_setting()
-    if find_last_time(user_id, group_id) - time.time() > setting.timeout * 60:
+    if find_last_time(user_id, group_id) - time.time() > setting["timeout"] * 60:
         return True
     else:
         return False

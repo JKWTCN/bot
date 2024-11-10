@@ -183,7 +183,7 @@ def BuyKohlrabi(user_id: int, group_id: int, num: int):
                     },
                     {
                         "type": "text",
-                        "data": {"text": "大头菜会在本周末过期,请及时卖出喵。"},
+                        "data": {"text": "大头菜会在每周一0点过期,请及时卖出喵。"},
                     },
                 ],
             },

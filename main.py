@@ -53,7 +53,15 @@ from tarot_cards import (
     radom_real,
     one_word,
 )
-from tools import dump_setting, load_setting, nomoral_qq_avatar, red_qq_avatar
+from tools import (
+    dump_setting,
+    load_setting,
+    nomoral_qq_avatar,
+    red_qq_avatar,
+    GetNowDay,
+    GetNowMonth,
+    GetLogTime,
+)
 from vcode import check_validation_timeout, update_vcode, verify, welcome_verify
 from welcome_to_newyork import (
     ban_new,
@@ -78,8 +86,8 @@ async def echo(websocket, path):
                             sender = message["sender"]
                             sender_name = sender["card"]
                             group_id = message["group_id"]
-                            user_id=sender["user_id"]
-                            raw_message=message["raw_message"]
+                            user_id = sender["user_id"]
+                            raw_message = message["raw_message"]
                             if len(sender["card"]) == 0:
                                 sender_name = sender["nickname"]
                             write_message(message)
@@ -102,26 +110,22 @@ async def echo(websocket, path):
                             if group_id in setting["admin_group_list"]:
                                 # 2%的概率派发50积分
                                 if random.random() < 0.02:
-                                    now_point = find_point(
-                                        sender["user_id"]
-                                        )
+                                    now_point = find_point(sender["user_id"])
                                     change_point(
                                         sender["user_id"],
                                         group_id,
                                         now_point + 50,
-                                        )
-                                    all_num,today_num=SendRewards(user_id,group_id)
+                                    )
+                                    all_num, today_num = SendRewards(user_id, group_id)
                                     payload = {
-                                                    "action": "send_group_msg",
-                                                    "params": {
-                                                        "group_id": group_id,
-                                                        "message": f"恭喜群友{sender_name}获得乐可派发的水群积分！\
+                                        "action": "send_group_msg",
+                                        "params": {
+                                            "group_id": group_id,
+                                            "message": f"恭喜群友{sender_name}获得乐可派发的水群积分！\
                                                             积分{now_point}->{now_point + 50}。\n总共:{all_num}次,今日:{today_num}次",
-                                                    }
-                                                }
-                                    await websocket.send(
-                                                    json.dumps(payload)
-                                                )
+                                        },
+                                    }
+                                    await websocket.send(json.dumps(payload))
                             # 0.5% 的概率复读
                             if random.random() < 0.005:
                                 payload = {
@@ -132,6 +136,27 @@ async def echo(websocket, path):
                                     },
                                 }
                                 await websocket.send(json.dumps(payload))
+                            if "[CQ:at,qq=" in message["raw_message"]:
+                                at_id = re.findall(
+                                    r"\[CQ:at,qq=(\d+)]", message["raw_message"]
+                                )
+                                at_id = at_id[0]
+                                if user_id in setting["admin_list"]:
+                                    if "解除禁言" in message["raw_message"]:
+                                        logging.info(
+                                            f"{sender_name}({user_id})解除禁言了qq:{at_id}"
+                                        )
+                                        await websocket.send(
+                                            json.dumps(ban_new(at_id, group_id, 0))
+                                        )
+                                    elif "禁言" in message["raw_message"]:
+                                        logging.info(
+                                            f"{sender_name}({user_id})禁言了qq:{at_id}"
+                                        )
+                                        await websocket.send(
+                                            json.dumps(ban_new(at_id, group_id, 1800))
+                                        )
+
                             # 复读大拇哥
                             if "[CQ:face,id=76]" in message["raw_message"]:
                                 payload = {
@@ -1128,7 +1153,11 @@ async def echo(websocket, path):
                                 num = math.trunc(num)
                                 if num > 100:
                                     await websocket.send(
-                                        json.dumps(SayPrivte(message["user_id"], "最大100连喵!"))
+                                        json.dumps(
+                                            SayPrivte(
+                                                message["user_id"], "最大100连喵!"
+                                            )
+                                        )
                                     )
                                 else:
                                     await websocket.send(
@@ -1149,9 +1178,7 @@ async def echo(websocket, path):
                             if message["user_id"] in setting["developers_list"]:
                                 if message["raw_message"].startswith("更新群友列表"):
                                     for group in setting["group_list"]:
-                                        await websocket.send(
-                                            json.dumps(get_group_member_list(group))
-                                        )
+                                        await websocket.send(json.dumps(group))
                                 if message["raw_message"].startswith("积分"):
                                     result = re.search("\d+", message["raw_message"])
                                     # print(result.group())
@@ -1298,17 +1325,15 @@ async def echo(websocket, path):
                                     await websocket.send(
                                         json.dumps(say(group_id, "乐可不是紫薯精喵。"))
                                     )
+                                # 定期更新群友列表
                                 if (
                                     time.time() - get_last_time_get_group_member_list()
                                     > 86400
                                 ):
-                                    await websocket.send(
-                                        json.dumps(
-                                            get_group_member_list(
-                                                setting["admin_group_main"]
-                                            )
+                                    for group in setting["group_list"]:
+                                        await websocket.send(
+                                            json.dumps(get_group_member_list(group))
                                         )
-                                    )
                                 # 定期检测新入群友验证码
                                 for i in os.listdir("./vcode"):
                                     user_id = i.split(".")[0].split("_")[0]
@@ -1510,8 +1535,12 @@ def FindNum(text: str):
 
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
+now = GetLogTime()
 logging.basicConfig(
-    filename="log/my.log", level=logging.INFO, format=LOG_FORMAT, datefmt=DATE_FORMAT
+    filename=f"log/{now}.log",
+    level=logging.INFO,
+    format=LOG_FORMAT,
+    datefmt=DATE_FORMAT,
 )
 asyncio.get_event_loop().run_until_complete(websockets.serve(echo, "0.0.0.0", 27431))
 asyncio.get_event_loop().run_forever()
