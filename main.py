@@ -1,7 +1,6 @@
 import asyncio
 import datetime
 import logging
-import math
 import os
 import random
 import time
@@ -39,8 +38,6 @@ from random_meme import (
     send_meme_merge_forwarding,
     send_radom_http_cat,
     send_random_meme,
-    ten_random_meme,
-    twenty_random_meme,
     MemeStatistics,
 )
 
@@ -64,7 +61,7 @@ from welcome_to_newyork import (
     welcom_new_no_admin,
     welcome_new,
 )
-
+from chat_rewards import SendRewards
 import re
 
 
@@ -81,6 +78,8 @@ async def echo(websocket, path):
                             sender = message["sender"]
                             sender_name = sender["card"]
                             group_id = message["group_id"]
+                            user_id=sender["user_id"]
+                            raw_message=message["raw_message"]
                             if len(sender["card"]) == 0:
                                 sender_name = sender["nickname"]
                             write_message(message)
@@ -93,14 +92,36 @@ async def echo(websocket, path):
                                     message["raw_message"],
                                 )
                             )
-                            logging.info(
-                                "{}({})在{}群里说:{}".format(
-                                    sender_name,
-                                    sender["user_id"],
-                                    group_id,
-                                    message["raw_message"],
-                                )
+                            log = "{}({})在{}群里说:{}".format(
+                                sender_name,
+                                sender["user_id"],
+                                group_id,
+                                message["raw_message"],
                             )
+                            logging.info(log)
+                            if group_id in setting["admin_group_list"]:
+                                # 2%的概率派发50积分
+                                if random.random() < 0.02:
+                                    now_point = find_point(
+                                        sender["user_id"]
+                                        )
+                                    change_point(
+                                        sender["user_id"],
+                                        group_id,
+                                        now_point + 50,
+                                        )
+                                    all_num,today_num=SendRewards(user_id,group_id)
+                                    payload = {
+                                                    "action": "send_group_msg",
+                                                    "params": {
+                                                        "group_id": group_id,
+                                                        "message": f"恭喜群友{sender_name}获得乐可派发的水群积分！\
+                                                            积分{now_point}->{now_point + 50}。\n总共:{all_num}次,今日:{today_num}次",
+                                                    }
+                                                }
+                                    await websocket.send(
+                                                    json.dumps(payload)
+                                                )
                             # 0.5% 的概率复读
                             if random.random() < 0.005:
                                 payload = {
@@ -111,12 +132,30 @@ async def echo(websocket, path):
                                     },
                                 }
                                 await websocket.send(json.dumps(payload))
+                            # 复读大拇哥
+                            if "[CQ:face,id=76]" in message["raw_message"]:
+                                payload = {
+                                    "action": "send_group_msg",
+                                    "params": {
+                                        "group_id": group_id,
+                                        "message": message["raw_message"],
+                                    },
+                                }
+                                await websocket.send(json.dumps(payload))
                             if (
-                                "[CQ:at,qq={}]".format(setting["developers_list"][0])
-                                in message["raw_message"]
-                                or "[CQ:at,qq={}]".format(setting["developers_list"][1])
-                                in message["raw_message"]
-                            ) and "reply" not in message["raw_message"]:
+                                (
+                                    "[CQ:at,qq={}]".format(
+                                        setting["developers_list"][0]
+                                    )
+                                    in message["raw_message"]
+                                    or "[CQ:at,qq={}]".format(
+                                        setting["developers_list"][1]
+                                    )
+                                    in message["raw_message"]
+                                )
+                                and "reply" not in message["raw_message"]
+                                and sender["user_id"] not in setting["AtWhiteList"]
+                            ):
                                 if (
                                     sender["user_id"] not in setting["developers_list"]
                                     and sender["user_id"] not in setting["admin_list"]
@@ -131,9 +170,7 @@ async def echo(websocket, path):
                                         json.dumps(
                                             say(
                                                 group_id,
-                                                "{},不要随便艾特☁️喵，禁言你了喵。".format(
-                                                    sender_name
-                                                ),
+                                                f"{sender_name},不要随便艾特☁️喵，禁言你了喵。",
                                             )
                                         )
                                     )
@@ -145,7 +182,7 @@ async def echo(websocket, path):
                                     for i in range(100):
                                         time.sleep(0.1)
                                         result = re.search(
-                                            "\d+", message["raw_message"]
+                                            r"\d+", message["raw_message"]
                                         )
                                         payload = {
                                             "action": "send_msg",
@@ -251,35 +288,14 @@ async def echo(websocket, path):
                             else:
                                 match message["message"][0]["type"]:
                                     case "text":
-                                        if group_id in setting["admin_group_list"]:
-                                            # 2%的概率派发50积分
-                                            if random.random() < 0.02:
-                                                now_point = find_point(
-                                                    sender["user_id"]
-                                                )
-                                                change_point(
-                                                    sender["user_id"],
-                                                    group_id,
-                                                    now_point + 50,
-                                                )
-                                                payload = {
-                                                    "action": "send_group_msg",
-                                                    "params": {
-                                                        "group_id": group_id,
-                                                        "message": "恭喜群友{}获得乐可派发的水群积分！积分{}->{}。".format(
-                                                            sender_name,
-                                                            now_point,
-                                                            now_point + 50,
-                                                        ),
-                                                    },
-                                                }
-                                                await websocket.send(
-                                                    json.dumps(payload)
-                                                )
                                         # print(message["message"][0]["data"]["text"])
-                                        if sender["user_id"] == setting[
-                                            "miaomiao_group_member"
-                                        ] and "喵" not in message["raw_message"] and "[CQ:image" not in message["raw_message"]:
+                                        if (
+                                            sender["user_id"]
+                                            == setting["miaomiao_group_member"]
+                                            and "喵" not in message["raw_message"]
+                                            and "[CQ:image"
+                                            not in message["raw_message"]
+                                        ):
                                             await websocket.send(
                                                 json.dumps(
                                                     ban_new(
@@ -311,7 +327,11 @@ async def echo(websocket, path):
                                             not in setting["developers_list"]
                                         ):
                                             if (
-                                                "喵" not in message["raw_message"] and "[CQ:image" not in message["raw_message"] and "[CQ:reply"not in message["raw_message"]
+                                                "喵" not in message["raw_message"]
+                                                and "[CQ:image"
+                                                not in message["raw_message"]
+                                                and "[CQ:reply"
+                                                not in message["raw_message"]
                                             ):
                                                 if (
                                                     sender["user_id"]
@@ -1108,7 +1128,7 @@ async def echo(websocket, path):
                                 num = math.trunc(num)
                                 if num > 100:
                                     await websocket.send(
-                                        json.dumps(SayPrivte(group_id, "最大100连喵!"))
+                                        json.dumps(SayPrivte(message["user_id"], "最大100连喵!"))
                                     )
                                 else:
                                     await websocket.send(
@@ -1139,7 +1159,7 @@ async def echo(websocket, path):
                                         json.dumps(
                                             recharge_privte(
                                                 message["user_id"],
-                                                group_id,
+                                                0,
                                                 int(result.group()),
                                             )
                                         )

@@ -8,7 +8,6 @@ from rankings import update_value
 from Class.Ranking import Ranking
 
 
-
 # 统计群友抽奖次数
 def find_gambling_times(user_id: int):
     conn = sqlite3.connect("bot.db")
@@ -189,7 +188,7 @@ def check_russian_pve(user_id: int):
 
 
 def change_point(user_id: int, group_id: int, point: int):
-    point=round(point, 3)
+    point = round(point, 3)
     update_value(Ranking(user_id, group_id, point, time.time(), 1))
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
@@ -237,6 +236,9 @@ def get_statistics(user_id: int, group_id: int):
     now_point = find_point(user_id)
     gambling_times = find_gambling_times(user_id)
     now_num = GetMyKohlrabi(user_id, group_id)
+    from chat_rewards import SendRewards
+
+    all_num, today_num = SendRewards(user_id, group_id)
     (all_buy, all_buy_cost, all_sell, all_sell_price) = GetRecordKohlrabi(
         user_id, group_id
     )
@@ -249,7 +251,7 @@ def get_statistics(user_id: int, group_id: int):
                 {
                     "type": "text",
                     "data": {
-                        "text": ",您目前的积分为：{}，您的总抽奖次数为:{}次。\n".format(
+                        "text": ",您目前的积分为：{}，您的总抽奖次数为:{}次。".format(
                             now_point, gambling_times
                         )
                     },
@@ -257,13 +259,19 @@ def get_statistics(user_id: int, group_id: int):
                 {
                     "type": "text",
                     "data": {
-                        "text": f"您目前的大头菜库存:{now_num},生涯买入了{all_buy}颗大头菜,共花费{all_buy_cost}积分;生涯卖出了{all_sell}颗大头菜,共获得{all_sell_price}积分。"
+                        "text": f"今日获得水群积分的次数:{today_num},生涯总共获得水群积分的次数:{all_num}\n",
+                    },
+                },
+                {
+                    "type": "text",
+                    "data": {
+                        "text": f"您目前的大头菜库存:{now_num},生涯买入了{all_buy}颗大头菜,共花费{all_buy_cost}积分;生涯卖出了{all_sell}颗大头菜,共获得{all_sell_price}积分。\n"
                     },
                 },
             ],
         },
     }
-    _check_num = round(all_sell_price - all_buy_cost,3)
+    _check_num = round(all_sell_price - all_buy_cost, 3)
     if _check_num > 0:
         payload["params"]["message"].append(
             {
