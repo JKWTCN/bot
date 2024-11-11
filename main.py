@@ -551,7 +551,7 @@ async def echo(websocket, path):
                                                         )
                                                     )
                                             elif (
-                                                "今天吃"
+                                                "吃什么"
                                                 in message["message"][0]["data"]["text"]
                                             ):
                                                 await websocket.send(
@@ -568,7 +568,7 @@ async def echo(websocket, path):
                                                         SayAndAt(
                                                             sender["user_id"],
                                                             group_id,
-                                                            ",今天吃大嘴巴子🖐喵。",
+                                                            ",吃大嘴巴子🖐喵。",
                                                         )
                                                     )
                                                 )
@@ -1078,7 +1078,7 @@ async def echo(websocket, path):
                                                         )
                                                 else:
                                                     await websocket.send(
-                                                            json.dumps(Say(group_id,f"{sender_name},还没到晚上10点喵,睡的有点早喵。"))
+                                                            json.dumps(say(group_id,f"{sender_name},还没到晚上10点喵,睡的有点早喵。"))
                                                         )
                                             
                                             elif (
