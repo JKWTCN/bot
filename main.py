@@ -202,7 +202,7 @@ async def echo(websocket, path):
                                                 )
                                             )
                                         )
-                                else:
+                                elif at_id == setting["bot_id"]:
                                     await websocket.send(
                                         json.dumps(
                                             say(

@@ -8,6 +8,7 @@ setting.py
 /__pycache__
 /.vscode
 /figs
+/private
 setting.json
 private.py
 bot.db-journal
