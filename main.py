@@ -1516,20 +1516,15 @@ async def echo(websocket, path):
                         user = Group_member()
                         user.init_by_dict(group_member)
                         updata_user_info(user)
+                        name=get_user_name(user.user_id,user.group_id)
                         if (
-                            (
-                                (
-                                    time.time() - user.last_sent_time > 5184000
-                                    and user.join_time == user.last_sent_time
-                                )
-                                or time.time() - user.last_sent_time > 7776000
-                            )
+                            time.time() - user.last_sent_time > 5184000
                             and user.group_id in setting["admin_group_list"]
                             and user.group_id not in setting["sepcial_group"]
                         ):
                             print(
                                 "{}({}),最后发言时间:{}".format(
-                                    user.nickname,
+                                    name,
                                     user.user_id,
                                     time.strftime(
                                         "%Y-%m-%d %H:%M:%S",
@@ -1538,22 +1533,14 @@ async def echo(websocket, path):
                                 )
                             )
                             logging.info(
-                                "{}因两个月未活跃被请出群聊".format(user.user_id)
+                                "{}({})因两个月未活跃被请出群聊".format(name,user.user_id)
                             )
-                            payload = {
-                                "action": "set_group_kick",
-                                "params": {
-                                    "group_id": group_member["group_id"],
-                                    "user_id": user.user_id,
-                                },
-                            }
-                            await websocket.send(json.dumps(payload))
                             await websocket.send(
                                 json.dumps(
                                     say(
-                                        setting["admin_group_main"],
-                                        "{}({})，乐可要踢掉你了喵！\n原因:三个月无活跃或两个月未活跃且从未活跃过。\n其最后发言时间为:{}".format(
-                                            user.nickname,
+                                        user.group_id,
+                                        "{}({})，乐可要踢掉你了喵！\n原因:两个月未活跃。\n最后发言时间为:{}".format(
+                                            name,
                                             user.user_id,
                                             time.strftime(
                                                 "%Y-%m-%d %H:%M:%S",
@@ -1563,6 +1550,14 @@ async def echo(websocket, path):
                                     )
                                 )
                             )
+                            payload = {
+                                "action": "set_group_kick",
+                                "params": {
+                                    "group_id": group_member["group_id"],
+                                    "user_id": user.user_id,
+                                },
+                            }
+                            await websocket.send(json.dumps(payload))
                 case "defense":
                     delete_msg(message["data"]["message_id"])
                 case "applaud":
@@ -1614,7 +1609,6 @@ def SayPrivte(user_id: int, text: str):
             "user_id": user_id,
             "message": text,
         },
-        "echo": "123",
     }
     return payload
 
@@ -1626,7 +1620,6 @@ def say(group_id: int, text: str):
             "group_id": group_id,
             "message": text,
         },
-        "echo": "123",
     }
     return payload
 
