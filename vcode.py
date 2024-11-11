@@ -84,10 +84,11 @@ def find_last_time(user_id: int, group_id: int):
     cur.execute(
         "SELECT time FROM vcode where user_id=? and group_id=?", (user_id, group_id)
     )
-    print(cur.fetchall())
-    if len(cur.fetchall()) == 0:
+    data = cur.fetchall()
+    # print(cur.fetchall())
+    if len(data) == 0:
         return -1
-    return cur.fetchall()[0]
+    return data[0][0]
 
 
 # 更新最后一次的验证时间
@@ -214,7 +215,7 @@ def check_validation_timeout(user_id: int, group_id: int):
     from tools import load_setting
 
     setting = load_setting()
-    if find_last_time(user_id, group_id) - time.time() > setting["timeout"] * 60:
+    if time.time() - find_last_time(user_id, group_id) > setting["timeout"] * 60:
         return True
     else:
         return False

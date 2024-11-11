@@ -32,7 +32,7 @@ from easter_egg import (
     sex_img,
 )
 from rankings import ranking_point_payload
-from private import cxgl
+from private import cxgl, WhoAskPants
 from group_operate import (
     poor_point,
     get_group_member_list,
@@ -66,9 +66,10 @@ from tools import (
     load_setting,
     nomoral_qq_avatar,
     red_qq_avatar,
-    GetLogTime,GetSleepSeconds
+    GetLogTime,
+    GetSleepSeconds,
 )
-from vcode import check_validation_timeout, update_vcode, verify, welcome_verify
+from vcode import check_validation_timeout, update_vcode, verify, welcome_verify,delete_vcode
 from welcome_to_newyork import (
     ban_new,
     return_function,
@@ -572,6 +573,17 @@ async def echo(websocket, path):
                                                         )
                                                     )
                                                 )
+                                            elif "胖次" in message["message"][0][
+                                                "data"
+                                            ]["text"] and (
+                                                "云"
+                                                in message["message"][0]["data"]["text"]
+                                                or "☁️"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                await websocket.send(
+                                                    json.dumps(WhoAskPants(group_id))
+                                                )
                                             elif (
                                                 "挑战你"
                                                 in message["message"][0]["data"]["text"]
@@ -1044,9 +1056,13 @@ async def echo(websocket, path):
                                                 "晚安"
                                                 in message["message"][0]["data"]["text"]
                                             ):
-                                                now_hour=datetime.datetime.now().strftime('%H')
-                                                now_hour=int(now_hour)
-                                                if now_hour>=22:
+                                                now_hour = (
+                                                    datetime.datetime.now().strftime(
+                                                        "%H"
+                                                    )
+                                                )
+                                                now_hour = int(now_hour)
+                                                if now_hour >= 22:
                                                     if user_id in setting["admin_list"]:
                                                         payload = {
                                                             "action": "send_group_msg",
@@ -1074,13 +1090,24 @@ async def echo(websocket, path):
                                                             json.dumps(payload)
                                                         )
                                                         await websocket.send(
-                                                            json.dumps(ban_new(user_id,group_id,GetSleepSeconds()))
+                                                            json.dumps(
+                                                                ban_new(
+                                                                    user_id,
+                                                                    group_id,
+                                                                    GetSleepSeconds(),
+                                                                )
+                                                            )
                                                         )
                                                 else:
                                                     await websocket.send(
-                                                            json.dumps(say(group_id,f"{sender_name},还没到晚上10点喵,睡的有点早喵。"))
+                                                        json.dumps(
+                                                            say(
+                                                                group_id,
+                                                                f"{sender_name},还没到晚上10点喵,睡的有点早喵。",
+                                                            )
                                                         )
-                                            
+                                                    )
+
                                             elif (
                                                 "日报"
                                                 in message["message"][0]["data"]["text"]
@@ -1446,7 +1473,7 @@ async def echo(websocket, path):
                                     group_id = i.split(".")[0].split("_")[1]
                                     if check_validation_timeout(
                                         user_id,
-                                        setting["admin_group_main"],
+                                        group_id,
                                     ):
                                         res, user_info = get_user_info(
                                             user_id, group_id
@@ -1462,10 +1489,12 @@ async def echo(websocket, path):
                                             json.dumps(
                                                 say(
                                                     setting["admin_group_main"],
-                                                    "f{sender_name}的验证码已过期，已自动踢出喵！",
+                                                    f"{sender_name}的验证码已过期，已自动踢出喵！",
                                                 )
                                             )
                                         )
+                                        await websocket.send(json.dumps(kick_member(user_id, group_id)))
+                                        delete_vcode(user_id, group_id)
                                 # 0.2% 的概率乐可卖萌
                                 if random.random() < 0.002:
                                     await websocket.send(json.dumps(cute(group_id)))
