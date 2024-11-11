@@ -66,7 +66,7 @@ from tools import (
     load_setting,
     nomoral_qq_avatar,
     red_qq_avatar,
-    GetLogTime,
+    GetLogTime,GetSleepSeconds
 )
 from vcode import check_validation_timeout, update_vcode, verify, welcome_verify
 from welcome_to_newyork import (
@@ -198,7 +198,7 @@ async def echo(websocket, path):
                                             json.dumps(
                                                 say(
                                                     group_id,
-                                                    "{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，统计。”。",
+                                                    f"{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，统计。”。",
                                                 )
                                             )
                                         )
@@ -207,15 +207,17 @@ async def echo(websocket, path):
                                         json.dumps(
                                             say(
                                                 group_id,
-                                                "{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，统计。”。",
+                                                f"{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，统计。”。",
                                             )
                                         )
                                     )
 
-                            # 复读大拇哥和忠诚
+                            # 复读大拇哥和忠诚、o/、O/
                             if (
                                 "[CQ:face,id=76]" in message["raw_message"]
                                 or "[CQ:face,id=282]" in message["raw_message"]
+                                or "o/" in message["raw_message"]
+                                or "O/" in message["raw_message"]
                             ):
                                 payload = {
                                     "action": "send_group_msg",
@@ -1042,18 +1044,43 @@ async def echo(websocket, path):
                                                 "晚安"
                                                 in message["message"][0]["data"]["text"]
                                             ):
-                                                payload = {
-                                                    "action": "send_group_msg",
-                                                    "params": {
-                                                        "group_id": group_id,
-                                                        "message": "{},晚安，好梦喵。(∪.∪ )...zzz".format(
-                                                            sender_name
-                                                        ),
-                                                    },
-                                                }
-                                                await websocket.send(
-                                                    json.dumps(payload)
-                                                )
+                                                now_hour=datetime.datetime.now().strftime('%H')
+                                                now_hour=int(now_hour)
+                                                if now_hour>=22:
+                                                    if user_id in setting["admin_list"]:
+                                                        payload = {
+                                                            "action": "send_group_msg",
+                                                            "params": {
+                                                                "group_id": group_id,
+                                                                "message": "{},晚安，好梦喵。(∪.∪ )...zzz".format(
+                                                                    sender_name
+                                                                ),
+                                                            },
+                                                        }
+                                                        await websocket.send(
+                                                            json.dumps(payload)
+                                                        )
+                                                    else:
+                                                        payload = {
+                                                            "action": "send_group_msg",
+                                                            "params": {
+                                                                "group_id": group_id,
+                                                                "message": "{},明天早上六点见喵,晚安，好梦喵。(∪.∪ )...zzz".format(
+                                                                    sender_name
+                                                                ),
+                                                            },
+                                                        }
+                                                        await websocket.send(
+                                                            json.dumps(payload)
+                                                        )
+                                                        await websocket.send(
+                                                            json.dumps(ban_new(user_id,group_id,GetSleepSeconds()))
+                                                        )
+                                                else:
+                                                    await websocket.send(
+                                                            json.dumps(Say(group_id,f"{sender_name},还没到晚上10点喵,睡的有点早喵。"))
+                                                        )
+                                            
                                             elif (
                                                 "日报"
                                                 in message["message"][0]["data"]["text"]

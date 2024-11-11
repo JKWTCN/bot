@@ -4,6 +4,15 @@ import base64
 import json
 
 
+# 获取到现在离明天6点的秒数
+def GetSleepSeconds():
+    now = datetime.datetime.now()
+    today_begin = datetime.datetime(now.year, now.month, now.day, 6, 0, 0)
+    tomorrow_begin = today_begin + datetime.timedelta(days=1)
+    rest_seconds = (tomorrow_begin - now).seconds
+    return rest_seconds
+
+
 def get_now_week() -> int:
     return int(time.strftime("%W"))
 
@@ -11,8 +20,10 @@ def get_now_week() -> int:
 def GetNowDay() -> int:
     return int(time.strftime("%d"))
 
-def GetLogTime()->int:
+
+def GetLogTime() -> int:
     return int(time.strftime("%Y%m%d"))
+
 
 def GetNowMonth() -> int:
     return int(time.strftime("%m"))
