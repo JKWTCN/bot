@@ -1,7 +1,7 @@
 from venv import logger
 import requests
 
-
+# chat内容转发给大模型
 def chat(group_id: int, nick_name: str, text: str):
     port = "11434"
     url = f"http://localhost:{port}/api/chat"

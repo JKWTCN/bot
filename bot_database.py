@@ -29,7 +29,7 @@ def find_gambling_times(user_id: int):
         # print(data)
         return data[0][0]
 
-
+# 判断是否在不欢迎名单
 def in_unwelcome(user_id: int, group_id: int):
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
@@ -43,7 +43,7 @@ def in_unwelcome(user_id: int, group_id: int):
         return (True, data[0][1])
     return (False, 0)
 
-
+# 增加数据库记录的总抽奖次数
 def add_gambling_times(user_id: int, add_times: int):
     now_times = find_gambling_times(user_id)
     conn = sqlite3.connect("bot.db")
@@ -58,7 +58,7 @@ def add_gambling_times(user_id: int, add_times: int):
     conn.commit()
     conn.close()
 
-
+# 查找积分
 def find_point(user_id):
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
@@ -75,7 +75,7 @@ def find_point(user_id):
         return round(data[0][1], 3)
         # return cur.fetchall()
 
-
+# 获取上次获取群成员列表的时间
 def get_last_time_get_group_member_list():
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
@@ -87,7 +87,7 @@ def get_last_time_get_group_member_list():
     conn.close()
     return data[0][0]
 
-
+# 更新上次获取群成员列表的时间
 def updata_last_time_get_group_member_list():
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
@@ -98,7 +98,7 @@ def updata_last_time_get_group_member_list():
     conn.commit()
     conn.close()
 
-
+# 添加不欢迎名单
 def add_unwelcome(user_id: int, time: int, group_id: int):
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
@@ -106,7 +106,7 @@ def add_unwelcome(user_id: int, time: int, group_id: int):
     conn.commit()
     conn.close()
 
-
+# 信息写入数据库
 def write_message(message: json):
     sender = message["sender"]
     sender_name = sender["card"]
@@ -130,7 +130,7 @@ def write_message(message: json):
     conn.commit()
     conn.close()
 
-
+# 充值积分
 def recharge(user_id: int, group_id: int, point: int):
     now_point = find_point(user_id)
     change_point(user_id, group_id, now_point + point)
@@ -143,7 +143,7 @@ def recharge(user_id: int, group_id: int, point: int):
     }
     return payload
 
-
+# 私聊充值积分
 def recharge_privte(user_id: int, group_id: int, point: int):
     now_point = find_point(user_id)
     change_point(user_id, group_id, now_point + point)

@@ -6,7 +6,7 @@ import json
 from Class.Group_member import get_user_name
 from bot_database import change_point, find_point
 
-
+# 乐可有概率卖萌
 def cute(group_id: int):
     path = "res/cute.gif"
     logging.info("乐可卖萌")
@@ -25,7 +25,7 @@ def cute(group_id: int):
     }
     return payload
 
-
+# 发送一张绝对涩的涩图
 def sex_img(user_id: int, group_id: int):
     now_point = find_point(user_id)
     if now_point < 500000:
@@ -87,7 +87,7 @@ def sex_img(user_id: int, group_id: int):
         }
     return payload
 
-
+# kfcv我50彩蛋
 def kfc_v_me_50(group_id: int):
     r = requests.get("https://api.shadiao.pro/kfc")
     data = json.loads(r.text)

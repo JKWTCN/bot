@@ -33,7 +33,15 @@ from easter_egg import (
 )
 from rankings import ranking_point_payload
 from private import cxgl
-from group_operate import poor_point, get_group_member_list, kick_member
+from group_operate import (
+    poor_point,
+    get_group_member_list,
+    kick_member,
+    SetGroupWholeBan,
+    SetGroupWholeNoBan,
+    DeleteEssenceMsg,
+    SetEssenceMsg,
+)
 from random_meme import (
     send_meme_merge_forwarding,
     send_radom_http_cat,
@@ -58,8 +66,6 @@ from tools import (
     load_setting,
     nomoral_qq_avatar,
     red_qq_avatar,
-    GetNowDay,
-    GetNowMonth,
     GetLogTime,
 )
 from vcode import check_validation_timeout, update_vcode, verify, welcome_verify
@@ -140,25 +146,77 @@ async def echo(websocket, path):
                                 at_id = re.findall(
                                     r"\[CQ:at,qq=(\d+)]", message["raw_message"]
                                 )
-                                at_id = at_id[0]
-                                if user_id in setting["admin_list"]:
+                                at_id = int(at_id[0])
+                                # 管理员管理功能
+                                if (
+                                    user_id in setting["admin_list"]
+                                    and at_id != setting["bot_id"]
+                                ):
+                                    rev_name = get_user_name(at_id, group_id)
                                     if "解除禁言" in message["raw_message"]:
                                         logging.info(
-                                            f"{sender_name}({user_id})解除禁言了qq:{at_id}"
+                                            f"{group_id}:{sender_name}({user_id})解除禁言了{rev_name}({at_id})"
                                         )
                                         await websocket.send(
                                             json.dumps(ban_new(at_id, group_id, 0))
                                         )
                                     elif "禁言" in message["raw_message"]:
                                         logging.info(
-                                            f"{sender_name}({user_id})禁言了qq:{at_id}"
+                                            f"{group_id}:{sender_name}({user_id})禁言了{rev_name}({at_id})"
                                         )
                                         await websocket.send(
                                             json.dumps(ban_new(at_id, group_id, 1800))
                                         )
+                                    elif "说再见" in message["raw_message"]:
+                                        logging.info(
+                                            f"{group_id}:{sender_name}({user_id})踢出了{rev_name}({at_id})"
+                                        )
+                                        await websocket.send(
+                                            json.dumps(kick_member(at_id, group_id))
+                                        )
+                                elif (
+                                    user_id in setting["admin_list"]
+                                    and at_id == setting["bot_id"]
+                                ):
+                                    # 管理员功能 at乐可
+                                    if "解除全体禁言" in message["raw_message"]:
+                                        logging.info(
+                                            f"{group_id}:{sender_name}({user_id})解除了全体禁言"
+                                        )
+                                        await websocket.send(
+                                            json.dumps(SetGroupWholeNoBan(group_id))
+                                        )
+                                    elif "全体禁言" in message["raw_message"]:
+                                        logging.info(
+                                            f"{group_id}:{sender_name}({user_id})全体禁言"
+                                        )
+                                        await websocket.send(
+                                            json.dumps(SetGroupWholeBan(group_id))
+                                        )
+                                    else:
+                                        await websocket.send(
+                                            json.dumps(
+                                                say(
+                                                    group_id,
+                                                    "{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，统计。”。",
+                                                )
+                                            )
+                                        )
+                                else:
+                                    await websocket.send(
+                                        json.dumps(
+                                            say(
+                                                group_id,
+                                                "{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，统计。”。",
+                                            )
+                                        )
+                                    )
 
-                            # 复读大拇哥
-                            if "[CQ:face,id=76]" in message["raw_message"]:
+                            # 复读大拇哥和忠诚
+                            if (
+                                "[CQ:face,id=76]" in message["raw_message"]
+                                or "[CQ:face,id=282]" in message["raw_message"]
+                            ):
                                 payload = {
                                     "action": "send_group_msg",
                                     "params": {
@@ -248,6 +306,27 @@ async def echo(websocket, path):
                                     "echo": "applaud",
                                 }
                                 await websocket.send(json.dumps(payload))
+                            elif re.search(
+                                r"CQ:reply,id=\d+]加精", message["raw_message"]
+                            ):
+                                message_id = re.search(
+                                    r"\d+", message["raw_message"]
+                                ).group()
+                                await websocket.send(
+                                    json.dumps(SetEssenceMsg(message_id))
+                                )
+                            elif (
+                                re.search(
+                                    r"CQ:reply,id=\d+]移除加精", message["raw_message"]
+                                )
+                                and sender["user_id"] in setting["admin_list"]
+                            ):
+                                message_id = re.search(
+                                    r"\d+", message["raw_message"]
+                                ).group()
+                                await websocket.send(
+                                    json.dumps(DeleteEssenceMsg(message_id))
+                                )
 
                             # 新入群验证
                             if "{}_{}.jpg".format(
@@ -1103,27 +1182,27 @@ async def echo(websocket, path):
                                                 rev_id,
                                             )
                                         )
-                                        if str(rev_id) == str(setting["bot_id"]):
-                                            if (
-                                                group_id in setting["admin_group_list"]
-                                                and sender["user_id"]
-                                                not in setting["admin_list"]
-                                            ):
-                                                await websocket.send(
-                                                    ban_new(
-                                                        sender["user_id"],
-                                                        group_id,
-                                                        60,
-                                                    )
-                                                )
-                                            await websocket.send(
-                                                json.dumps(
-                                                    say(
-                                                        group_id,
-                                                        "请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，统计。”。",
-                                                    )
-                                                )
-                                            )
+                                        # if str(rev_id) == str(setting["bot_id"]):
+                                        #     if (
+                                        #         group_id in setting["admin_group_list"]
+                                        #         and sender["user_id"]
+                                        #         not in setting["admin_list"]
+                                        #     ):
+                                        #         await websocket.send(
+                                        #             ban_new(
+                                        #                 sender["user_id"],
+                                        #                 group_id,
+                                        #                 60,
+                                        #             )
+                                        #         )
+                                        #     await websocket.send(
+                                        #         json.dumps(
+                                        #             say(
+                                        #                 group_id,
+                                        #                 "请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，统计。”。",
+                                        #             )
+                                        #         )
+                                        #     )
                                     case _:
                                         # print(message)
                                         pass

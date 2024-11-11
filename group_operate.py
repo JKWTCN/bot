@@ -3,7 +3,7 @@ import time
 import bot_database
 import tools
 
-
+# 发送获取群友名单
 def get_group_member_list(group_id: int):
     payload = {
         "action": "get_group_member_list",
@@ -13,8 +13,49 @@ def get_group_member_list(group_id: int):
         "echo": "update_group_member_list",
     }
     return payload
+# 设置群聊精华信息
+def SetEssenceMsg(message_id: int):
+    payload = {
+        "action": "set_essence_msg",
+        "params": {
+            "message_id": message_id,
+        },
+    }
+    return payload
+
+# 移除群聊精华信息
+def DeleteEssenceMsg(message_id: int):
+    payload = {
+        "action": "delete_essence_msg",
+        "params": {
+            "message_id": message_id,
+        },
+    }
+    return payload
 
 
+# 全体禁言
+def SetGroupWholeBan(group_id: int):
+    payload = {
+        "action": "set_group_whole_ban",
+        "params": {
+            "group_id": group_id,
+            "enable":True
+        },
+    }
+    return payload
+#解除全体禁言
+def SetGroupWholeNoBan(group_id: int):
+    payload = {
+        "action": "set_group_whole_ban",
+        "params": {
+            "group_id": group_id,
+            "enable":False
+        },
+    }
+    return payload
+
+# 踢人
 def kick_member(user_id: int, group_id: int):
     payload = {
         "action": "set_group_kick",
@@ -26,7 +67,7 @@ def kick_member(user_id: int, group_id: int):
     # print(payload)
     return payload
 
-
+# 发群低保
 def poor_point(user_id: int, group_id: int, sender_name: str):
     now_point = bot_database.find_point(user_id)
     if now_point <= 0:

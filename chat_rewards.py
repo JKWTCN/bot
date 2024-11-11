@@ -2,6 +2,7 @@ import sqlite3
 from tools import GetNowDay
 
 
+# 发送水群积分
 def SendRewards(user_id: int, group_id: int):
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
