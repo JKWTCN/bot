@@ -69,7 +69,13 @@ from tools import (
     GetLogTime,
     GetSleepSeconds,
 )
-from vcode import check_validation_timeout, update_vcode, verify, welcome_verify,delete_vcode
+from vcode import (
+    check_validation_timeout,
+    update_vcode,
+    verify,
+    welcome_verify,
+    delete_vcode,
+)
 from welcome_to_newyork import (
     ban_new,
     return_function,
@@ -128,8 +134,7 @@ async def echo(websocket, path):
                                         "action": "send_group_msg",
                                         "params": {
                                             "group_id": group_id,
-                                            "message": f"恭喜群友{sender_name}获得乐可派发的水群积分！\
-                                                            积分{now_point}->{now_point + 50}。\n总共:{all_num}次,今日:{today_num}次",
+                                            "message": f"恭喜群友{sender_name}获得乐可派发的水群积分！积分{now_point}->{now_point + 50}。\n总共:{all_num}次,今日:{today_num}次",
                                         },
                                     }
                                     await websocket.send(json.dumps(payload))
@@ -199,7 +204,7 @@ async def echo(websocket, path):
                                             json.dumps(
                                                 say(
                                                     group_id,
-                                                    f"{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，统计。”。",
+                                                    f"{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
                                                 )
                                             )
                                         )
@@ -208,7 +213,7 @@ async def echo(websocket, path):
                                         json.dumps(
                                             say(
                                                 group_id,
-                                                f"{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，统计。”。",
+                                                f"{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
                                             )
                                         )
                                     )
@@ -713,6 +718,18 @@ async def echo(websocket, path):
                                                     )
                                                 )
                                             elif (
+                                                "积分"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                await websocket.send(
+                                                    json.dumps(
+                                                        say(
+                                                            group_id,
+                                                            f"{sender_name},积分可通过抽奖、签到、在有权限的群水群和大头菜贸易获得喵。",
+                                                        )
+                                                    )
+                                                )
+                                            elif (
                                                 "价格"
                                                 in message["message"][0]["data"]["text"]
                                                 and "大头菜"
@@ -723,7 +740,7 @@ async def echo(websocket, path):
                                                     json.dumps(
                                                         say(
                                                             group_id,
-                                                            f"当前大头菜价格为:{GetNowPrice()}积分喵,你的积分为{find_point(user_id)}喵。",
+                                                            f"当前大头菜价格为: {GetNowPrice()} 喵,\n你的积分为 {find_point(user_id)} 喵。",
                                                         )
                                                     )
                                                 )
@@ -1493,7 +1510,9 @@ async def echo(websocket, path):
                                                 )
                                             )
                                         )
-                                        await websocket.send(json.dumps(kick_member(user_id, group_id)))
+                                        await websocket.send(
+                                            json.dumps(kick_member(user_id, group_id))
+                                        )
                                         delete_vcode(user_id, group_id)
                                 # 0.2% 的概率乐可卖萌
                                 if random.random() < 0.002:
@@ -1516,7 +1535,7 @@ async def echo(websocket, path):
                         user = Group_member()
                         user.init_by_dict(group_member)
                         updata_user_info(user)
-                        name=get_user_name(user.user_id,user.group_id)
+                        name = get_user_name(user.user_id, user.group_id)
                         if (
                             time.time() - user.last_sent_time > 5184000
                             and user.group_id in setting["admin_group_list"]
@@ -1533,7 +1552,9 @@ async def echo(websocket, path):
                                 )
                             )
                             logging.info(
-                                "{}({})因两个月未活跃被请出群聊".format(name,user.user_id)
+                                "{}({})因两个月未活跃被请出群聊".format(
+                                    name, user.user_id
+                                )
                             )
                             await websocket.send(
                                 json.dumps(

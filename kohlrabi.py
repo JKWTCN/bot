@@ -14,6 +14,29 @@ def GetBShock():
     return df.PRICE[0]
 
 
+def GetDogeCoinV2():
+    import re
+    from requests_html import HTMLSession
+
+    try:
+        s = HTMLSession()
+        response = s.get("https://www.528btc.com/coin/2993/binance-doge-usdt-usd")
+        # print(response.text)
+        # with open("tmp.html", "w", encoding="utf-8") as f:
+        #     f.write(response.text)
+        pattern = re.compile(
+            '<i class="price_num wordRise">(.*?)</i>',
+        )
+        m = pattern.findall(response.text)
+        return m[0]
+    except:
+        setting = load_setting()
+        logger.info(
+            "获取大头菜价格失败，使用上一次的价格:{}".format(setting["kohlrabi_price"])
+        )
+        return setting["kohlrabi_price"]
+
+
 # 狗狗币
 def GetDogeCoin():
     import re
@@ -41,7 +64,7 @@ def GetDogeCoin():
 
 # 获取大头菜价格
 def GetNowPrice():
-    now_price = GetDogeCoin()
+    now_price = GetDogeCoinV2()
     return round(float(now_price) * 1000, 3)
 
 

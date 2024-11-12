@@ -223,9 +223,9 @@ def check_in(user_id: int, group_id: int):
             "UPDATE user_point SET point=?,time=? WHERE user_id=?",
             (now_point, datetime.timestamp(datetime.now()), user_id),
         )
-        update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
         conn.commit()
         conn.close()
+        update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
         return (1, now_point)
     else:
         conn.close()
