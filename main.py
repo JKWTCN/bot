@@ -83,6 +83,7 @@ from welcome_to_newyork import (
     welcome_new,
 )
 from chat_rewards import SendRewards
+from chat_record import AddChatRecord, GetNowChatRecord, GetLifeChatRecord
 import re
 
 
@@ -119,6 +120,7 @@ async def echo(websocket, path):
                                 group_id,
                                 message["raw_message"],
                             )
+                            AddChatRecord(sender["user_id"], group_id)
                             logging.info(log)
                             if group_id in setting["admin_group_list"]:
                                 # 2%的概率派发50积分
@@ -635,6 +637,24 @@ async def echo(websocket, path):
                                                         get_statistics(
                                                             sender["user_id"], group_id
                                                         )
+                                                    )
+                                                )
+                                            elif (
+                                                "生涯水群排名"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                await websocket.send(
+                                                    json.dumps(
+                                                        GetLifeChatRecord(group_id)
+                                                    )
+                                                )
+                                            elif (
+                                                "水群排名"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                await websocket.send(
+                                                    json.dumps(
+                                                        GetNowChatRecord(group_id)
                                                     )
                                                 )
                                             elif (
@@ -1519,6 +1539,13 @@ async def echo(websocket, path):
                                     await websocket.send(json.dumps(cute(group_id)))
                                 # 定期清理过期的大头菜
                                 ClearKohlrabi()
+                                for user in setting["alarm_member"]:
+                                    if datetime.datetime.now().hour == 8:
+                                        SayAndAt(
+                                            user,
+                                            setting["admin_group_main"],
+                                            " 好似喵!!!愿原力与你同在喵!!!",
+                                        )
                             case _:
                                 print(message)
                     else:

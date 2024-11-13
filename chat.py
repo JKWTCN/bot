@@ -1,6 +1,7 @@
 from venv import logger
 import requests
 
+
 # chat内容转发给大模型
 def chat(group_id: int, nick_name: str, text: str):
     port = "11434"
@@ -31,7 +32,8 @@ def chat(group_id: int, nick_name: str, text: str):
         # print(res["message"])
         logger.info("(AI)乐可说:{}".format(res["message"]["content"]))
         re_text = res["message"]["content"]
-    except requests.exceptions.RequestException as e:
+
+    except:
         logger.info("连接超时")
         re_text = "呜呜不太理解呢喵。"
     payload = {

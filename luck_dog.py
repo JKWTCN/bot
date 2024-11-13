@@ -47,6 +47,7 @@ def GetGamblingTimesToday(user_id: int, group_id: int):
     else:
         return (data[0][0], data[0][1])
 
+
 # 改变今天的抽奖次数
 def ChangeGameblingTimesToday(user_id: int, group_id: int, today_num: int, today: int):
     conn = sqlite3.connect("bot.db")
@@ -56,6 +57,7 @@ def ChangeGameblingTimesToday(user_id: int, group_id: int, today_num: int, today
         (today_num, today, user_id, group_id),
     )
     conn.commit()
+
 
 # 运势
 def ys_simple(ys):
@@ -72,6 +74,7 @@ def ys_simple(ys):
     elif ys == 99:
         return "大凶，快去洗澡喵"
 
+
 # 运势详情
 def luck_dog(use_id: int, sender_name: str, group_id: int):
     payload = {
@@ -85,6 +88,7 @@ def luck_dog(use_id: int, sender_name: str, group_id: int):
         },
     }
     return payload
+
 
 # 私聊抽奖
 def LuckChoiceMutPrivate(user_id: int, nums: int):
@@ -329,7 +333,7 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
                             },
                         }
                     )
-                    if today_num > 1000:
+                    if today_num > setting["gambling_limit"]:
                         payload["params"]["message"].append(
                             {
                                 "type": "text",
@@ -395,7 +399,7 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
         )
         if group_id not in setting["sepcial_group"]:
             ChangeGameblingTimesToday(user_id, group_id, today_num, today)
-    elif today_num > 1000:
+    elif today_num > setting["gambling_limit"]:
         payload["params"]["message"].append(
             {
                 "type": "text",
@@ -486,9 +490,9 @@ def luck_choice(user_id: int, sender_name: str, group_id: int):
 
 def open_chart_by_base64(user_id: int, group_id: int, x, y):
     plt.plot(x, y)
-    plt.savefig("figs/point_fig.jpg".format(user_id, group_id))
+    plt.savefig("figs/point_fig.jpg")
     plt.close()
-    with open("figs/point_fig.jpg".format(user_id, group_id), "rb") as image_file:
+    with open("figs/point_fig.jpg", "rb") as image_file:
         image_data = image_file.read()
     return base64.b64encode(image_data)
 
