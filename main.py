@@ -738,6 +738,42 @@ async def echo(websocket, path):
                                                     )
                                                 )
                                             elif (
+                                                "二十连"
+                                                in message["message"][0]["data"]["text"]
+                                                and "梗图"
+                                                not in message["message"][0]["data"][
+                                                    "text"
+                                                ]
+                                            ):
+                                                await websocket.send(
+                                                    json.dumps(
+                                                        luck_dog.luck_choice_mut(
+                                                            sender["user_id"],
+                                                            sender_name,
+                                                            group_id,
+                                                            20,
+                                                        )
+                                                    )
+                                                )
+                                            elif (
+                                                "十连"
+                                                in message["message"][0]["data"]["text"]
+                                                and "梗图"
+                                                not in message["message"][0]["data"][
+                                                    "text"
+                                                ]
+                                            ):
+                                                await websocket.send(
+                                                    json.dumps(
+                                                        luck_dog.luck_choice_mut(
+                                                            sender["user_id"],
+                                                            sender_name,
+                                                            group_id,
+                                                            10,
+                                                        )
+                                                    )
+                                                )
+                                            elif (
                                                 "积分"
                                                 in message["message"][0]["data"]["text"]
                                             ):
@@ -1455,10 +1491,13 @@ async def echo(websocket, path):
                                 res, user_info = get_user_info(
                                     message["user_id"], group_id
                                 )
-                                if user_info.card != "":
-                                    sender_name = user_info.card
+                                if res:
+                                    if user_info.card != "":
+                                        sender_name = user_info.card
+                                    else:
+                                        sender_name = user_info.nickname
                                 else:
-                                    sender_name = user_info.nickname
+                                    sender_name=""
                                 add_unwelcome(user_id, message["time"], group_id)
                                 await websocket.send(
                                     json.dumps(

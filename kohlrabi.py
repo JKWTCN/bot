@@ -28,9 +28,25 @@ def GetDogeCoinV2():
             '<i class="price_num wordRise">(.*?)</i>',
         )
         m = pattern.findall(response.text)
-        return m[0]
+        if len(m) != 0:
+            setting = load_setting()
+            setting["kohlrabi_price"] = float(m[0])
+            dump_setting(setting)
+            return m[0]
+        else:
+            pattern = re.compile(
+                '<i class="price_num wordFall">(.*?)</i>',
+            )
+            m = pattern.findall(response.text)
+            setting = load_setting()
+            setting["kohlrabi_price"] = float(m[0])
+            dump_setting(setting)
+            return m[0]
     except:
         setting = load_setting()
+        print(
+            "获取大头菜价格失败，使用上一次的价格:{}".format(setting["kohlrabi_price"])
+        )
         logger.info(
             "获取大头菜价格失败，使用上一次的价格:{}".format(setting["kohlrabi_price"])
         )
@@ -314,3 +330,6 @@ def SellKohlrabi(user_id: int, group_id: int, num: int):
             },
         }
     return payload
+
+
+# print(GetDogeCoinV2())
