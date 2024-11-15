@@ -71,8 +71,8 @@ def GetNowChatRecord(group_id: int):
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
     cur.execute(
-        "SELECT user_id,today_num FROM ChatRecord WHERE group_id=? ORDER BY today_num DESC ;",
-        (group_id,),
+        "SELECT user_id,today_num FROM ChatRecord WHERE group_id=? and today=? ORDER BY today_num DESC ;",
+        (group_id,GetNowDay(),),
     )
     data = cur.fetchall()
     num: int = 0

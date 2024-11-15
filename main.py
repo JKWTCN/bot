@@ -74,7 +74,7 @@ from vcode import (
     update_vcode,
     verify,
     welcome_verify,
-    delete_vcode,
+    delete_vcode,find_vcode
 )
 from welcome_to_newyork import (
     ban_new,
@@ -158,8 +158,8 @@ async def echo(websocket, path):
                                 # 管理员管理功能
                                 if (
                                     user_id in setting["admin_list"]
-                                    and at_id != setting["bot_id"]
-                                ):
+                                    or user_id in setting["sec_admin_list"]
+                                ) and at_id != setting["bot_id"]:
                                     rev_name = get_user_name(at_id, group_id)
                                     if "解除禁言" in message["raw_message"]:
                                         logging.info(
@@ -182,10 +182,43 @@ async def echo(websocket, path):
                                         await websocket.send(
                                             json.dumps(kick_member(at_id, group_id))
                                         )
+                                    elif "通过验证"  in message["raw_message"]:
+                                        (mod, vcode_str) = find_vcode(user_id, group_id)
+                                        if mod:
+                                            (mod, times) = verify(
+                                            sender["user_id"],
+                                            group_id,
+                                            vcode_str,
+                                            )   
+                                            if mod:
+                                            # 通过验证
+                                                if group_id not in setting["other_group"]:
+                                                    await websocket.send(
+                                                        json.dumps(
+                                                            ban_new(
+                                                                sender["user_id"], group_id, 60
+                                                            )
+                                                        )
+                                                    )
+                                                    await websocket.send(
+                                                        json.dumps(
+                                                            welcome_new(
+                                                                sender["user_id"], group_id
+                                                            )
+                                                        )
+                                                    )
+                                                else:
+                                                    await websocket.send(
+                                                        json.dumps(
+                                                            welcom_new_no_admin(
+                                                                sender["user_id"], group_id
+                                                            )
+                                                        )
+                                                    )
                                 elif (
                                     user_id in setting["admin_list"]
-                                    and at_id == setting["bot_id"]
-                                ):
+                                    or user_id in setting["sec_admin_list"]
+                                ) and at_id == setting["bot_id"]:
                                     # 管理员功能 at乐可
                                     if "解除全体禁言" in message["raw_message"]:
                                         logging.info(
@@ -226,7 +259,20 @@ async def echo(websocket, path):
                                 or "[CQ:face,id=282]" in message["raw_message"]
                                 or "o/" in message["raw_message"]
                                 or "O/" in message["raw_message"]
-                            ):
+                            ) and ".com" not in message["raw_message"]:
+                                if user_id in setting["cxqy"]:
+                                    await websocket.send(
+                                        json.dumps(
+                                            say(
+                                                group_id,
+                                                "小马于{}说:".format(
+                                                    datetime.datetime.now().strftime(
+                                                        "%Y年%m月%d日%H时%M分%S秒"
+                                                    )
+                                                ),
+                                            )
+                                        )
+                                    )
                                 payload = {
                                     "action": "send_group_msg",
                                     "params": {
@@ -362,16 +408,29 @@ async def echo(websocket, path):
                                     )
                                     if mod:
                                         # 通过验证
-                                        await websocket.send(
-                                            json.dumps(
-                                                ban_new(sender["user_id"], group_id, 60)
+                                        if group_id not in setting["other_group"]:
+                                            await websocket.send(
+                                                json.dumps(
+                                                    ban_new(
+                                                        sender["user_id"], group_id, 60
+                                                    )
+                                                )
                                             )
-                                        )
-                                        await websocket.send(
-                                            json.dumps(
-                                                welcome_new(sender["user_id"], group_id)
+                                            await websocket.send(
+                                                json.dumps(
+                                                    welcome_new(
+                                                        sender["user_id"], group_id
+                                                    )
+                                                )
                                             )
-                                        )
+                                        else:
+                                            await websocket.send(
+                                                json.dumps(
+                                                    welcom_new_no_admin(
+                                                        sender["user_id"], group_id
+                                                    )
+                                                )
+                                            )
                                     elif times > 0:
                                         await websocket.send(
                                             json.dumps(
@@ -439,6 +498,7 @@ async def echo(websocket, path):
                                             and group_id in setting["admin_group_list"]
                                             and sender["user_id"]
                                             not in setting["developers_list"]
+                                            and group_id not in setting["other_group"]
                                         ):
                                             if (
                                                 "喵" not in message["raw_message"]
@@ -580,9 +640,12 @@ async def echo(websocket, path):
                                                         )
                                                     )
                                                 )
-                                            elif "胖次" in message["message"][0][
-                                                "data"
-                                            ]["text"] and (
+                                            elif (
+                                                "胖次"
+                                                in message["message"][0]["data"]["text"]
+                                                or "胖茨"
+                                                in message["message"][0]["data"]["text"]
+                                            ) and (
                                                 "云"
                                                 in message["message"][0]["data"]["text"]
                                                 or "☁️"
@@ -1482,6 +1545,7 @@ async def echo(websocket, path):
                             if (
                                 message["sub_type"] == "leave"
                                 and group_id in setting["admin_group_list"]
+                                and group_id not in setting["other_group"]
                             ):
                                 print(
                                     "{}:{}离开了群{}。\n".format(
@@ -1497,7 +1561,7 @@ async def echo(websocket, path):
                                     else:
                                         sender_name = user_info.nickname
                                 else:
-                                    sender_name=""
+                                    sender_name = ""
                                 add_unwelcome(user_id, message["time"], group_id)
                                 await websocket.send(
                                     json.dumps(
@@ -1602,8 +1666,12 @@ async def echo(websocket, path):
                         user.init_by_dict(group_member)
                         updata_user_info(user)
                         name = get_user_name(user.user_id, user.group_id)
+                        if user.group_id not in setting["other_group"]:
+                            timeout = 5184000
+                        else:
+                            timeout = 15552000
                         if (
-                            time.time() - user.last_sent_time > 5184000
+                            time.time() - user.last_sent_time > timeout
                             and user.group_id in setting["admin_group_list"]
                             and user.group_id not in setting["sepcial_group"]
                         ):
@@ -1618,17 +1686,18 @@ async def echo(websocket, path):
                                 )
                             )
                             logging.info(
-                                "{}({})因两个月未活跃被请出群聊".format(
-                                    name, user.user_id
+                                "{}({})因{}个月未活跃被请出群聊".format(
+                                    name, timeout / 2592000, user.user_id
                                 )
                             )
                             await websocket.send(
                                 json.dumps(
                                     say(
                                         user.group_id,
-                                        "{}({})，乐可要踢掉你了喵！\n原因:两个月未活跃。\n最后发言时间为:{}".format(
+                                        "{}({})，乐可要踢掉你了喵！\n原因:{}个月未活跃。\n最后发言时间为:{}".format(
                                             name,
                                             user.user_id,
+                                            timeout / 2592000,
                                             time.strftime(
                                                 "%Y-%m-%d %H:%M:%S",
                                                 time.localtime(user.last_sent_time),
