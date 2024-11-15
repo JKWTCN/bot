@@ -182,11 +182,11 @@ async def echo(websocket, path):
                                         await websocket.send(
                                             json.dumps(kick_member(at_id, group_id))
                                         )
-                                    elif "通过验证"  in message["raw_message"]:
-                                        (mod, vcode_str) = find_vcode(user_id, group_id)
+                                    elif "通过验证"  in message["raw_message"] or "验证通过"  in message["raw_message"]:
+                                        (mod, vcode_str) = find_vcode(at_id, group_id)
                                         if mod:
                                             (mod, times) = verify(
-                                            sender["user_id"],
+                                           at_id,
                                             group_id,
                                             vcode_str,
                                             )   
@@ -196,14 +196,14 @@ async def echo(websocket, path):
                                                     await websocket.send(
                                                         json.dumps(
                                                             ban_new(
-                                                                sender["user_id"], group_id, 60
+                                                                at_id, group_id, 60
                                                             )
                                                         )
                                                     )
                                                     await websocket.send(
                                                         json.dumps(
                                                             welcome_new(
-                                                                sender["user_id"], group_id
+                                                                at_id, group_id
                                                             )
                                                         )
                                                     )
@@ -211,7 +211,7 @@ async def echo(websocket, path):
                                                     await websocket.send(
                                                         json.dumps(
                                                             welcom_new_no_admin(
-                                                                sender["user_id"], group_id
+                                                                at_id, group_id
                                                             )
                                                         )
                                                     )
@@ -254,33 +254,34 @@ async def echo(websocket, path):
                                     )
 
                             # 复读大拇哥和忠诚、o/、O/
-                            if (
-                                "[CQ:face,id=76]" in message["raw_message"]
-                                or "[CQ:face,id=282]" in message["raw_message"]
-                                or "o/" in message["raw_message"]
-                                or "O/" in message["raw_message"]
-                            ) and ".com" not in message["raw_message"]:
-                                if user_id in setting["cxqy"]:
-                                    await websocket.send(
-                                        json.dumps(
-                                            say(
-                                                group_id,
-                                                "小马于{}说:".format(
-                                                    datetime.datetime.now().strftime(
-                                                        "%Y年%m月%d日%H时%M分%S秒"
-                                                    )
-                                                ),
-                                            )
-                                        )
-                                    )
-                                payload = {
-                                    "action": "send_group_msg",
-                                    "params": {
-                                        "group_id": group_id,
-                                        "message": message["raw_message"],
-                                    },
-                                }
-                                await websocket.send(json.dumps(payload))
+                            # if (
+                            #     "[CQ:face,id=76]" in message["raw_message"]
+                            #     or "[CQ:face,id=282]" in message["raw_message"]
+                            #     or "o/" in message["raw_message"]
+                            #     or "O/" in message["raw_message"]
+                            #     or "👍🏻" in message["raw_message"]
+                            # ) and ".com" not in message["raw_message"]:
+                            #     if user_id in setting["cxqy"]:
+                            #         await websocket.send(
+                            #             json.dumps(
+                            #                 say(
+                            #                     group_id,
+                            #                     "小马于{}说:".format(
+                            #                         datetime.datetime.now().strftime(
+                            #                             "%Y年%m月%d日%H时%M分%S秒"
+                            #                         )
+                            #                     ),
+                            #                 )
+                            #             )
+                            #         )
+                            #     payload = {
+                            #         "action": "send_group_msg",
+                            #         "params": {
+                            #             "group_id": group_id,
+                            #             "message": message["raw_message"],
+                            #         },
+                            #     }
+                            #     await websocket.send(json.dumps(payload))
                             if (
                                 (
                                     "[CQ:at,qq={}]".format(
