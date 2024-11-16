@@ -23,11 +23,23 @@ async def return_function(websocket, user_id: int, group_id: int):
 
 
 async def ban_new(websocket, user_id: int, group_id: int, duration: int):
-    payload = {
-        "action": "set_group_ban",
-        "params": {"group_id": group_id, "user_id": user_id, "duration": duration},
-    }
-    await websocket.send(json.dumps(payload))
+    from Class.Group_member import IsAdmin
+
+    if IsAdmin(user_id, group_id):
+        payload = {
+            "action": "send_msg",
+            "params": {
+                "group_id": group_id,
+                "message": "我，打管理?真的假的?",
+            },
+        }
+        await websocket.send(json.dumps(payload))
+    else:
+        payload = {
+            "action": "set_group_ban",
+            "params": {"group_id": group_id, "user_id": user_id, "duration": duration},
+        }
+        await websocket.send(json.dumps(payload))
 
 
 async def new_group_vcode(websocket, user_id: int, group_id: int):

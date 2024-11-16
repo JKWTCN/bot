@@ -51,7 +51,7 @@ from group_operate import (
     DeleteEssenceMsg,
     SetEssenceMsg,
     update_group_info,
-    GetMessage,
+    GetMessage,GetGroupName
 )
 from random_meme import (
     send_meme_merge_forwarding,
@@ -117,22 +117,25 @@ async def echo(websocket):
                             sender_name = sender["card"]
                             group_id = message["group_id"]
                             user_id = message["user_id"]
+                            group_name=GetGroupName(group_id)
                             raw_message = message["raw_message"]
                             if len(sender["card"]) == 0:
                                 sender_name = sender["nickname"]
                             write_message(message)
                             print(
-                                "{}:{}({})在{}群里说:{}".format(
+                                "{}:{}({})在{}({})群里说:{}".format(
                                     message["time"],
                                     sender_name,
                                     user_id,
+                                    group_name,
                                     group_id,
                                     message["raw_message"],
                                 )
                             )
-                            log = "{}({})在{}群里说:{}".format(
+                            log = "{}({})在{}({})群里说:{}".format(
                                 sender_name,
                                 user_id,
+                                group_name,
                                 group_id,
                                 message["raw_message"],
                             )
@@ -1528,6 +1531,7 @@ async def echo(websocket):
                     logging.info("开始更新群列表")
                     # print(message["data"])
                     for group in message["data"]:
+                        logging.info(f"正在更新群:{group["group_name"]}({group["group_id"]})")
                         update_group_info(
                             group["group_id"],
                             group["group_name"],
@@ -1540,8 +1544,8 @@ async def echo(websocket):
                         await update_group_member_list(websocket, group["group_id"])
                     setting["last_update_time"] = time.time()
                     dump_setting(setting)
-                    print("更新群列表完毕")
-                    logging.info("更新群列表完毕")
+                    print("更新全部群列表完毕")
+                    logging.info("更新全部群列表完毕")
                 case "so_cute":
                     # print(message)
                     group_id = message["data"]["group_id"]
