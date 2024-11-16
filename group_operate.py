@@ -1,6 +1,6 @@
 import sqlite3
 import time
-from Class.Group_member import IsAdmin
+from Class.Group_member import IsAdmin,get_user_name
 import bot_database
 import tools
 import json
@@ -114,7 +114,8 @@ async def kick_member(websocket, user_id: int, group_id: int):
 
 
 # 发群低保
-async def poor_point(websocket, user_id: int, group_id: int, sender_name: str):
+async def poor_point(websocket, user_id: int, group_id: int):
+    sender_name=get_user_name(user_id,group_id)
     now_point = bot_database.find_point(user_id)
     if now_point <= 0:
         conn = sqlite3.connect("bot.db")

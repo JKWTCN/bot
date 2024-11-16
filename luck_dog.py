@@ -258,6 +258,7 @@ async def luck_choice_mut(
             }
         )
         await websocket.send(json.dumps(payload))
+        return
     luck_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     start_point = bot_database.find_point(user_id)
     now_point = start_point
@@ -369,6 +370,7 @@ async def luck_choice_mut(
                     if group_id not in setting["sepcial_group"]:
                         ChangeGameblingTimesToday(user_id, group_id, today_num, today)
                     await websocket.send(json.dumps(payload))
+                    return
         payload["params"]["message"].append(
             {
                 "type": "text",

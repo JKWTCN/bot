@@ -50,6 +50,7 @@ async def russian_pve_shot(websocket, user_id: int, group_id: int, nick_name: st
             },
         }
         await websocket.send(json.dumps(payload))
+        return
     now_choice = random.randint(1, now_shots)
     # 自己开枪中枪了
     if now_choice == 1:
@@ -71,6 +72,7 @@ async def russian_pve_shot(websocket, user_id: int, group_id: int, nick_name: st
         bot_database.change_point(user_id, group_id, 0)
         bot_database.delete_russian_pve(user_id)
         await websocket.send(json.dumps(payload))
+        return
     now_shots = now_shots - 1
     now_choice = random.randint(1, now_shots)
     # 乐可开枪中枪了
@@ -101,6 +103,7 @@ async def russian_pve_shot(websocket, user_id: int, group_id: int, nick_name: st
         )
         bot_database.delete_russian_pve(user_id)
         await websocket.send(json.dumps(payload))
+        return
     now_shots = now_shots - 1
     bot_database.changed_russian_pve(user_id, now_shots)
     payload = {

@@ -638,15 +638,11 @@ async def echo(websocket):
                                                 "低保"
                                                 in message["message"][0]["data"]["text"]
                                             ):
-                                                await websocket.send(
-                                                    json.dumps(
-                                                        poor_point(
+                                                await  poor_point(websocket,
                                                             user_id,
                                                             group_id,
-                                                            sender_name,
                                                         )
-                                                    )
-                                                )
+                                            
                                             elif (
                                                 "抽签"
                                                 in message["message"][0]["data"]["text"]
@@ -844,7 +840,6 @@ async def echo(websocket):
                                                     if nums > 20:
                                                         await send_meme_merge_forwarding(
                                                             websocket,
-                                                            group_id,
                                                             group_id,
                                                             nums % 20,
                                                         )
@@ -1146,7 +1141,7 @@ async def echo(websocket):
                                                     json.dumps(payload)
                                                 )
                                             else:
-                                                chat(
+                                                await chat(
                                                     websocket,
                                                     group_id,
                                                     sender_name,
@@ -1483,7 +1478,8 @@ async def echo(websocket):
                                     websocket, user.user_id, user.group_id
                                 )
                 case "defense":
-                    await delete_msg(message["data"]["message_id"])
+                    print(message)
+                    await delete_msg(websocket, message["data"]["message_id"])
                 case "get_group_list":
                     print("开始更新群列表")
                     logging.info("开始更新群列表")
