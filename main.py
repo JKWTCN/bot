@@ -51,7 +51,8 @@ from group_operate import (
     DeleteEssenceMsg,
     SetEssenceMsg,
     update_group_info,
-    GetMessage,GetGroupName
+    GetMessage,
+    GetGroupName,
 )
 from random_meme import (
     send_meme_merge_forwarding,
@@ -82,7 +83,8 @@ from tools import (
     nomoral_qq_avatar,
     red_qq_avatar,
     GetLogTime,
-    GetSleepSeconds,GetSystemInfoTable
+    GetSleepSeconds,
+    GetSystemInfoTable,
 )
 from vcode import (
     check_validation_timeout,
@@ -117,7 +119,7 @@ async def echo(websocket):
                             sender_name = sender["card"]
                             group_id = message["group_id"]
                             user_id = message["user_id"]
-                            group_name=GetGroupName(group_id)
+                            group_name = GetGroupName(group_id)
                             raw_message = message["raw_message"]
                             if len(sender["card"]) == 0:
                                 sender_name = sender["nickname"]
@@ -368,8 +370,8 @@ async def echo(websocket):
                                     r"CQ:reply,id=(\d+)", message["raw_message"]
                                 )[0]
                                 if HasAllKeyWords(
-                                    message["raw_message"], ["看到", "了","你"]
-                                ) and HasKeyWords(message["raw_message"],["吗","嘛"]):
+                                    message["raw_message"], ["看到", "了", "你"]
+                                ) and HasKeyWords(message["raw_message"], ["吗", "嘛"]):
                                     await GetMessage(websocket, message_id, "so_cute")
 
                             # 新入群验证
@@ -858,10 +860,10 @@ async def echo(websocket):
                                                                 websocket, group_id, 20
                                                             )
                                                     await send_meme_merge_forwarding(
-                                                            websocket,
-                                                            group_id,
-                                                            nums % 20,
-                                                        )
+                                                        websocket,
+                                                        group_id,
+                                                        nums % 20,
+                                                    )
                                                     await say(
                                                         websocket,
                                                         group_id,
@@ -1169,9 +1171,11 @@ async def echo(websocket):
                                                         "text"
                                                     ],
                                                 )
-                                                if len(text)!=0:
-                                                    text=text[0]
-                                                    await SoHappy(websocket, group_id, text)
+                                                if len(text) != 0:
+                                                    text = text[0]
+                                                    await SoHappy(
+                                                        websocket, group_id, text
+                                                    )
                                             elif (
                                                 "悲报"
                                                 in message["message"][0]["data"]["text"]
@@ -1182,18 +1186,25 @@ async def echo(websocket):
                                                         "text"
                                                     ],
                                                 )
-                                                if len(text)!=0:
-                                                    text=text[0]
-                                                    await SoSad(websocket, group_id, text)
+                                                if len(text) != 0:
+                                                    text = text[0]
+                                                    await SoSad(
+                                                        websocket, group_id, text
+                                                    )
                                             elif (
                                                 "答案之书"
                                                 in message["message"][0]["data"]["text"]
                                             ):
-                                                await AnswerBook(websocket,user_id, group_id)
-                                            elif(
-                                                "status" in message["message"][0]["data"]["text"]
+                                                await AnswerBook(
+                                                    websocket, user_id, group_id
+                                                )
+                                            elif (
+                                                "status"
+                                                in message["message"][0]["data"]["text"]
                                             ):
-                                                await GetSystemInfoTable(websocket, group_id)
+                                                await GetSystemInfoTable(
+                                                    websocket, group_id
+                                                )
                                             else:
                                                 await chat(
                                                     websocket,
@@ -1484,7 +1495,7 @@ async def echo(websocket):
         elif "echo" in message:
             match message["echo"]:
                 case "update_group_member_list":
-                    print("{}:开始更新{}({})群友列表！".format(time.time(),))
+                    print("{}:开始更新群友列表！".format(time.time()))
                     for group_member in message["data"]:
                         user = Group_member()
                         user.init_by_dict(group_member)
@@ -1539,7 +1550,9 @@ async def echo(websocket):
                     logging.info("开始更新群列表")
                     # print(message["data"])
                     for group in message["data"]:
-                        logging.info(f"正在更新群:{group["group_name"]}({group["group_id"]})")
+                        logging.info(
+                            f"正在更新群:{group["group_name"]}({group["group_id"]})"
+                        )
                         update_group_info(
                             group["group_id"],
                             group["group_name"],

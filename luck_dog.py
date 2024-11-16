@@ -495,7 +495,7 @@ async def luck_choice(websocket, user_id: int, sender_name: str, group_id: int):
 
 def open_chart_by_base64(user_id: int, group_id: int, x, y):
     plt.plot(x, y)
-    plt.savefig("figs/point_fig.png",dpi=600)
+    plt.savefig("figs/point_fig.png", dpi=460)
     plt.close()
     with open("figs/point_fig.png", "rb") as image_file:
         image_data = image_file.read()
