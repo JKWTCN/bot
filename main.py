@@ -11,13 +11,15 @@ from Class.Group_member import (
     get_user_info,
     get_user_name,
     updata_user_info,
+    update_group_member_list,
+    IsAdmin,
+    BotIsAdmin,
 )
 from bot_database import (
     add_unwelcome,
     change_point,
     daily_check_in,
     find_point,
-    get_last_time_get_group_member_list,
     get_statistics,
     in_unwelcome,
     recharge_privte,
@@ -35,12 +37,13 @@ from rankings import ranking_point_payload
 from private import cxgl, WhoAskPants
 from group_operate import (
     poor_point,
-    get_group_member_list,
+    get_group_list,
     kick_member,
     SetGroupWholeBan,
     SetGroupWholeNoBan,
     DeleteEssenceMsg,
     SetEssenceMsg,
+    update_group_info,
 )
 from random_meme import (
     send_meme_merge_forwarding,
@@ -123,7 +126,7 @@ async def echo(websocket):
                             )
                             AddChatRecord(user_id, group_id)
                             logging.info(log)
-                            if group_id in setting["admin_group_list"]:
+                            if IsAdmin(setting["bot_id"], group_id):
                                 # 2%的概率派发50积分
                                 if random.random() < 0.02:
                                     now_point = find_point(user_id)
@@ -158,8 +161,7 @@ async def echo(websocket):
                                 at_id = int(at_id[0])
                                 # 管理员管理功能
                                 if (
-                                    user_id in setting["admin_list"]
-                                    or user_id in setting["sec_admin_list"]
+                                    IsAdmin(setting["bot_id"], group_id)
                                 ) and at_id != setting["bot_id"]:
                                     rev_name = get_user_name(at_id, group_id)
                                     if "解除禁言" in message["raw_message"]:
@@ -173,12 +175,13 @@ async def echo(websocket):
                                         )
                                         await ban_new(websocket, at_id, group_id, 1800)
                                     elif "说再见" in message["raw_message"]:
-                                        logging.info(
-                                            f"{group_id}:{sender_name}({user_id})踢出了{rev_name}({at_id})"
-                                        )
-                                        await websocket.send(
-                                            json.dumps(kick_member(at_id, group_id))
-                                        )
+                                        if not IsAdmin(user_id, group_id):
+                                            logging.info(
+                                                f"{group_id}:{sender_name}({user_id})踢出了{rev_name}({at_id})"
+                                            )
+                                            await kick_member(
+                                                websocket, at_id, group_id
+                                            )
                                     elif HasKeyWords(
                                         message["raw_message"], ["通过验证", "验证通过"]
                                     ):
@@ -205,10 +208,9 @@ async def echo(websocket):
                                                     await welcom_new_no_admin(
                                                         websocket, at_id, group_id
                                                     )
-                                elif (
-                                    user_id in setting["admin_list"]
-                                    or user_id in setting["sec_admin_list"]
-                                ) and at_id == setting["bot_id"]:
+                                elif (IsAdmin(user_id, group_id)) and at_id == setting[
+                                    "bot_id"
+                                ]:
                                     # 管理员功能 at乐可
                                     if "解除全体禁言" in message["raw_message"]:
                                         logging.info(
@@ -282,8 +284,8 @@ async def echo(websocket):
                             ):
                                 if (
                                     user_id not in setting["developers_list"]
-                                    and user_id not in setting["admin_list"]
-                                    and group_id in setting["admin_group_list"]
+                                    and not IsAdmin(user_id, group_id)
+                                    and BotIsAdmin(group_id)
                                 ):
                                     await ban_new(websocket, user_id, group_id, 60)
                                     await say(
@@ -294,8 +296,8 @@ async def echo(websocket):
 
                                 elif (
                                     user_id not in setting["developers_list"]
-                                    and user_id in setting["admin_list"]
-                                    and group_id in setting["admin_group_list"]
+                                    and IsAdmin(user_id, group_id)
+                                    and BotIsAdmin(group_id)
                                 ):
                                     for i in range(100):
                                         time.sleep(0.1)
@@ -348,12 +350,9 @@ async def echo(websocket):
                                 await websocket.send(
                                     json.dumps(SetEssenceMsg(message_id))
                                 )
-                            elif (
-                                re.search(
-                                    r"CQ:reply,id=\d+]移除加精", message["raw_message"]
-                                )
-                                and user_id in setting["admin_list"]
-                            ):
+                            elif re.search(
+                                r"CQ:reply,id=\d+]移除加精", message["raw_message"]
+                            ) and IsAdmin(user_id, group_id):
                                 message_id = re.search(
                                     r"\d+", message["raw_message"]
                                 ).group()
@@ -406,16 +405,17 @@ async def echo(websocket):
                                         )
 
                                     elif times <= 0:
-                                        await websocket.send(
-                                            json.dumps(kick_member(user_id, group_id))
-                                        )
-                                        await say(
-                                            websocket,
-                                            group_id,
-                                            "{},验证码输入错误，你没有机会了喵。有缘江湖相会了喵。".format(
-                                                sender_name
-                                            ),
-                                        )
+                                        if not IsAdmin(user_id, group_id):
+                                            await kick_member(
+                                                websocket, user_id, group_id
+                                            )
+                                            await say(
+                                                websocket,
+                                                group_id,
+                                                "{},验证码输入错误，你没有机会了喵。有缘江湖相会了喵。".format(
+                                                    sender_name
+                                                ),
+                                            )
                             else:
                                 match message["message"][0]["type"]:
                                     case "text":
@@ -448,7 +448,7 @@ async def echo(websocket):
                                             )
                                         if (
                                             datetime.datetime.now().day == 25
-                                            and group_id in setting["admin_group_list"]
+                                            and BotIsAdmin(group_id)
                                             and user_id
                                             not in setting["developers_list"]
                                             and group_id not in setting["other_group"]
@@ -460,7 +460,7 @@ async def echo(websocket):
                                                 and "[CQ:reply"
                                                 not in message["raw_message"]
                                             ):
-                                                if user_id not in setting["admin_list"]:
+                                                if not IsAdmin(user_id, group_id):
                                                     await ban_new(
                                                         websocket,
                                                         user_id,
@@ -1031,7 +1031,7 @@ async def echo(websocket):
                                                 )
                                                 now_hour = int(now_hour)
                                                 if now_hour >= 22:
-                                                    if user_id in setting["admin_list"]:
+                                                    if IsAdmin(user_id, group_id):
                                                         payload = {
                                                             "action": "send_group_msg",
                                                             "params": {
@@ -1090,7 +1090,7 @@ async def echo(websocket):
                                             elif (
                                                 "打响指"
                                                 in message["message"][0]["data"]["text"]
-                                            ) and user_id in setting["admin_list"]:
+                                            ) and IsAdmin(user_id, group_id):
                                                 await say(
                                                     websocket,
                                                     group_id,
@@ -1110,14 +1110,14 @@ async def echo(websocket):
                                             elif (
                                                 "清楚明白"
                                                 in message["message"][0]["data"]["text"]
-                                                and user_id in setting["admin_list"]
+                                                and IsAdmin(user_id, group_id)
                                                 and setting["is_thanos"]
                                             ):
                                                 await cxgl(websocket, user_id, group_id)
                                             elif (
                                                 "取消"
                                                 in message["message"][0]["data"]["text"]
-                                                and user_id in setting["admin_list"]
+                                                and IsAdmin(user_id, group_id)
                                                 and setting["is_thanos"]
                                             ):
                                                 await nomoral_qq_avatar(websocket)
@@ -1244,12 +1244,13 @@ async def echo(websocket):
                                     )
                                 )
                             if message["user_id"] in setting["developers_list"]:
-                                if message["raw_message"].startswith("更新群友列表"):
-                                    for group in setting["group_list"]:
-                                        await websocket.send(json.dumps(group))
-                                setting = load_setting()
-                                setting["last_update_time"] = time.time()
-                                dump_setting(setting)
+                                if HasKeyWords(message["raw_message"], ["更新列表"]):
+                                    await get_group_list(websocket)
+                                    # for group in setting["group_list"]:
+                                    #     await websocket.send(json.dumps(group))
+                                    #     setting = load_setting()
+                                    #     setting["last_update_time"] = time.time()
+                                    #     dump_setting(setting)
                                 if message["raw_message"].startswith("积分"):
                                     result = re.search(r"\d+", message["raw_message"])
                                     # print(result.group())
@@ -1273,19 +1274,20 @@ async def echo(websocket):
                             )
                             logging.info("{}加入入群{}".format(user_id, group_id))
                             if user_id != setting["bot_id"]:
-                                if group_id in setting["admin_group_list"]:
+                                if BotIsAdmin(group_id):
                                     if str(user_id) in setting["blacklist"].keys():
-                                        await websocket.send(
-                                            json.dumps(kick_member(user_id, group_id))
-                                        )
-                                        await say(
-                                            websocket,
-                                            group_id,
-                                            "{},你已因{}被本群拉黑，无法加入本群".format(
-                                                user_id,
-                                                setting["blacklist"][str(user_id)],
-                                            ),
-                                        )
+                                        if not IsAdmin(user_id, group_id):
+                                            await kick_member(
+                                                websocket, user_id, group_id
+                                            )
+                                            await say(
+                                                websocket,
+                                                group_id,
+                                                "{},你已因{}被本群拉黑，无法加入本群".format(
+                                                    user_id,
+                                                    setting["blacklist"][str(user_id)],
+                                                ),
+                                            )
 
                                     else:
                                         (is_in_unwelcome, quit_time) = in_unwelcome(
@@ -1335,7 +1337,7 @@ async def echo(websocket):
                             group_id = message["group_id"]
                             if (
                                 message["sub_type"] == "leave"
-                                and group_id in setting["admin_group_list"]
+                                and BotIsAdmin(group_id)
                                 and group_id not in setting["other_group"]
                             ):
                                 print(
@@ -1376,8 +1378,9 @@ async def echo(websocket):
                                     await say(websocket, group_id, "乐可不是紫薯精喵。")
                                 # 定期更新群友列表
                                 if time.time() - setting["last_update_time"] > 300:
-                                    for group in setting["group_list"]:
-                                        await get_group_member_list(websocket, group)
+                                    await get_group_list(websocket)
+                                    # for group in setting["group_list"]:
+                                    #     await get_group_member_list(websocket, group)
                                 # 定期检测新入群友验证码
                                 for i in os.listdir("./vcode"):
                                     user_id = i.split(".")[0].split("_")[0]
@@ -1393,20 +1396,21 @@ async def echo(websocket):
                                             sender_name = user_info.card
                                         else:
                                             sender_name = user_info.nickname
-                                        await ban_new(
-                                            websocket,
-                                            user_id,
-                                            group_id,
-                                            60,
-                                        )
-                                        await say(
-                                            websocket,
-                                            setting["admin_group_main"],
-                                            f"{sender_name}的验证码已过期，已自动踢出喵！",
-                                        )
-                                        await websocket.send(
-                                            json.dumps(kick_member(user_id, group_id))
-                                        )
+                                        if not IsAdmin(user_id, group_id):
+                                            await ban_new(
+                                                websocket,
+                                                user_id,
+                                                group_id,
+                                                60,
+                                            )
+                                            await say(
+                                                websocket,
+                                                group_id,
+                                                f"{sender_name}的验证码已过期，已自动踢出喵！",
+                                            )
+                                            await kick_member(
+                                                websocket, user_id, group_id
+                                            )
                                         delete_vcode(user_id, group_id)
                                 # 0.2% 的概率乐可卖萌
                                 if random.random() < 0.002:
@@ -1443,49 +1447,62 @@ async def echo(websocket):
                             timeout = 15552000
                         if (
                             time.time() - user.last_sent_time > timeout
-                            and user.group_id in setting["admin_group_list"]
+                            and BotIsAdmin(user.group_id)
                             and user.group_id not in setting["sepcial_group"]
                         ):
-                            print(
-                                "{}({}),最后发言时间:{}".format(
-                                    name,
-                                    user.user_id,
-                                    time.strftime(
-                                        "%Y-%m-%d %H:%M:%S",
-                                        time.localtime(user.last_sent_time),
+                            if not IsAdmin(user.user_id, user.group_id):
+                                print(
+                                    "{}({}),最后发言时间:{}".format(
+                                        name,
+                                        user.user_id,
+                                        time.strftime(
+                                            "%Y-%m-%d %H:%M:%S",
+                                            time.localtime(user.last_sent_time),
+                                        ),
+                                    )
+                                )
+                                logging.info(
+                                    "{}({})因{}个月未活跃被请出群聊".format(
+                                        name, user.user_id, timeout / 2592000
+                                    )
+                                )
+                                await say(
+                                    websocket,
+                                    user.group_id,
+                                    "{}({})，乐可要踢掉你了喵！\n原因:{}个月未活跃。\n最后发言时间为:{}".format(
+                                        name,
+                                        user.user_id,
+                                        timeout / 2592000,
+                                        time.strftime(
+                                            "%Y-%m-%d %H:%M:%S",
+                                            time.localtime(user.last_sent_time),
+                                        ),
                                     ),
                                 )
-                            )
-                            logging.info(
-                                "{}({})因{}个月未活跃被请出群聊".format(
-                                    name, timeout / 2592000, user.user_id
+                                await kick_member(
+                                    websocket, user.user_id, user.group_id
                                 )
-                            )
-                            await say(
-                                websocket,
-                                user.group_id,
-                                "{}({})，乐可要踢掉你了喵！\n原因:{}个月未活跃。\n最后发言时间为:{}".format(
-                                    name,
-                                    user.user_id,
-                                    timeout / 2592000,
-                                    time.strftime(
-                                        "%Y-%m-%d %H:%M:%S",
-                                        time.localtime(user.last_sent_time),
-                                    ),
-                                ),
-                            )
-                            payload = {
-                                "action": "set_group_kick",
-                                "params": {
-                                    "group_id": group_member["group_id"],
-                                    "user_id": user.user_id,
-                                },
-                            }
-                            await websocket.send(json.dumps(payload))
                 case "defense":
-                    delete_msg(message["data"]["message_id"])
+                    await delete_msg(message["data"]["message_id"])
                 case "get_group_list":
-                    pass
+                    print("开始更新群列表")
+                    logging.info("开始更新群列表")
+                    # print(message["data"])
+                    for group in message["data"]:
+                        update_group_info(
+                            group["group_id"],
+                            group["group_name"],
+                            group["member_count"],
+                            group["max_member_count"],
+                        )
+                        if group["group_id"] not in setting["group_list"]:
+                            setting["group_list"].append(group["group_id"])
+                            dump_setting(setting)
+                        await update_group_member_list(websocket, group["group_id"])
+                    setting["last_update_time"] = time.time()
+                    dump_setting(setting)
+                    print("更新群列表完毕")
+                    logging.info("更新群列表完毕")
                 case "applaud":
                     sender_id = message["data"]["sender"]["user_id"]
                     message_id = message["data"]["message_id"]

@@ -1,6 +1,8 @@
 import re
 import sqlite3
 
+from tools import load_setting
+
 
 class Group_member:
     group_id: int
@@ -141,7 +143,7 @@ def updata_user_info(group_member: Group_member):
     # print(is_had)
 
 
-async def get_group_member_list_payload(websocket, group_id: int):
+async def update_group_member_list(websocket, group_id: int):
     import json
 
     payload = {
@@ -152,3 +154,21 @@ async def get_group_member_list_payload(websocket, group_id: int):
         "echo": "update_group_member_list",
     }
     await websocket.send(json.dumps(payload))
+
+
+# 检测该用户是否该群的管理员
+def IsAdmin(user_id: int, group_id: int):
+    res, member_info = get_user_info(user_id, group_id)
+    if res:
+        if member_info.role == "owner" or member_info.role == "admin":
+            return True
+        else:
+            return False
+    else:
+        return False
+
+
+# 检测机器人是否为该群的管理员
+def BotIsAdmin(group_id: int):
+    setting = load_setting()
+    return IsAdmin(setting["bot_id"], group_id)

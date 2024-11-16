@@ -1,27 +1,61 @@
 import sqlite3
 import time
+from Class.Group_member import IsAdmin
 import bot_database
 import tools
 import json
 
 
+# 获取群聊名称
+def GetGroupName(group_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT group_name FROM group_info where group_id=?;",
+        (group_id,),
+    )
+    data = cur.fetchall()
+    if len(data) == 0:
+        return group_id
+    else:
+        return data[0][0]
+
+
+# 更新群列表
+def update_group_info(
+    group_id: int, group_name: str, member_count: int, max_member_count: int
+):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT * FROM group_info where group_id=?;",
+        (group_id,),
+    )
+    data = cur.fetchall()
+    if len(data) == 0:
+        cur.execute(
+            "INSERT INTO group_info (group_id,group_name,member_count,max_member_count)VALUES (?,?,?,?);",
+            (group_id, group_name, member_count, max_member_count),
+        )
+        conn.commit()
+    else:
+        cur.execute(
+            "UPDATE group_info SET group_name = ?,member_count=?,max_member_count=? WHERE group_id = ?;",
+            (
+                group_name,
+                member_count,
+                max_member_count,
+                group_id,
+            ),
+        )
+        conn.commit()
+
+
 # 发送获取群名单
-async def get_group_list(websocket, group_id: int):
+async def get_group_list(websocket):
     payload = {
         "action": "get_group_list",
         "echo": "get_group_list",
-    }
-    await websocket.send(json.dumps(payload))
-
-
-# 发送获取群友名单
-async def get_group_member_list(websocket, group_id: int):
-    payload = {
-        "action": "get_group_member_list",
-        "params": {
-            "group_id": group_id,
-        },
-        "echo": "update_group_member_list",
     }
     await websocket.send(json.dumps(payload))
 
