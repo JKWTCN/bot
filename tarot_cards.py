@@ -35,6 +35,59 @@ async def daily_paper(websocket, user_id: int, group_id: int):
     await websocket.send(json.dumps(payload))
 
 
+# 悲报
+async def SoSad(websocket, group_id: int, text: str):
+    payload = {
+        "action": "send_msg",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {
+                    "type": "image",
+                    "data": {"file": f"https://www.oexan.cn/API/beibao.php?msg={text}"},
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+# 喜报
+async def SoHappy(websocket, group_id: int, text: str):
+    payload = {
+        "action": "send_msg",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {
+                    "type": "image",
+                    "data": {"file": f"https://api.tangdouz.com/wz/xb.php?nr={text}"},
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+# 你们看到她了吗
+async def SoCute(websocket, user_id: int, group_id: int):
+    payload = {
+        "action": "send_msg",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {
+                    "type": "image",
+                    "data": {
+                        "file": f"https://api.tangdouz.com/wz/cute.php?q={user_id}"
+                    },
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
 # 塔罗牌
 def get_tarot_cards():
     r = requests.get("https://api.tangdouz.com/tarot.php")
@@ -179,6 +232,27 @@ async def return_trarot_cards(websocket, user_id: int, group_id: int):
                             text[2].split("\\r")[0], text[2].split("\\r")[1]
                         )
                     },
+                },
+            ],
+        },
+    }
+    # print(payload)
+    await websocket.send(json.dumps(payload))
+
+
+# 抽签
+async def AnswerBook(websocket, user_id: int, group_id: int):
+    r = requests.get("https://api.tangdouz.com/answer.php")
+    # print(r.text)
+    payload = {
+        "action": "send_msg",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "at", "data": {"qq": user_id}},
+                {
+                    "type": "text",
+                    "data": {"text": "\n{}".format(r.text)},
                 },
             ],
         },

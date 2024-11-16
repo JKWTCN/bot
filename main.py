@@ -26,7 +26,14 @@ from bot_database import (
     write_message,
 )
 from chat import chat
-from kohlrabi import BuyKohlrabi, ClearKohlrabi, GetNowPrice, SellKohlrabi, ShowHand,SellKohlrabiAll
+from kohlrabi import (
+    BuyKohlrabi,
+    ClearKohlrabi,
+    GetNowPrice,
+    SellKohlrabi,
+    ShowHand,
+    SellKohlrabiAll,
+)
 import luck_dog
 from easter_egg import (
     cute,
@@ -44,6 +51,7 @@ from group_operate import (
     DeleteEssenceMsg,
     SetEssenceMsg,
     update_group_info,
+    GetMessage,
 )
 from random_meme import (
     send_meme_merge_forwarding,
@@ -63,6 +71,10 @@ from tarot_cards import (
     radom_waifu,
     radom_real,
     one_word,
+    SoCute,
+    SoHappy,
+    SoSad,
+    AnswerBook,
 )
 from tools import (
     dump_setting,
@@ -330,31 +342,32 @@ async def echo(websocket):
                                 )
                                 and user_id in setting["developers_list"]
                             ):
-                                message_id = re.search(
-                                    r"\d+", message["raw_message"]
-                                ).group()
-                                payload = {
-                                    "action": "get_msg",
-                                    "params": {
-                                        "message_id": message_id,
-                                    },
-                                    "echo": "applaud",
-                                }
-                                await websocket.send(json.dumps(payload))
+                                message_id = re.findall(
+                                    r"CQ:reply,id=(\d+)", message["raw_message"]
+                                )[0]
+                                await GetMessage(websocket, message_id, "applaud")
                             elif re.search(
                                 r"CQ:reply,id=\d+]加精", message["raw_message"]
                             ):
-                                message_id = re.search(
-                                    r"\d+", message["raw_message"]
-                                ).group()
-                                await SetEssenceMsg(websocket,message_id)
+                                message_id = re.findall(
+                                    r"CQ:reply,id=(\d+)", message["raw_message"]
+                                )[0]
+                                await SetEssenceMsg(websocket, message_id)
                             elif re.search(
                                 r"CQ:reply,id=\d+]移除加精", message["raw_message"]
                             ) and IsAdmin(user_id, group_id):
-                                message_id = re.search(
-                                    r"\d+", message["raw_message"]
-                                ).group()
-                                await DeleteEssenceMsg(websocket,message_id)
+                                message_id = re.findall(
+                                    r"CQ:reply,id=(\d+)", message["raw_message"]
+                                )[0]
+                                await DeleteEssenceMsg(websocket, message_id)
+                            elif re.search(r"CQ:reply,id=\d+]", message["raw_message"]):
+                                message_id = re.findall(
+                                    r"CQ:reply,id=(\d+)", message["raw_message"]
+                                )[0]
+                                if HasAllKeyWords(
+                                    message["raw_message"], ["看到", "了", "你们"]
+                                ):
+                                    await GetMessage(websocket, message_id, "so_cute")
 
                             # 新入群验证
                             if "{}_{}.jpg".format(user_id, group_id) in os.listdir(
@@ -634,11 +647,12 @@ async def echo(websocket):
                                                 "低保"
                                                 in message["message"][0]["data"]["text"]
                                             ):
-                                                await  poor_point(websocket,
-                                                            user_id,
-                                                            group_id,
-                                                        )
-                                            
+                                                await poor_point(
+                                                    websocket,
+                                                    user_id,
+                                                    group_id,
+                                                )
+
                                             elif (
                                                 "抽签"
                                                 in message["message"][0]["data"]["text"]
@@ -793,10 +807,8 @@ async def echo(websocket):
                                                 in message["message"][0]["data"]["text"]
                                             ):
                                                 await SellKohlrabiAll(
-                                                        websocket,
-                                                        user_id,
-                                                        group_id
-                                                    )
+                                                    websocket, user_id, group_id
+                                                )
                                             elif (
                                                 "梗图二十"
                                                 in message["message"][0]["data"]["text"]
@@ -835,14 +847,14 @@ async def echo(websocket):
 
                                                 else:
                                                     nums = num
-                                                    for i in range(
-                                                        math.trunc(nums / 20.0)
-                                                    ):
-                                                        await send_meme_merge_forwarding(
-                                                            websocket, group_id, 20
-                                                        )
                                                     if nums > 20:
-                                                        await send_meme_merge_forwarding(
+                                                        for i in range(
+                                                            math.trunc(nums / 20.0)
+                                                        ):
+                                                            await send_meme_merge_forwarding(
+                                                                websocket, group_id, 20
+                                                            )
+                                                    await send_meme_merge_forwarding(
                                                             websocket,
                                                             group_id,
                                                             nums % 20,
@@ -1144,6 +1156,33 @@ async def echo(websocket):
                                                 await websocket.send(
                                                     json.dumps(payload)
                                                 )
+                                            elif (
+                                                "喜报"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                text = re.findall(
+                                                    r"喜报.*?([\u4e00-\u9fa5]+).*?",
+                                                    message["message"][0]["data"][
+                                                        "text"
+                                                    ],
+                                                )[0]
+                                                await SoHappy(websocket, group_id, text)
+                                            elif (
+                                                "悲报"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                text = re.findall(
+                                                    r"悲报.*?([\u4e00-\u9fa5]+).*?",
+                                                    message["message"][0]["data"][
+                                                        "text"
+                                                    ],
+                                                )[0]
+                                                await SoSad(websocket, group_id, text)
+                                            elif (
+                                                "答案之书"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                await AnswerBook(websocket,user_id, group_id)
                                             else:
                                                 await chat(
                                                     websocket,
@@ -1503,6 +1542,11 @@ async def echo(websocket):
                     dump_setting(setting)
                     print("更新群列表完毕")
                     logging.info("更新群列表完毕")
+                case "so_cute":
+                    # print(message)
+                    group_id = message["data"]["group_id"]
+                    sender_id = message["data"]["sender"]["user_id"]
+                    await SoCute(websocket, sender_id, group_id)
                 case "applaud":
                     sender_id = message["data"]["sender"]["user_id"]
                     message_id = message["data"]["message_id"]
@@ -1545,6 +1589,17 @@ async def echo(websocket):
                 print(message)
 
 
+# 要求全部在
+def HasAllKeyWords(text: str, key_words: list) -> bool:
+    for key_word in key_words:
+        if key_word in text:
+            pass
+        else:
+            return False
+    return True
+
+
+# 有一个关键词即可
 def HasKeyWords(text: str, key_words: list) -> bool:
     for key_word in key_words:
         if key_word in text:

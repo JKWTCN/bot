@@ -1,6 +1,6 @@
 import sqlite3
 import time
-from Class.Group_member import IsAdmin,get_user_name
+from Class.Group_member import IsAdmin, get_user_name
 import bot_database
 import tools
 import json
@@ -49,6 +49,17 @@ def update_group_info(
             ),
         )
         conn.commit()
+
+
+async def GetMessage(websocket,message_id:int,echo:str):
+    payload = {
+        "action": "get_msg",
+        "params": {
+            "message_id": message_id,
+        },
+        "echo": echo,
+    }
+    await websocket.send(json.dumps(payload))
 
 
 # 发送获取群名单
@@ -115,7 +126,7 @@ async def kick_member(websocket, user_id: int, group_id: int):
 
 # 发群低保
 async def poor_point(websocket, user_id: int, group_id: int):
-    sender_name=get_user_name(user_id,group_id)
+    sender_name = get_user_name(user_id, group_id)
     now_point = bot_database.find_point(user_id)
     if now_point <= 0:
         conn = sqlite3.connect("bot.db")
