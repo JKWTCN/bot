@@ -331,7 +331,7 @@ async def echo(websocket):
                                                     {
                                                         "type": "text",
                                                         "data": {
-                                                            "text": "不要随便艾特☁️喵。"
+                                                            "text": ",不要随便艾特☁️喵。"
                                                         },
                                                     },
                                                 ],
@@ -368,7 +368,7 @@ async def echo(websocket):
                                     r"CQ:reply,id=(\d+)", message["raw_message"]
                                 )[0]
                                 if HasAllKeyWords(
-                                    message["raw_message"], ["看到", "了", "你"]
+                                    message["raw_message"], ["看到", "了","你"]
                                 ):
                                     await GetMessage(websocket, message_id, "so_cute")
 
