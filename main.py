@@ -85,6 +85,13 @@ from tools import (
     GetLogTime,
     GetSleepSeconds,
     GetSystemInfoTable,
+    HasKeyWords,
+    say,
+    HasAllKeyWords,
+    SayAndAt,
+    FindNum,
+    SayPrivte,
+    delete_msg,
 )
 from vcode import (
     check_validation_timeout,
@@ -1617,76 +1624,6 @@ async def echo(websocket):
                         print(message)
             else:
                 print(message)
-
-
-# 要求全部在
-def HasAllKeyWords(text: str, key_words: list) -> bool:
-    for key_word in key_words:
-        if key_word in text:
-            pass
-        else:
-            return False
-    return True
-
-
-# 有一个关键词即可
-def HasKeyWords(text: str, key_words: list) -> bool:
-    for key_word in key_words:
-        if key_word in text:
-            return True
-    return False
-
-
-async def SayPrivte(websocket, user_id: int, text: str):
-    payload = {
-        "action": "send_msg",
-        "params": {
-            "user_id": user_id,
-            "message": text,
-        },
-    }
-    await websocket.send(json.dumps(payload))
-
-
-async def say(websocket, group_id: int, text: str):
-    payload = {
-        "action": "send_msg",
-        "params": {
-            "group_id": group_id,
-            "message": text,
-        },
-    }
-    await websocket.send(json.dumps(payload))
-
-
-async def SayAndAt(websocket, user_id: int, group_id: int, text: str):
-    payload = {
-        "action": "send_msg",
-        "params": {
-            "group_id": group_id,
-            "message": [
-                {"type": "at", "data": {"qq": user_id}},
-                {"type": "text", "data": {"text": text}},
-            ],
-        },
-    }
-    await websocket.send(json.dumps(payload))
-
-
-async def delete_msg(websocket, message_id: int):
-    payload = {
-        "action": "delete_msg",
-        "params": {
-            "message_id": message_id,
-        },
-    }
-    await websocket.send(json.dumps(payload))
-
-
-def FindNum(text: str):
-    result = re.search(r"\d+", text)
-    num = int(result.group())
-    return num
 
 
 # def beijing(sec, what):

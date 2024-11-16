@@ -13,6 +13,78 @@ def GetSleepSeconds():
     return rest_seconds
 
 
+# 要求全部在
+def HasAllKeyWords(text: str, key_words: list) -> bool:
+    for key_word in key_words:
+        if key_word in text:
+            pass
+        else:
+            return False
+    return True
+
+
+# 有一个关键词即可
+def HasKeyWords(text: str, key_words: list) -> bool:
+    for key_word in key_words:
+        if key_word in text:
+            return True
+    return False
+
+
+async def SayPrivte(websocket, user_id: int, text: str):
+    payload = {
+        "action": "send_msg",
+        "params": {
+            "user_id": user_id,
+            "message": text,
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+async def say(websocket, group_id: int, text: str):
+    payload = {
+        "action": "send_msg",
+        "params": {
+            "group_id": group_id,
+            "message": text,
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+async def SayAndAt(websocket, user_id: int, group_id: int, text: str):
+    payload = {
+        "action": "send_msg",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "at", "data": {"qq": user_id}},
+                {"type": "text", "data": {"text": text}},
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+async def delete_msg(websocket, message_id: int):
+    payload = {
+        "action": "delete_msg",
+        "params": {
+            "message_id": message_id,
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+def FindNum(text: str):
+    import re
+
+    result = re.search(r"\d+", text)
+    num = int(result.group())
+    return num
+
+
 # 获取系统状态
 def ShowSystemInfoTableByBase64():
     import matplotlib.pyplot as plt
@@ -220,4 +292,4 @@ def GetDirSizeByUnit(path="."):
                 return (round(MBX / 1024, 2), "GB")
 
 
-ShowSystemInfoTableByBase64()
+# ShowSystemInfoTableByBase64()
