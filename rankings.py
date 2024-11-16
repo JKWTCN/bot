@@ -6,6 +6,8 @@ from Class.Group_member import get_user_info, is_in_group
 from Class.Ranking import Ranking
 from Class.User_point import User_point
 
+import json
+
 
 class Type(Enum):
     point_max = 1
@@ -77,7 +79,7 @@ def find_points_ranking():
         return (True, points_list)
 
 
-def ranking_point_payload(group_id: int):
+async def ranking_point_payload(websocket, group_id: int):
     payload = {
         "action": "send_msg",
         "params": {
@@ -144,7 +146,7 @@ def ranking_point_payload(group_id: int):
             },
         )
     # print(payload)
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # print(find_value(1)[1].max_value)

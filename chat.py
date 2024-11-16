@@ -1,9 +1,12 @@
+import json
 from venv import logger
 import requests
 
+from Class.Group_member import get_user_name
+
 
 # chat内容转发给大模型
-def chat(group_id: int, nick_name: str, text: str):
+async def chat(websocket, group_id: int, nick_name: str, text: str):
     port = "11434"
     url = f"http://localhost:{port}/api/chat"
     model = "qwen2.5:0.5b"
@@ -43,7 +46,7 @@ def chat(group_id: int, nick_name: str, text: str):
             "message": "{},{}".format(nick_name, re_text),
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # ollama run qwen2.5:0.5b

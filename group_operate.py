@@ -2,9 +2,20 @@ import sqlite3
 import time
 import bot_database
 import tools
+import json
+
+
+# 发送获取群名单
+async def get_group_list(websocket, group_id: int):
+    payload = {
+        "action": "get_group_list",
+        "echo": "get_group_list",
+    }
+    await websocket.send(json.dumps(payload))
+
 
 # 发送获取群友名单
-def get_group_member_list(group_id: int):
+async def get_group_member_list(websocket, group_id: int):
     payload = {
         "action": "get_group_member_list",
         "params": {
@@ -12,51 +23,51 @@ def get_group_member_list(group_id: int):
         },
         "echo": "update_group_member_list",
     }
-    return payload
+    await websocket.send(json.dumps(payload))
+
+
 # 设置群聊精华信息
-def SetEssenceMsg(message_id: int):
+async def SetEssenceMsg(websocket, message_id: int):
     payload = {
         "action": "set_essence_msg",
         "params": {
             "message_id": message_id,
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
+
 
 # 移除群聊精华信息
-def DeleteEssenceMsg(message_id: int):
+async def DeleteEssenceMsg(websocket, message_id: int):
     payload = {
         "action": "delete_essence_msg",
         "params": {
             "message_id": message_id,
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # 全体禁言
-def SetGroupWholeBan(group_id: int):
+async def SetGroupWholeBan(websocket, group_id: int):
     payload = {
         "action": "set_group_whole_ban",
-        "params": {
-            "group_id": group_id,
-            "enable":True
-        },
+        "params": {"group_id": group_id, "enable": True},
     }
-    return payload
-#解除全体禁言
-def SetGroupWholeNoBan(group_id: int):
+    await websocket.send(json.dumps(payload))
+
+
+# 解除全体禁言
+async def SetGroupWholeNoBan(websocket, group_id: int):
     payload = {
         "action": "set_group_whole_ban",
-        "params": {
-            "group_id": group_id,
-            "enable":False
-        },
+        "params": {"group_id": group_id, "enable": False},
     }
-    return payload
+    await websocket.send(json.dumps(payload))
+
 
 # 踢人
-def kick_member(user_id: int, group_id: int):
+async def kick_member(websocket, user_id: int, group_id: int):
     payload = {
         "action": "set_group_kick",
         "params": {
@@ -65,10 +76,11 @@ def kick_member(user_id: int, group_id: int):
         },
     }
     # print(payload)
-    return payload
+    await websocket.send(json.dumps(payload))
+
 
 # 发群低保
-def poor_point(user_id: int, group_id: int, sender_name: str):
+async def poor_point(websocket, user_id: int, group_id: int, sender_name: str):
     now_point = bot_database.find_point(user_id)
     if now_point <= 0:
         conn = sqlite3.connect("bot.db")
@@ -145,4 +157,4 @@ def poor_point(user_id: int, group_id: int, sender_name: str):
                 "message": "{},你不符合群低保领取条件。".format(sender_name),
             },
         }
-    return payload
+    await websocket.send(json.dumps(payload))

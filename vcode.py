@@ -6,6 +6,7 @@ import sqlite3
 import time
 import os
 import logging
+import json
 
 
 # 创建验证码并写入数据库
@@ -176,7 +177,7 @@ def verify(user_id: int, group_id: int, text: str):
 
 
 # 验证的说辞
-def welcome_verify(user_id: int, group_id: int):
+async def welcome_verify(websocket, user_id: int, group_id: int):
     (mod, times) = find_vcode(user_id, group_id)
     if not mod:
         create_vcode(user_id, group_id)
@@ -207,7 +208,7 @@ def welcome_verify(user_id: int, group_id: int):
             ],
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # 检测是否验证超时

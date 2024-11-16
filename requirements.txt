@@ -4,3 +4,6 @@ captcha
 numpy
 matplotlib
 tushare
+plottable
+requests_html
+lxml_html_clean

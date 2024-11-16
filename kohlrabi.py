@@ -5,6 +5,7 @@ import time
 import sqlite3
 from Class.Group_member import get_user_name
 from tools import load_setting, dump_setting
+import json
 
 
 # B股股指
@@ -134,7 +135,7 @@ def ChangeMyKohlrabi(user_id: int, group_id: int, nums: int):
 
 
 # 梭哈
-def ShowHand(user_id: int, group_id: int):
+async def ShowHand(websocket, user_id: int, group_id: int):
     from bot_database import change_point, find_point
     import math
 
@@ -187,11 +188,11 @@ def ShowHand(user_id: int, group_id: int):
                 ],
             },
         }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # 购买大头菜
-def BuyKohlrabi(user_id: int, group_id: int, num: int):
+async def BuyKohlrabi(websocket, user_id: int, group_id: int, num: int):
     from bot_database import change_point, find_point
 
     now_num = GetMyKohlrabi(user_id, group_id)
@@ -242,7 +243,7 @@ def BuyKohlrabi(user_id: int, group_id: int, num: int):
                 ],
             },
         }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # 获取大头菜相关统计信息
@@ -282,7 +283,7 @@ def UpdateRecordKohlrabi(
 
 
 # 售出大头菜
-def SellKohlrabi(user_id: int, group_id: int, num: int):
+async def SellKohlrabi(websocket, user_id: int, group_id: int, num: int):
     now_num = GetMyKohlrabi(user_id, group_id)
     if now_num > 0 and num <= now_num:
         from bot_database import change_point, find_point
@@ -329,7 +330,7 @@ def SellKohlrabi(user_id: int, group_id: int, num: int):
                 ],
             },
         }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # print(GetDogeCoinV2())

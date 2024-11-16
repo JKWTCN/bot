@@ -141,7 +141,9 @@ def updata_user_info(group_member: Group_member):
     # print(is_had)
 
 
-def get_group_member_list_payload(group_id: int):
+async def get_group_member_list_payload(websocket, group_id: int):
+    import json
+
     payload = {
         "action": "get_group_member_list",
         "params": {
@@ -149,4 +151,4 @@ def get_group_member_list_payload(group_id: int):
         },
         "echo": "update_group_member_list",
     }
-    return payload
+    await websocket.send(json.dumps(payload))

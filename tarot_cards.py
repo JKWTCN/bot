@@ -1,9 +1,10 @@
 import requests
 from random import choice
+import json
 
 
 # 看世界
-def photo_new(user_id: int, group_id: int):
+async def photo_new(websocket, user_id: int, group_id: int):
     r = requests.get("https://api.tangdouz.com/60.php")
     payload = {
         "action": "send_msg",
@@ -15,11 +16,11 @@ def photo_new(user_id: int, group_id: int):
             ],
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # 日报
-def daily_paper(user_id: int, group_id: int):
+async def daily_paper(websocket, user_id: int, group_id: int):
     r = requests.get("https://api.tangdouz.com/a/60/")
     payload = {
         "action": "send_msg",
@@ -31,7 +32,7 @@ def daily_paper(user_id: int, group_id: int):
             ],
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # 塔罗牌
@@ -42,7 +43,7 @@ def get_tarot_cards():
 
 
 # 涩涩
-def get_cos(user_id: int, group_id: int):
+async def get_cos(websocket, user_id: int, group_id: int):
     r = requests.get("https://api.tangdouz.com/hlxmt.php")
     text = r.text.split("±")
     text = list(filter(None, text))
@@ -65,11 +66,11 @@ def get_cos(user_id: int, group_id: int):
             {"type": "image", "data": {"file": text[i][4:]}},
         )
     print(payload)
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # 随机一言
-def one_word(user_id: int, group_id: int):
+async def one_word(websocket, user_id: int, group_id: int):
     url_list = [
         "https://api.tangdouz.com/aqgy.php",
         "https://api.tangdouz.com/sjyy.php",
@@ -90,11 +91,11 @@ def one_word(user_id: int, group_id: int):
             ],
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # 随机三次元图片
-def radom_real(user_id: int, group_id: int):
+async def radom_real(websocket, user_id: int, group_id: int):
     url1 = requests.get("https://api.tangdouz.com/mn.php")
     url2 = requests.get(
         choice(["https://api.tangdouz.com/mt.php", "https://api.tangdouz.com/mt1.php"])
@@ -110,11 +111,11 @@ def radom_real(user_id: int, group_id: int):
             ],
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # 随机二次元图片
-def radom_waifu(user_id: int, group_id: int):
+async def radom_waifu(websocket, user_id: int, group_id: int):
     r = requests.get("https://api.tangdouz.com/abz/dm.php")
     payload = {
         "action": "send_msg",
@@ -126,11 +127,11 @@ def radom_waifu(user_id: int, group_id: int):
             ],
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # 每日一言
-def daily_word(user_id: int, group_id: int):
+async def daily_word(websocket, user_id: int, group_id: int):
     r = requests.get("https://api.tangdouz.com/a/perday.php")
     # print(r.text)
     text = r.text.split("±")
@@ -154,11 +155,11 @@ def daily_word(user_id: int, group_id: int):
         },
     }
     # print(payload)
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # 塔罗牌
-def return_trarot_cards(user_id: int, group_id: int):
+async def return_trarot_cards(websocket, user_id: int, group_id: int):
     text = get_tarot_cards()
     payload = {
         "action": "send_msg",
@@ -183,11 +184,11 @@ def return_trarot_cards(user_id: int, group_id: int):
         },
     }
     # print(payload)
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # 抽签
-def drawing(user_id: int, group_id: int):
+async def drawing(websocket, user_id: int, group_id: int):
     r = requests.get("https://api.tangdouz.com/a/ccscq.php")
     # print(r.text)
     payload = {
@@ -204,7 +205,7 @@ def drawing(user_id: int, group_id: int):
         },
     }
     # print(payload)
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # return_trarot_cards()

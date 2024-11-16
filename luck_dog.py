@@ -9,6 +9,7 @@ import numpy as np
 from tools import GetNowDay, load_setting
 from rankings import update_value
 import sqlite3
+import json
 
 choice_list = [200, 100, 50, 10, -10, -20, 444, 555, 666, 777]
 choice_probability = [
@@ -76,7 +77,7 @@ def ys_simple(ys):
 
 
 # 运势详情
-def luck_dog(use_id: int, sender_name: str, group_id: int):
+async def luck_dog(websocket, use_id: int, sender_name: str, group_id: int):
     payload = {
         "action": "send_msg",
         "params": {
@@ -87,11 +88,11 @@ def luck_dog(use_id: int, sender_name: str, group_id: int):
             ),
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # 私聊抽奖
-def LuckChoiceMutPrivate(user_id: int, nums: int):
+async def LuckChoiceMutPrivate(websocket, user_id: int, nums: int):
     group_id = 0
     setting = load_setting()
     payload = {
@@ -188,7 +189,7 @@ def LuckChoiceMutPrivate(user_id: int, nums: int):
                     }
                 )
                 update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
-                return payload
+                await websocket.send(json.dumps(payload))
         payload["params"]["message"].append(
             {
                 "type": "text",
@@ -231,10 +232,12 @@ def LuckChoiceMutPrivate(user_id: int, nums: int):
             }
         )
     update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
-def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
+async def luck_choice_mut(
+    websocket, user_id: int, sender_name: str, group_id: int, nums: int
+):
     setting = load_setting()
     payload = {
         "action": "send_msg",
@@ -254,7 +257,7 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
                 },
             }
         )
-        return payload
+        await websocket.send(json.dumps(payload))
     luck_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     start_point = bot_database.find_point(user_id)
     now_point = start_point
@@ -365,7 +368,7 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
                     update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
                     if group_id not in setting["sepcial_group"]:
                         ChangeGameblingTimesToday(user_id, group_id, today_num, today)
-                    return payload
+                    await websocket.send(json.dumps(payload))
         payload["params"]["message"].append(
             {
                 "type": "text",
@@ -422,12 +425,12 @@ def luck_choice_mut(user_id: int, sender_name: str, group_id: int, nums: int):
             }
         )
     update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # 5积分抽一次
 # 200(0.025) 100(0.05) 50(0.10) 10(0.20) -10(0.5) 10*(0.001) 0*(0.001)
-def luck_choice(user_id: int, sender_name: str, group_id: int):
+async def luck_choice(websocket, user_id: int, sender_name: str, group_id: int):
     now_point = bot_database.find_point(user_id)
     if now_point >= 5:
         bot_database.add_gambling_times(user_id, 1)
@@ -485,7 +488,7 @@ def luck_choice(user_id: int, sender_name: str, group_id: int):
             },
         }
     # print(payload)
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 def open_chart_by_base64(user_id: int, group_id: int, x, y):

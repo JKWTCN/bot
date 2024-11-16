@@ -1,5 +1,6 @@
 import random
 import bot_database
+import json
 
 
 # @return (x,y)
@@ -32,7 +33,7 @@ def pro_str(message: str):
         return (x, y)
 
 
-def russian_pve_shot(user_id: int, group_id: int,nick_name:str):
+async def russian_pve_shot(websocket, user_id: int, group_id: int, nick_name: str):
     now_shots = bot_database.check_russian_pve(user_id)
     if now_shots == -1:
         payload = {
@@ -48,7 +49,7 @@ def russian_pve_shot(user_id: int, group_id: int,nick_name:str):
                 ],
             },
         }
-        return payload
+        await websocket.send(json.dumps(payload))
     now_choice = random.randint(1, now_shots)
     # 自己开枪中枪了
     if now_choice == 1:
@@ -67,12 +68,12 @@ def russian_pve_shot(user_id: int, group_id: int,nick_name:str):
                 ],
             },
         }
-        bot_database.change_point(user_id,group_id, 0)
+        bot_database.change_point(user_id, group_id, 0)
         bot_database.delete_russian_pve(user_id)
-        return payload
-    now_shots=now_shots-1
+        await websocket.send(json.dumps(payload))
+    now_shots = now_shots - 1
     now_choice = random.randint(1, now_shots)
-     # 乐可开枪中枪了
+    # 乐可开枪中枪了
     if now_choice == 1:
         payload = {
             "action": "send_msg",
@@ -82,44 +83,47 @@ def russian_pve_shot(user_id: int, group_id: int,nick_name:str):
                     {"type": "at", "data": {"qq": user_id}},
                     {
                         "type": "text",
-                        "data": {
-                            "text": ",你开了一枪未中,乐可开了一枪，中了。"
-                        },
+                        "data": {"text": ",你开了一枪未中,乐可开了一枪，中了。"},
                     },
                     {
                         "type": "text",
                         "data": {
-                            "text": "\n乐可:怎么可能，你一定是作弊了喵！(恭喜{}赢了，积分翻倍)".format(nick_name)
+                            "text": "\n乐可:怎么可能，你一定是作弊了喵！(恭喜{}赢了，积分翻倍)".format(
+                                nick_name
+                            )
                         },
                     },
                 ],
             },
         }
-        bot_database.change_point(user_id, group_id,bot_database.find_point(user_id)*10)
+        bot_database.change_point(
+            user_id, group_id, bot_database.find_point(user_id) * 10
+        )
         bot_database.delete_russian_pve(user_id)
-        return payload
-    now_shots=now_shots-1
+        await websocket.send(json.dumps(payload))
+    now_shots = now_shots - 1
     bot_database.changed_russian_pve(user_id, now_shots)
     payload = {
-            "action": "send_msg",
-            "params": {
-                "group_id": group_id,
-                "message": [
-                    {"type": "at", "data": {"qq": user_id}},
-                    {
-                        "type": "text",
-                        "data": {
-                            "text": "你开了一枪，未中；乐可开了一枪，未中。剩余子弹:{}".format(now_shots)
-                        },
+        "action": "send_msg",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "at", "data": {"qq": user_id}},
+                {
+                    "type": "text",
+                    "data": {
+                        "text": "你开了一枪，未中；乐可开了一枪，未中。剩余子弹:{}".format(
+                            now_shots
+                        )
                     },
-                ],
-            },
-        }
-    return payload
-    
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
 
 
-def russian_pve(user_id: int, group_id: int,nick_name:str):
+async def russian_pve(websocket, user_id: int, group_id: int, nick_name: str):
     if bot_database.find_point(user_id) > 0:
         now_shots = bot_database.check_russian_pve(user_id)
         if now_shots == -1:
@@ -132,7 +136,9 @@ def russian_pve(user_id: int, group_id: int,nick_name:str):
                         {
                             "type": "text",
                             "data": {
-                                "text": "\n{},拔枪吧！午时已到！乐可可是第一神枪手喵！".format(nick_name)
+                                "text": "\n{},拔枪吧！午时已到！乐可可是第一神枪手喵！".format(
+                                    nick_name
+                                )
                             },
                         },
                     ],
@@ -146,7 +152,11 @@ def russian_pve(user_id: int, group_id: int,nick_name:str):
                     "message": [
                         {
                             "type": "text",
-                            "data": {"text": "{},你已经在乐可在决斗了喵，快开抢吧！".format(nick_name)},
+                            "data": {
+                                "text": "{},你已经在乐可在决斗了喵，快开抢吧！".format(
+                                    nick_name
+                                )
+                            },
                         },
                     ],
                 },
@@ -159,16 +169,20 @@ def russian_pve(user_id: int, group_id: int,nick_name:str):
                 "message": [
                     {
                         "type": "text",
-                        "data": {"text": "{},没积分？没积分不要来挑战乐可喵。".format(nick_name)},
+                        "data": {
+                            "text": "{},没积分？没积分不要来挑战乐可喵。".format(
+                                nick_name
+                            )
+                        },
                     },
                 ],
             },
         }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 #
-def russian(message: str, user_id: int, group_id: int):
+async def russian(websocket, message: str, user_id: int, group_id: int):
     (bullet, point) = pro_str(message)
     if bullet == -1 or point == -1:
         payload = {
@@ -251,5 +265,4 @@ def russian(message: str, user_id: int, group_id: int):
                     ],
                 },
             }
-    return payload
-
+    await websocket.send(json.dumps(payload))

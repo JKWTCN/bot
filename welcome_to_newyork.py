@@ -1,6 +1,8 @@
 import base64
+import json
 
-def return_function(user_id: int, group_id: int):
+
+async def return_function(websocket, user_id: int, group_id: int):
     with open("res/function.png", "rb") as image_file:
         image_data = image_file.read()
     image_base64 = base64.b64encode(image_data)
@@ -17,17 +19,18 @@ def return_function(user_id: int, group_id: int):
             ],
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
-def ban_new(user_id: int, group_id: int, duration: int):
+async def ban_new(websocket, user_id: int, group_id: int, duration: int):
     payload = {
         "action": "set_group_ban",
         "params": {"group_id": group_id, "user_id": user_id, "duration": duration},
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
-def new_group_vcode(user_id: int, group_id: int):
+
+async def new_group_vcode(websocket, user_id: int, group_id: int):
     with open("vcode/{}.jpg".format(user_id), "rb") as image_file:
         image_data = image_file.read()
     image_base64 = base64.b64encode(image_data)
@@ -40,7 +43,7 @@ def new_group_vcode(user_id: int, group_id: int):
                 {
                     "type": "text",
                     "data": {
-                        "text": "验证码已发送，请输入验证码,注意是全大写字符喵。你有三次机会回答喵。如果看不清，请说\"乐可，看不清\"，乐可会给你换一张验证码喵！"
+                        "text": '验证码已发送，请输入验证码,注意是全大写字符喵。你有三次机会回答喵。如果看不清，请说"乐可，看不清"，乐可会给你换一张验证码喵！'
                     },
                 },
                 {
@@ -50,9 +53,10 @@ def new_group_vcode(user_id: int, group_id: int):
             ],
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
-def welcome_new(user_id: int, group_id: int):
+
+async def welcome_new(websocket, user_id: int, group_id: int):
     with open("res/welcome.jpg", "rb") as image_file:
         image_data = image_file.read()
     image_base64 = base64.b64encode(image_data)
@@ -75,10 +79,10 @@ def welcome_new(user_id: int, group_id: int):
             ],
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
-def welcom_new_no_admin(user_id: int, group_id: int):
+async def welcom_new_no_admin(websocket, user_id: int, group_id: int):
     with open("res/welcome.jpg", "rb") as image_file:
         image_data = image_file.read()
     image_base64 = base64.b64encode(image_data)
@@ -99,10 +103,10 @@ def welcom_new_no_admin(user_id: int, group_id: int):
             ],
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
-def leave(user_id: int, group_id: int):
+async def leave(websocket, user_id: int, group_id: int):
     payload = {
         "action": "send_msg",
         "params": {
@@ -115,12 +119,12 @@ def leave(user_id: int, group_id: int):
             ],
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
-def get_qunyou_message(user_id: int, group_id: int):
+async def get_qunyou_message(websocket, user_id: int, group_id: int):
     payload = {
         "action": "get_group_member_info ",
         "params": {"group_id": group_id, "user_id": user_id},
     }
-    return payload
+    await websocket.send(json.dumps(payload))

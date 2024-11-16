@@ -1,10 +1,10 @@
 import base64
 import sqlite3
 from tools import GetNowDay
-import logging
 import matplotlib.pyplot as plt
 from plottable import Table
 import pandas as pd
+import json
 
 
 # 群友水群次数表格
@@ -25,7 +25,7 @@ def ShowTableByBase64(data):
 
 
 # 统计生涯水群次数
-def GetLifeChatRecord(group_id: int):
+async def GetLifeChatRecord(websocket, group_id: int):
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
     cur.execute(
@@ -35,7 +35,7 @@ def GetLifeChatRecord(group_id: int):
     data = cur.fetchall()
     num: int = 0
     if len(data) == 0:
-        return payload
+        await websocket.send(json.dumps(payload))
     elif len(data) <= 30:
         num = len(data)
     else:
@@ -63,21 +63,24 @@ def GetLifeChatRecord(group_id: int):
             },
         }
     )
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # 统计今日水群次数
-def GetNowChatRecord(group_id: int):
+async def GetNowChatRecord(websocket, group_id: int):
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
     cur.execute(
         "SELECT user_id,today_num FROM ChatRecord WHERE group_id=? and today=? ORDER BY today_num DESC ;",
-        (group_id,GetNowDay(),),
+        (
+            group_id,
+            GetNowDay(),
+        ),
     )
     data = cur.fetchall()
     num: int = 0
     if len(data) == 0:
-        return payload
+        await websocket.send(json.dumps(payload))
     elif len(data) <= 30:
         num = len(data)
     else:
@@ -105,7 +108,7 @@ def GetNowChatRecord(group_id: int):
             },
         }
     )
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # 统计水群次数

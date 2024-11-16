@@ -34,7 +34,7 @@ def get_timestamp_week(timestamp) -> int:
 
 
 def load_setting():
-    with open("setting.json", "r") as file:
+    with open("setting.json", "r", encoding="utf-8") as file:
         setting = json.load(file)
     return setting
 
@@ -44,20 +44,22 @@ def dump_setting(setting: dict):
         json.dump(setting, f, ensure_ascii=False, indent=4)
 
 
-def red_qq_avatar():
-    return set_qq_avatar("res/leike_red.jpg")
+async def red_qq_avatar(websocket):
+    await set_qq_avatar(websocket, "res/leike_red.jpg")
 
 
-def nomoral_qq_avatar():
-    return set_qq_avatar("res/leike.jpg")
+async def nomoral_qq_avatar(
+    websocket,
+):
+    await set_qq_avatar(websocket, "res/leike.jpg")
 
 
-def set_qq_avatar(file_dir: str):
+async def set_qq_avatar(websocket, file_dir: str):
     payload = {
         "action": "set_qq_avatar",
         "params": {"file": "base64://" + open_img_by_base64(file_dir).decode("utf-8")},
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 def open_img_by_base64(path: str):

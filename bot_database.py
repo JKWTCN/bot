@@ -139,7 +139,7 @@ def write_message(message: json):
 
 
 # 充值积分
-def recharge(user_id: int, group_id: int, point: int):
+async def recharge(websocket, user_id: int, group_id: int, point: int):
     now_point = find_point(user_id)
     change_point(user_id, group_id, now_point + point)
     payload = {
@@ -149,11 +149,11 @@ def recharge(user_id: int, group_id: int, point: int):
             "message": "充值成功,积分{}->{}。".format(now_point, now_point + point),
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # 私聊充值积分
-def recharge_privte(user_id: int, group_id: int, point: int):
+async def recharge_privte(websocket, user_id: int, group_id: int, point: int):
     now_point = find_point(user_id)
     change_point(user_id, group_id, now_point + point)
     payload = {
@@ -163,7 +163,7 @@ def recharge_privte(user_id: int, group_id: int, point: int):
             "message": "充值成功,积分{}->{}。".format(now_point, now_point + point),
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 def changed_russian_pve(user_id: int, shots: int):
@@ -263,8 +263,9 @@ def ShowStatisticsTableByBase64(data, name: str):
     return base64.b64encode(image_data)
 
 
-def get_statistics(user_id: int, group_id: int):
+async def get_statistics(websocket, user_id: int, group_id: int):
     from Class.Group_member import get_user_name
+
     now_point = find_point(user_id)
     gambling_times = find_gambling_times(user_id)
     now_num = GetMyKohlrabi(user_id, group_id)
@@ -314,15 +315,15 @@ def get_statistics(user_id: int, group_id: int):
             "data": {
                 "file": "base64://"
                 + ShowStatisticsTableByBase64(
-                    data,get_user_name(user_id, group_id)
+                    data, get_user_name(user_id, group_id)
                 ).decode("utf-8")
             },
         }
     )
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
-def daily_check_in(user_id: int, sender_name: str, group_id: int):
+async def daily_check_in(websocket, user_id: int, sender_name: str, group_id: int):
     result = check_in(user_id, group_id)
     if result[0] == 1:
         payload = {
@@ -344,4 +345,4 @@ def daily_check_in(user_id: int, sender_name: str, group_id: int):
                 ),
             },
         }
-    return payload
+    await websocket.send(json.dumps(payload))

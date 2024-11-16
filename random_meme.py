@@ -4,9 +4,10 @@ import random
 from random import choice
 import glob
 from tools import GetDirSizeByUnit
+import json
 
 
-def MemeStatistics(group_id: int):
+async def MemeStatistics(websocket, group_id: int):
     all_file = find_all_file("../meme")
     num, unit = GetDirSizeByUnit("../meme")
     payload = {
@@ -23,7 +24,7 @@ def MemeStatistics(group_id: int):
             ],
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 def find_all_file(path: str):
@@ -35,7 +36,7 @@ def find_all_file(path: str):
     return s
 
 
-def twenty_random_meme(group_id: int):
+async def twenty_random_meme(websocket, group_id: int):
     payload = {
         "action": "send_msg",
         "params": {
@@ -59,10 +60,10 @@ def twenty_random_meme(group_id: int):
                 "data": {"file": "base64://" + image_base64.decode("utf-8")},
             }
         )
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
-def ten_random_meme(group_id: int):
+async def ten_random_meme(websocket, group_id: int):
     payload = {
         "action": "send_msg",
         "params": {
@@ -86,10 +87,10 @@ def ten_random_meme(group_id: int):
                 "data": {"file": "base64://" + image_base64.decode("utf-8")},
             }
         )
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
-def send_meme_merge_forwarding(group_id: int, nums: int):
+async def send_meme_merge_forwarding(websocket, group_id: int, nums: int):
     payload = {
         "action": "send_msg",
         "params": {
@@ -113,10 +114,10 @@ def send_meme_merge_forwarding(group_id: int, nums: int):
                 "data": {"file": "base64://" + image_base64.decode("utf-8")},
             }
         )
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
-def send_random_meme(group_id: int):
+async def send_random_meme(websocket, group_id: int):
     # s = find_all_file("./meme")
     # files = os.listdir("meme/unchoise")
     # path = "{}/{}".format("meme/unchoise", choice(files))
@@ -140,10 +141,10 @@ def send_random_meme(group_id: int):
             },
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
-def send_radom_http_cat(group_id: int):
+async def send_radom_http_cat(websocket, group_id: int):
     http_code = [
         100,
         101,
@@ -202,7 +203,7 @@ def send_radom_http_cat(group_id: int):
             },
         },
     }
-    return payload
+    await websocket.send(json.dumps(payload))
 
 
 # print(ten_random_meme(123))
