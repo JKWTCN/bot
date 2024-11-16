@@ -368,7 +368,7 @@ async def echo(websocket):
                                     r"CQ:reply,id=(\d+)", message["raw_message"]
                                 )[0]
                                 if HasAllKeyWords(
-                                    message["raw_message"], ["看到", "了", "你们"]
+                                    message["raw_message"], ["看到", "了", "你"]
                                 ):
                                     await GetMessage(websocket, message_id, "so_cute")
 
@@ -1168,8 +1168,10 @@ async def echo(websocket):
                                                     message["message"][0]["data"][
                                                         "text"
                                                     ],
-                                                )[0]
-                                                await SoHappy(websocket, group_id, text)
+                                                )
+                                                if len(text)!=0:
+                                                    text=text[0]
+                                                    await SoHappy(websocket, group_id, text)
                                             elif (
                                                 "悲报"
                                                 in message["message"][0]["data"]["text"]
@@ -1179,8 +1181,10 @@ async def echo(websocket):
                                                     message["message"][0]["data"][
                                                         "text"
                                                     ],
-                                                )[0]
-                                                await SoSad(websocket, group_id, text)
+                                                )
+                                                if len(text)!=0:
+                                                    text=text[0]
+                                                    await SoSad(websocket, group_id, text)
                                             elif (
                                                 "答案之书"
                                                 in message["message"][0]["data"]["text"]
