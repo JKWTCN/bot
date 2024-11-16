@@ -36,10 +36,10 @@ async def GetLifeChatRecord(websocket, group_id: int):
     num: int = 0
     if len(data) == 0:
         await websocket.send(json.dumps(payload))
-    elif len(data) <= 30:
+    elif len(data) <= 20:
         num = len(data)
     else:
-        num = 30
+        num = 20
     payload = {
         "action": "send_msg",
         "params": {
@@ -81,10 +81,10 @@ async def GetNowChatRecord(websocket, group_id: int):
     num: int = 0
     if len(data) == 0:
         await websocket.send(json.dumps(payload))
-    elif len(data) <= 30:
+    elif len(data) <= 20:
         num = len(data)
     else:
-        num = 30
+        num = 20
     payload = {
         "action": "send_msg",
         "params": {
