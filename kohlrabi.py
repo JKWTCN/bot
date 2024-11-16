@@ -283,6 +283,58 @@ def UpdateRecordKohlrabi(
 
 
 # 售出大头菜
+async def SellKohlrabiAll(websocket, user_id: int, group_id: int):
+    now_num = GetMyKohlrabi(user_id, group_id)
+    if now_num > 0:
+        from bot_database import change_point, find_point
+
+        num = now_num
+        now_point = find_point(user_id)
+        now_price = GetNowPrice()
+        (all_buy, all_buy_cost, all_sell, all_sell_price) = GetRecordKohlrabi(
+            user_id, group_id
+        )
+        get_point = round(now_price * num, 3)
+        change_point(user_id, group_id, now_point + get_point)
+        ChangeMyKohlrabi(user_id, group_id, now_num - num)
+        all_sell = all_sell + num
+        all_sell_price = round(all_sell_price + get_point, 3)
+        UpdateRecordKohlrabi(
+            user_id, group_id, all_buy, all_buy_cost, all_sell, all_sell_price
+        )
+        payload = {
+            "action": "send_msg",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": f"{get_user_name(user_id, group_id)},售出成功喵,单价{now_price},你的大头菜库存:{now_num}->{now_num - num},积分:{now_point}->{now_point + get_point}喵!"
+                        },
+                    },
+                ],
+            },
+        }
+    else:
+        payload = {
+            "action": "send_msg",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": f"{get_user_name(user_id, group_id)},大头菜数目不够喵,你当前的大头菜数目为:{now_num}个喵!"
+                        },
+                    },
+                ],
+            },
+        }
+    await websocket.send(json.dumps(payload))
+
+
+# 售出大头菜
 async def SellKohlrabi(websocket, user_id: int, group_id: int, num: int):
     now_num = GetMyKohlrabi(user_id, group_id)
     if now_num > 0 and num <= now_num:

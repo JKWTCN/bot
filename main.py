@@ -26,7 +26,7 @@ from bot_database import (
     write_message,
 )
 from chat import chat
-from kohlrabi import BuyKohlrabi, ClearKohlrabi, GetNowPrice, SellKohlrabi, ShowHand
+from kohlrabi import BuyKohlrabi, ClearKohlrabi, GetNowPrice, SellKohlrabi, ShowHand,SellKohlrabiAll
 import luck_dog
 from easter_egg import (
     cute,
@@ -347,18 +347,14 @@ async def echo(websocket):
                                 message_id = re.search(
                                     r"\d+", message["raw_message"]
                                 ).group()
-                                await websocket.send(
-                                    json.dumps(SetEssenceMsg(message_id))
-                                )
+                                await SetEssenceMsg(websocket,message_id)
                             elif re.search(
                                 r"CQ:reply,id=\d+]移除加精", message["raw_message"]
                             ) and IsAdmin(user_id, group_id):
                                 message_id = re.search(
                                     r"\d+", message["raw_message"]
                                 ).group()
-                                await websocket.send(
-                                    json.dumps(DeleteEssenceMsg(message_id))
-                                )
+                                await DeleteEssenceMsg(websocket,message_id)
 
                             # 新入群验证
                             if "{}_{}.jpg".format(user_id, group_id) in os.listdir(
@@ -792,7 +788,15 @@ async def echo(websocket):
                                                         group_id,
                                                         num,
                                                     )
-
+                                            elif (
+                                                "卖出全部"
+                                                in message["message"][0]["data"]["text"]
+                                            ):
+                                                await SellKohlrabiAll(
+                                                        websocket,
+                                                        user_id,
+                                                        group_id
+                                                    )
                                             elif (
                                                 "梗图二十"
                                                 in message["message"][0]["data"]["text"]
