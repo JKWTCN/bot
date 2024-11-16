@@ -369,7 +369,7 @@ async def echo(websocket):
                                 )[0]
                                 if HasAllKeyWords(
                                     message["raw_message"], ["看到", "了","你"]
-                                ):
+                                ) and HasKeyWords(message["raw_message"],["吗","嘛"]):
                                     await GetMessage(websocket, message_id, "so_cute")
 
                             # 新入群验证
