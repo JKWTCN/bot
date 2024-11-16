@@ -303,6 +303,7 @@ async def echo(websocket):
                                     user_id not in setting["developers_list"]
                                     and not IsAdmin(user_id, group_id)
                                     and BotIsAdmin(group_id)
+                                    and group_id == setting["admin_group_main"]
                                 ):
                                     await ban_new(websocket, user_id, group_id, 60)
                                     await say(
@@ -315,6 +316,7 @@ async def echo(websocket):
                                     user_id not in setting["developers_list"]
                                     and IsAdmin(user_id, group_id)
                                     and BotIsAdmin(group_id)
+                                    and group_id == setting["admin_group_main"]
                                 ):
                                     for i in range(100):
                                         time.sleep(0.1)
@@ -792,28 +794,31 @@ async def echo(websocket):
                                                 "卖出"
                                                 in message["message"][0]["data"]["text"]
                                             ):
-                                                num = FindNum(
-                                                    message["message"][0]["data"][
+                                                if (
+                                                    "全部"
+                                                    in message["message"][0]["data"][
                                                         "text"
                                                     ]
-                                                )
-                                                import math
-
-                                                num = math.trunc(num)
-                                                if num >= 1:
-                                                    await SellKohlrabi(
-                                                        websocket,
-                                                        user_id,
-                                                        group_id,
-                                                        num,
+                                                ):
+                                                    await SellKohlrabiAll(
+                                                        websocket, user_id, group_id
                                                     )
-                                            elif (
-                                                "卖出全部"
-                                                in message["message"][0]["data"]["text"]
-                                            ):
-                                                await SellKohlrabiAll(
-                                                    websocket, user_id, group_id
-                                                )
+                                                else:
+                                                    num = FindNum(
+                                                        message["message"][0]["data"][
+                                                            "text"
+                                                        ]
+                                                    )
+                                                    import math
+
+                                                    num = math.trunc(num)
+                                                    if num >= 1:
+                                                        await SellKohlrabi(
+                                                            websocket,
+                                                            user_id,
+                                                            group_id,
+                                                            num,
+                                                        )
                                             elif (
                                                 "梗图二十"
                                                 in message["message"][0]["data"]["text"]
