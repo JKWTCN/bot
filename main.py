@@ -628,8 +628,7 @@ async def echo(websocket):
                                                     group_id,
                                                 )
                                             elif (
-                                                "生涯水群排名"
-                                                in message["message"][0]["data"]["text"]
+                                                HasALLKeyWords(message["message"][0]["data"]["text"],["生涯","水群","排名"])
                                             ):
                                                 await GetLifeChatRecord(
                                                     websocket, group_id
