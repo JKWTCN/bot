@@ -13,6 +13,104 @@ def GetSleepSeconds():
     return rest_seconds
 
 
+# 获取系统状态
+def ShowSystemInfoTableByBase64():
+    import matplotlib.pyplot as plt
+    from plottable import Table
+    import pandas as pd
+    import base64
+    import psutil
+    import platform
+
+    plt.rcParams["font.sans-serif"] = ["Unifont"]  # 设置字体
+    plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
+    if platform.system() == "Linux":
+        info = platform.freedesktop_os_release()
+        data = {"项目": [], "值": []}
+        data["项目"].append("操作系统名称")
+        data["值"].append(info["NAME"])
+        data["项目"].append("操作系统版本")
+        data["值"].append(info["VERSION"])
+    # 获取计算机的处理器名称
+    data["项目"].append("处理器名称")
+    data["值"].append(platform.processor())
+    # 获取计算机的处理器架构
+    data["项目"].append("处理器架构")
+    data["值"].append(platform.architecture())
+    mem = psutil.virtual_memory()
+    # 系统总计内存
+    zj = float(mem.total) / 1024 / 1024
+    # 系统已经使用内存
+    ysy = float(mem.used) / 1024 / 1024
+    # 系统空闲内存
+    kx = float(mem.free) / 1024 / 1024
+    data["项目"].append("系统总计内存")
+    data["值"].append(f"{zj:.4f} MB")
+    data["项目"].append("系统已经使用内存")
+    data["值"].append(f"{ysy:.4f} MB")
+    data["项目"].append("系统空闲内存")
+    data["值"].append(f"{kx:.4f} MB")
+    # 查看cpu逻辑个数的信息
+    data["项目"].append("逻辑CPU个数")
+    data["值"].append(psutil.cpu_count())
+    # 查看cpu物理个数的信息
+    data["项目"].append("物理CPU个数")
+    data["值"].append(psutil.cpu_count(logical=False))
+    # CPU的使用率
+    cpu = (str(psutil.cpu_percent(1))) + "%"
+    data["项目"].append("CPU使用率")
+    data["值"].append((str(psutil.cpu_percent(1))) + "%")
+    dk = psutil.disk_usage("/")
+    # 总磁盘
+    total = dk.total / 1024 / 1024 / 1024
+    used = dk.used / 1024 / 1024 / 1024
+    free = dk.free / 1024 / 1024 / 1024
+    data["项目"].append("系统总计磁盘")
+    data["值"].append(f"{total:0.3f} GB")
+    data["项目"].append("系统已经使用磁盘")
+    data["值"].append(f"{used:0.3f} GB")
+    data["项目"].append("系统空闲磁盘")
+    data["值"].append(f"{free:0.3f} GB")
+    data["项目"].append("磁盘使用率")
+    data["值"].append(f"{dk.percent:0.1f}%")
+    # 发送数据包
+    data["项目"].append("发送数据字节")
+    data["值"].append(f"{psutil.net_io_counters().bytes_sent} bytes")
+    # 接收数据包
+    data["项目"].append("发送数据字节")
+    data["值"].append(f"{psutil.net_io_counters().bytes_recv} bytes")
+    table = pd.DataFrame(data)
+    table = table.set_index("项目")
+    fig, ax = plt.subplots()
+    Table(table)
+    plt.title("系统状态")
+    plt.savefig("figs/system_table.png", dpi=460)
+    # plt.show()
+    plt.close()
+    with open("figs/system_table.png", "rb") as image_file:
+        image_data = image_file.read()
+    return base64.b64encode(image_data)
+
+
+async def GetSystemInfoTable(websocket, group_id: int):
+    payload = {
+        "action": "send_msg",
+        "params": {
+            "group_id": group_id,
+            "message": [],
+        },
+    }
+    payload["params"]["message"].append(
+        {
+            "type": "image",
+            "data": {
+                "file": "base64://" + ShowSystemInfoTableByBase64().decode("utf-8")
+            },
+        }
+    )
+    await websocket.send(json.dumps(payload))
+
+
 def get_now_week() -> int:
     return int(time.strftime("%W"))
 
@@ -120,3 +218,6 @@ def GetDirSizeByUnit(path="."):
                 return (round(MBX, 2), "MB")
             else:
                 return (round(MBX / 1024, 2), "GB")
+
+
+ShowSystemInfoTableByBase64()

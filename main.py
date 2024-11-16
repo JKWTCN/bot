@@ -82,7 +82,7 @@ from tools import (
     nomoral_qq_avatar,
     red_qq_avatar,
     GetLogTime,
-    GetSleepSeconds,
+    GetSleepSeconds,GetSystemInfoTable
 )
 from vcode import (
     check_validation_timeout,
@@ -1190,6 +1190,10 @@ async def echo(websocket):
                                                 in message["message"][0]["data"]["text"]
                                             ):
                                                 await AnswerBook(websocket,user_id, group_id)
+                                            elif(
+                                                "status" in message["message"][0]["data"]["text"]
+                                            ):
+                                                await GetSystemInfoTable(websocket, group_id)
                                             else:
                                                 await chat(
                                                     websocket,
@@ -1480,7 +1484,7 @@ async def echo(websocket):
         elif "echo" in message:
             match message["echo"]:
                 case "update_group_member_list":
-                    print("{}:开始更新群友列表！".format(time.time()))
+                    print("{}:开始更新{}({})群友列表！".format(time.time(),))
                     for group_member in message["data"]:
                         user = Group_member()
                         user.init_by_dict(group_member)

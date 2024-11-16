@@ -9,17 +9,17 @@ import json
 
 # 群友水群次数表格
 def ShowTableByBase64(data):
-    # plt.rcParams["font.sans-serif"] = ["Unifont"]  # 设置字体
-    plt.rcParams["font.sans-serif"] = ["SimHei"]  # 设置字体
+    plt.rcParams["font.sans-serif"] = ["Unifont"]  # 设置字体
+    # plt.rcParams["font.sans-serif"] = ["SimHei"]  # 设置字体
     plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
     table = pd.DataFrame(data)
-    fig, ax = plt.subplots(figsize=(8, 8))
+    fig, ax = plt.subplots()
     table = table.set_index("排名")
     Table(table)
     plt.title("水群排名")
-    plt.savefig("figs/chat_table.jpg")
+    plt.savefig("figs/chat_table.png", dpi=460)
     plt.close()
-    with open("figs/chat_table.jpg", "rb") as image_file:
+    with open("figs/chat_table.png", "rb") as image_file:
         image_data = image_file.read()
     return base64.b64encode(image_data)
 
