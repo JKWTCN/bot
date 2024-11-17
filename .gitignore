@@ -12,3 +12,4 @@ setting.py
 setting.json
 private.py
 bot.db-journal
+find_github.sh
