@@ -467,7 +467,7 @@ async def echo(websocket):
                                                 websocket,
                                                 user_id,
                                                 group_id,
-                                                60,
+                                                0,
                                             )
                                         if (
                                             datetime.datetime.now().day == 25
