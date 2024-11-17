@@ -124,7 +124,7 @@ async def get_cos(websocket, user_id: int, group_id: int):
     )
     r = requests.get("https://api.vvhan.com/api/wallpaper/mobileGirl?type=json")
     json_data = json.loads(r.text)
-    if json_data.hasKey("url"):
+    if "url" in json_data:
         payload["params"]["message"].append(
             {"type": "image", "data": {"file": json_data["url"]}},
         )
@@ -133,7 +133,7 @@ async def get_cos(websocket, user_id: int, group_id: int):
     )
     r = requests.get("https://api.vvhan.com/api/wallpaper/pcGirl?type=json")
     json_data = json.loads(r.text)
-    if json_data.hasKey("url"):
+    if "url" in json_data:
         payload["params"]["message"].append(
             {"type": "image", "data": {"file": json_data["url"]}},
         )
