@@ -1496,7 +1496,7 @@ async def echo(websocket):
                                     if datetime.datetime.now().hour > user[
                                         "time_hour"
                                     ] and not is_today(time.time(), user["time"]):
-                                        SayAndAt(
+                                        await SayAndAt(
                                             websocket,
                                             user["user_id"],
                                             user["group_id"],
