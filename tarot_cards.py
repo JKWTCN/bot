@@ -119,6 +119,24 @@ async def get_cos(websocket, user_id: int, group_id: int):
             {"type": "image", "data": {"file": text[i][4:]}},
         )
     print(payload)
+    payload["params"]["message"].append(
+        {"type": "text", "data": {"text": "随机手机分辨率美图\n"}},
+    )
+    r = requests.get("https://api.vvhan.com/api/wallpaper/mobileGirl?type=json")
+    json_data = json.loads(r.text)
+    if json_data.hasKey("url"):
+        payload["params"]["message"].append(
+            {"type": "image", "data": {"file": json_data["url"]}},
+        )
+    payload["params"]["message"].append(
+        {"type": "text", "data": {"text": "随机PC分辨率美图\n"}},
+    )
+    r = requests.get("https://api.vvhan.com/api/wallpaper/pcGirl?type=json")
+    json_data = json.loads(r.text)
+    if json_data.hasKey("url"):
+        payload["params"]["message"].append(
+            {"type": "image", "data": {"file": json_data["url"]}},
+        )
     await websocket.send(json.dumps(payload))
 
 

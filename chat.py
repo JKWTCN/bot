@@ -1,8 +1,15 @@
 import json
 from venv import logger
 import requests
-
+from tools import say
 from Class.Group_member import get_user_name
+
+
+# 讲笑话
+async def Joke(websocket, group_id):
+    r = requests.get("https://api.vvhan.com/api/text/joke")
+    print(r.text)
+    await say(websocket, group_id, r.text)
 
 
 # chat内容转发给大模型

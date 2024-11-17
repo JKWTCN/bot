@@ -25,7 +25,7 @@ from bot_database import (
     recharge_privte,
     write_message,
 )
-from chat import chat
+from chat import Joke, chat
 from kohlrabi import (
     BuyKohlrabi,
     ClearKohlrabi,
@@ -1217,6 +1217,8 @@ async def echo(websocket):
                                                 await GetSystemInfoTable(
                                                     websocket, group_id
                                                 )
+                                            elif HasKeyWords(raw_message, ["笑话"]):
+                                                await Joke(websocket, group_id)
                                             else:
                                                 await chat(
                                                     websocket,
