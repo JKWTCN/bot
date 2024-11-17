@@ -77,12 +77,27 @@ async def delete_msg(websocket, message_id: int):
     await websocket.send(json.dumps(payload))
 
 
+# 是否包含中文字符
+def HasChinese(text: str) -> bool:
+    import re
+
+    res = re.findall(r"([\u4e00-\u9fa5]+)", text)
+    if len(res) != 0:
+        return True
+    else:
+        return False
+
+
+# 寻找数字
 def FindNum(text: str):
     import re
 
     result = re.search(r"\d+", text)
-    num = int(result.group())
-    return num
+    if result != None:
+        num = int(result.group())
+        return num
+    else:
+        return 0
 
 
 # 获取系统状态
