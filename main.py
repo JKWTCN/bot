@@ -79,6 +79,7 @@ from tarot_cards import (
 )
 from tools import (
     dump_setting,
+    is_today,
     load_setting,
     nomoral_qq_avatar,
     red_qq_avatar,
@@ -1492,13 +1493,17 @@ async def echo(websocket):
                                 # 定期清理过期的大头菜
                                 ClearKohlrabi()
                                 for user in setting["alarm_member"]:
-                                    if datetime.datetime.now().hour == 8:
+                                    if datetime.datetime.now().hour > user[
+                                        "time_hour"
+                                    ] and not is_today(time.time(), user["time"]):
                                         SayAndAt(
                                             websocket,
-                                            user,
-                                            setting["admin_group_main"],
-                                            " 好似喵!!!愿原力与你同在喵!!!",
+                                            user["user_id"],
+                                            user["group_id"],
+                                            user["text"],
                                         )
+                                        setting["time"] = time.time()
+                                        dump_setting(setting)
                             case _:
                                 print(message)
                     else:

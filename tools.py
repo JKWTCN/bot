@@ -60,7 +60,7 @@ async def SayAndAt(websocket, user_id: int, group_id: int, text: str):
             "group_id": group_id,
             "message": [
                 {"type": "at", "data": {"qq": user_id}},
-                {"type": "text", "data": {"text": text}},
+                {"type": "text", "data": {"text": " " + text}},
             ],
         },
     }
