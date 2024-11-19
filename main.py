@@ -154,7 +154,7 @@ async def echo(websocket):
                             if IsAdmin(setting["bot_id"], group_id):
                                 # 如果是管理员就更新冷群
                                 UpdateColdGroup(
-                                    user_id, group_id, message["message_id"]
+                                    user_id, group_id, message["message_id"], message["raw_message"]
                                 )
                                 # 2%的概率派发50积分
                                 if random.random() < 0.02:

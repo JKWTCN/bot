@@ -1,7 +1,7 @@
 import json
 from venv import logger
 import requests
-from tools import dump_setting, load_setting, say, ReplySay
+from tools import HasKeyWords, dump_setting, load_setting, say, ReplySay
 from Class.Group_member import get_user_name
 import time
 
@@ -14,7 +14,7 @@ async def Joke(websocket, group_id):
 
 
 # 更新冷群状态
-def UpdateColdGroup(user_id: int, group_id: int, message_id: int):
+def UpdateColdGroup(user_id: int, group_id: int, message_id: int, raw_message: str):
     setting = load_setting()
     for group in setting["cold_group_king"]:
         if group["group_id"] == group_id:
@@ -23,6 +23,7 @@ def UpdateColdGroup(user_id: int, group_id: int, message_id: int):
             group["time"] = time.time()
             group["is_replay"] = False
             group["num"] += 1
+            group["raw_message"] = raw_message
             dump_setting(setting)
             return
     setting["cold_group_king"].append(
@@ -33,6 +34,7 @@ def UpdateColdGroup(user_id: int, group_id: int, message_id: int):
             "time": time.time(),
             "is_replay": False,
             "num": 0,
+            "raw_message": raw_message,
         }
     )
     dump_setting(setting)
@@ -64,6 +66,14 @@ def ColdChat(group: dict) -> str:
     user_id = group["user_id"]
     group_id = group["group_id"]
     num = group["num"]
+    raw_message = group["raw_message"]
+    if HasKeyWords(
+        raw_message,
+        [
+            "[CQ:image",
+        ],
+    ):
+        raw_message = ""
     nick_name = get_user_name(user_id, group_id)
     port = "11434"
     url = f"http://localhost:{port}/api/chat"
@@ -82,7 +92,7 @@ def ColdChat(group: dict) -> str:
             },
             {
                 "role": "User",
-                "content": f"在{nick_name}说话前,群友们聊了{num}句,聊的好火热,他一说话后大家就都不说话了,嘲笑嘲笑他。",
+                "content": f"在{nick_name}说话前,群友们聊了{num}句,他说的上一句话是:{raw_message},大家前面都聊的好火热,他一说话后大家就都不说话了,快狠狠地嘲笑嘲笑他。",
             },
         ],
     }
