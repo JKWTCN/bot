@@ -40,15 +40,15 @@ def UpdateColdGroup(user_id: int, group_id: int, message_id: int):
 async def ColdReplay(websocket):
     setting = load_setting()
     for group in setting["cold_group_king"]:
-        if group["is_replay"] == False and time.time() - group["time"] < 60 * 5:
-            group["is_replay"] = False
+        if group["is_replay"] == False and time.time() - group["time"] >= 60 * 5:
+            group["is_replay"] = True
             dump_setting(setting)
             name = get_user_name(group["user_id"], group["group_id"])
             await ReplySay(
                 websocket,
                 group["group_id"],
-                ColdChat(group["user_id"], group["group_id"]),
                 group["message_id"],
+                ColdChat(group["user_id"], group["group_id"]),
             )
 
 
