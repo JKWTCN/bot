@@ -22,17 +22,17 @@ def UpdateColdGroup(user_id: int, group_id: int, message_id: int):
             group["message_id"] = message_id
             group["time"] = time.time()
             group["is_replay"] = False
-        else:
-            setting["cold_group_king"].append(
-                {
-                    "group_id": group_id,
-                    "user_id": user_id,
-                    "message_id": message_id,
-                    "time": time.time(),
-                    "is_replay": False,
-                }
-            )
-        dump_setting(setting)
+            dump_setting(setting)
+            return
+    setting["cold_group_king"].append(
+        {
+            "group_id": group_id,
+            "user_id": user_id,
+            "message_id": message_id,
+            "time": time.time(),
+            "is_replay": False,
+        }
+    )
 
 
 # 检测是否冷群

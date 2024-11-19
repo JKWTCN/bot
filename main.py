@@ -1446,7 +1446,7 @@ async def echo(websocket):
                                         pass
                             case "heartbeat":
                                 # 冷群了回复
-                                await ColdReplay()
+                                await ColdReplay(websocket)
                                 if (
                                     time.time() - setting["thanos_time"] > 300
                                     and setting["is_thanos"]
