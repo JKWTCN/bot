@@ -1,7 +1,7 @@
 import json
 from venv import logger
 import requests
-from tools import dump_setting, load_setting, say
+from tools import dump_setting, load_setting, say, ReplySay
 from Class.Group_member import get_user_name
 import time
 
@@ -13,23 +13,26 @@ async def Joke(websocket, group_id):
     await say(websocket, group_id, r.text)
 
 
-# 更新水群状态
-def UpdateColdGroup(user_id: int, group_id: int):
+# 更新冷群状态
+def UpdateColdGroup(user_id: int, group_id: int, message_id: int):
     setting = load_setting()
     for group in setting["cold_group_king"]:
         if group["group_id"] == group_id:
             group["user_id"] = user_id
+            group["message_id"] = message_id
             group["time"] = time.time()
             group["is_replay"] = False
-    else:
-        setting["cold_group_king"].append(
-            {
-                "group_id": group_id,
-                "user_id": user_id,
-                "time": time.time(),
-                "is_replay": False,
-            }
-        )
+        else:
+            setting["cold_group_king"].append(
+                {
+                    "group_id": group_id,
+                    "user_id": user_id,
+                    "message_id": message_id,
+                    "time": time.time(),
+                    "is_replay": False,
+                }
+            )
+        dump_setting(setting)
 
 
 # 检测是否冷群
@@ -40,15 +43,19 @@ async def ColdReplay(websocket):
             group["is_replay"] = False
             dump_setting(setting)
             name = get_user_name(group["user_id"], group["group_id"])
-            await say(
+            await ReplySay(
                 websocket,
                 group["group_id"],
                 ColdChat(group["user_id"], group["group_id"]),
+                group["message_id"],
             )
 
 
 # chat内容转发给大模型
-def ColdChat(user_id: int, group_id: int) -> str:
+def ColdChat(
+    user_id: int,
+    group_id: int,
+) -> str:
     nick_name = get_user_name(user_id, group_id)
     port = "11434"
     url = f"http://localhost:{port}/api/chat"

@@ -4,6 +4,24 @@ import base64
 import json
 
 
+# 引用回复
+async def ReplySay(websocket, group_id: int, message_id: int, text: str):
+    payload = {
+        "action": "send_group_msg",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "reply", "data": {"id": message_id}},
+                {
+                    "type": "text",
+                    "data": {"text": text},
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
 # 获取到现在离明天6点的秒数
 def GetSleepSeconds():
     now = datetime.datetime.now()
