@@ -25,7 +25,7 @@ from bot_database import (
     recharge_privte,
     write_message,
 )
-from chat import Joke, chat
+from chat import ColdReplay, Joke, UpdateColdGroup, chat
 from kohlrabi import (
     BuyKohlrabi,
     ClearKohlrabi,
@@ -152,6 +152,8 @@ async def echo(websocket):
                             AddChatRecord(user_id, group_id)
                             logging.info(log)
                             if IsAdmin(setting["bot_id"], group_id):
+                                # 如果是管理员就更新冷群
+                                UpdateColdGroup(user_id, group_id)
                                 # 2%的概率派发50积分
                                 if random.random() < 0.02:
                                     now_point = find_point(user_id)
@@ -463,7 +465,6 @@ async def echo(websocket):
                                                     sender_name
                                                 ),
                                             )
-
                                             await ban_new(
                                                 websocket,
                                                 user_id,
@@ -1442,6 +1443,8 @@ async def echo(websocket):
                                     case _:
                                         pass
                             case "heartbeat":
+                                # 冷群了回复
+                                await ColdReplay()
                                 if (
                                     time.time() - setting["thanos_time"] > 300
                                     and setting["is_thanos"]
