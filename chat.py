@@ -33,6 +33,7 @@ def UpdateColdGroup(user_id: int, group_id: int, message_id: int):
             "is_replay": False,
         }
     )
+    dump_setting(setting)
 
 
 # 检测是否冷群
