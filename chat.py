@@ -22,6 +22,7 @@ def UpdateColdGroup(user_id: int, group_id: int, message_id: int):
             group["message_id"] = message_id
             group["time"] = time.time()
             group["is_replay"] = False
+            group["num"] += 1
             dump_setting(setting)
             return
     setting["cold_group_king"].append(
@@ -31,6 +32,7 @@ def UpdateColdGroup(user_id: int, group_id: int, message_id: int):
             "message_id": message_id,
             "time": time.time(),
             "is_replay": False,
+            "num": 0,
         }
     )
     dump_setting(setting)
@@ -40,7 +42,11 @@ def UpdateColdGroup(user_id: int, group_id: int, message_id: int):
 async def ColdReplay(websocket):
     setting = load_setting()
     for group in setting["cold_group_king"]:
-        if group["is_replay"] == False and time.time() - group["time"] >= 60 * 5:
+        if (
+            group["is_replay"] == False
+            and time.time() - group["time"] >= 60 * 5
+            and group["num"] > 5
+        ):
             group["is_replay"] = True
             dump_setting(setting)
             name = get_user_name(group["user_id"], group["group_id"])
@@ -48,15 +54,15 @@ async def ColdReplay(websocket):
                 websocket,
                 group["group_id"],
                 group["message_id"],
-                ColdChat(group["user_id"], group["group_id"]),
+                ColdChat(group),
             )
 
 
 # chat内容转发给大模型
-def ColdChat(
-    user_id: int,
-    group_id: int,
-) -> str:
+def ColdChat(group: dict) -> str:
+    user_id = group["user_id"]
+    group_id = group["group_id"]
+    num = group["num"]
     nick_name = get_user_name(user_id, group_id)
     port = "11434"
     url = f"http://localhost:{port}/api/chat"
@@ -75,7 +81,7 @@ def ColdChat(
             },
             {
                 "role": "User",
-                "content": f"{nick_name}导致本群聊冷群了,安慰安慰他。",
+                "content": f"在{nick_name}说话前,群友们聊了{num}句,聊的好火热,他一说话后大家就都不说话了,嘲笑嘲笑他。",
             },
         ],
     }
