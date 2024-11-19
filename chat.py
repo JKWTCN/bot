@@ -44,8 +44,9 @@ async def ColdReplay(websocket):
     for group in setting["cold_group_king"]:
         if (
             group["is_replay"] == False
-            and time.time() - group["time"] >= 60 * 5
-            and group["num"] > 5
+            and time.time() - group["time"]
+            >= setting["cold_group_king_setting"]["time_out"]
+            and group["num"] > setting["cold_group_king_setting"]["num_out"]
         ):
             group["is_replay"] = True
             dump_setting(setting)
