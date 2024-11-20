@@ -52,6 +52,7 @@ async def ColdReplay(websocket):
             and group["group_id"] not in setting["developers_list"]
         ):
             group["is_replay"] = True
+            group["num"] = 0
             dump_setting(setting)
             name = get_user_name(group["user_id"], group["group_id"])
             await ReplySay(
