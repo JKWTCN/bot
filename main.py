@@ -1511,7 +1511,7 @@ async def echo(websocket):
                                             user["group_id"],
                                             user["text"],
                                         )
-                                        setting["alarm_member"][i]["time"] = time.time()
+                                        user["time"] = time.time()
                                         dump_setting(setting)
                                         i += 1
                             case _:
