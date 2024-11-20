@@ -154,7 +154,10 @@ async def echo(websocket):
                             if IsAdmin(setting["bot_id"], group_id):
                                 # 如果是管理员就更新冷群
                                 UpdateColdGroup(
-                                    user_id, group_id, message["message_id"], message["raw_message"]
+                                    user_id,
+                                    group_id,
+                                    message["message_id"],
+                                    message["raw_message"],
                                 )
                                 # 2%的概率派发50积分
                                 if random.random() < 0.02:
@@ -1499,7 +1502,7 @@ async def echo(websocket):
                                 ClearKohlrabi()
                                 i = 0
                                 for user in setting["alarm_member"]:
-                                    if datetime.datetime.now().hour > user[
+                                    if datetime.datetime.now().hour >= user[
                                         "time_hour"
                                     ] and not is_today(time.time(), user["time"]):
                                         await SayAndAt(
