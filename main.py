@@ -339,7 +339,7 @@ async def echo(websocket):
                                             r"\d+", message["raw_message"]
                                         )
                                         payload = {
-                                            "action": "send_msg_async",
+                                            "action": "send_msg_rate_limited",
                                             "params": {
                                                 "group_id": group_id,
                                                 "message": [
@@ -921,7 +921,7 @@ async def echo(websocket):
                                                         qq = int(result.group())
                                                         if qq is not None:
                                                             payload = {
-                                                                "action": "send_msg_async",
+                                                                "action": "send_msg_rate_limited",
                                                                 "params": {
                                                                     "group_id": group_id,
                                                                     "message": [
