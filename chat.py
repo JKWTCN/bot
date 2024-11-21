@@ -143,7 +143,7 @@ async def chat(websocket, group_id: int, nick_name: str, text: str):
         logger.info("连接超时")
         re_text = "呜呜不太理解呢喵。"
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": "{},{}".format(nick_name, re_text),

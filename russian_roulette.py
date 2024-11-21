@@ -37,7 +37,7 @@ async def russian_pve_shot(websocket, user_id: int, group_id: int, nick_name: st
     now_shots = bot_database.check_russian_pve(user_id)
     if now_shots == -1:
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": [
@@ -55,7 +55,7 @@ async def russian_pve_shot(websocket, user_id: int, group_id: int, nick_name: st
     # 自己开枪中枪了
     if now_choice == 1:
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": [
@@ -78,7 +78,7 @@ async def russian_pve_shot(websocket, user_id: int, group_id: int, nick_name: st
     # 乐可开枪中枪了
     if now_choice == 1:
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": [
@@ -107,7 +107,7 @@ async def russian_pve_shot(websocket, user_id: int, group_id: int, nick_name: st
     now_shots = now_shots - 1
     bot_database.changed_russian_pve(user_id, now_shots)
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -131,7 +131,7 @@ async def russian_pve(websocket, user_id: int, group_id: int, nick_name: str):
         now_shots = bot_database.check_russian_pve(user_id)
         if now_shots == -1:
             payload = {
-                "action": "send_msg",
+                "action": "send_msg_async",
                 "params": {
                     "group_id": group_id,
                     "message": [
@@ -149,7 +149,7 @@ async def russian_pve(websocket, user_id: int, group_id: int, nick_name: str):
             }
         else:
             payload = {
-                "action": "send_msg",
+                "action": "send_msg_async",
                 "params": {
                     "group_id": group_id,
                     "message": [
@@ -166,7 +166,7 @@ async def russian_pve(websocket, user_id: int, group_id: int, nick_name: str):
             }
     else:
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": [
@@ -189,7 +189,7 @@ async def russian(websocket, message: str, user_id: int, group_id: int):
     (bullet, point) = pro_str(message)
     if bullet == -1 or point == -1:
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": [
@@ -203,7 +203,7 @@ async def russian(websocket, message: str, user_id: int, group_id: int):
         }
     elif bullet != -1 and point == -2:
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": [
@@ -221,7 +221,7 @@ async def russian(websocket, message: str, user_id: int, group_id: int):
         }
     elif point == -2 and bullet == -2:
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": [
@@ -241,7 +241,7 @@ async def russian(websocket, message: str, user_id: int, group_id: int):
         user_point = bot_database.find_point(user_id)
         if int(user_point) > int(point):
             payload = {
-                "action": "send_msg",
+                "action": "send_msg_async",
                 "params": {
                     "group_id": group_id,
                     "message": [
@@ -259,7 +259,7 @@ async def russian(websocket, message: str, user_id: int, group_id: int):
             }
         else:
             payload = {
-                "action": "send_msg",
+                "action": "send_msg_async",
                 "params": {
                     "group_id": group_id,
                     "message": [

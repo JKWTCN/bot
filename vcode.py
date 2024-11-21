@@ -188,7 +188,7 @@ async def welcome_verify(websocket, user_id: int, group_id: int):
 
     setting = load_setting()
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [

@@ -15,7 +15,7 @@ async def cute(websocket, group_id: int):
         image_data = image_file.read()
     image_base64 = base64.b64encode(image_data)
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": {
@@ -32,7 +32,7 @@ async def sex_img(websocket, user_id: int, group_id: int):
     now_point = find_point(user_id)
     if now_point < 500000:
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": [
@@ -63,7 +63,7 @@ async def sex_img(websocket, user_id: int, group_id: int):
             image_data = image_file.read()
         image_base64 = base64.b64encode(image_data)
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": [
@@ -95,7 +95,7 @@ async def kfc_v_me_50(websocket, group_id: int):
     r = requests.get("https://api.shadiao.pro/kfc")
     data = json.loads(r.text)
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [

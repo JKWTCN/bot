@@ -143,7 +143,7 @@ async def recharge(websocket, user_id: int, group_id: int, point: int):
     now_point = find_point(user_id)
     change_point(user_id, group_id, now_point + point)
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": "充值成功,积分{}->{}。".format(now_point, now_point + point),
@@ -157,7 +157,7 @@ async def recharge_privte(websocket, user_id: int, group_id: int, point: int):
     now_point = find_point(user_id)
     change_point(user_id, group_id, now_point + point)
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "user_id": user_id,
             "message": "充值成功,积分{}->{}。".format(now_point, now_point + point),
@@ -303,7 +303,7 @@ async def get_statistics(websocket, user_id: int, group_id: int):
         ],
     }
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [],
@@ -327,7 +327,7 @@ async def daily_check_in(websocket, user_id: int, sender_name: str, group_id: in
     result = check_in(user_id, group_id)
     if result[0] == 1:
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": "{},签到成功,您当前的积分为:{}。".format(
@@ -337,7 +337,7 @@ async def daily_check_in(websocket, user_id: int, sender_name: str, group_id: in
         }
     else:
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": "{},你今天已经签过到了,明天再来吧!您当前的积分为:{}。".format(

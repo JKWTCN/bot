@@ -41,7 +41,7 @@ async def GetLifeChatRecord(websocket, group_id: int):
     else:
         num = 20
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [],
@@ -86,7 +86,7 @@ async def GetNowChatRecord(websocket, group_id: int):
     else:
         num = 20
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [],

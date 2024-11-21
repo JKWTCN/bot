@@ -51,7 +51,7 @@ def HasKeyWords(text: str, key_words: list) -> bool:
 
 async def SayPrivte(websocket, user_id: int, text: str):
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "user_id": user_id,
             "message": text,
@@ -62,7 +62,7 @@ async def SayPrivte(websocket, user_id: int, text: str):
 
 async def say(websocket, group_id: int, text: str):
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": text,
@@ -73,7 +73,7 @@ async def say(websocket, group_id: int, text: str):
 
 async def SayAndAt(websocket, user_id: int, group_id: int, text: str):
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -199,7 +199,7 @@ def ShowSystemInfoTableByBase64():
 
 async def GetSystemInfoTable(websocket, group_id: int):
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [],

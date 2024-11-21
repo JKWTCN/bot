@@ -105,7 +105,7 @@ def ShowRankingByBase64(data):
 async def ranking_point_payload(websocket, group_id: int):
     data_list = {"积分排名": [], "昵称": [], "值": []}
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [],

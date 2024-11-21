@@ -79,7 +79,7 @@ def ys_simple(ys):
 # 运势详情
 async def luck_dog(websocket, use_id: int, sender_name: str, group_id: int):
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": "{},{}。".format(
@@ -96,7 +96,7 @@ async def LuckChoiceMutPrivate(websocket, user_id: int, nums: int):
     group_id = 0
     setting = load_setting()
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "user_id": user_id,
             "message": [],
@@ -240,7 +240,7 @@ async def luck_choice_mut(
 ):
     setting = load_setting()
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [],
@@ -439,7 +439,7 @@ async def luck_choice(websocket, user_id: int, sender_name: str, group_id: int):
         now_point = now_point - 5
         choice = random.choices(choice_list, choice_probability)
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": "",
@@ -481,7 +481,7 @@ async def luck_choice(websocket, user_id: int, sender_name: str, group_id: int):
         bot_database.change_point(user_id, group_id, changed_point)
     else:
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": "{},抽奖失败喵，至少要5积分喵。您当前积分为：{}。".format(

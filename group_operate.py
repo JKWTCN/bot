@@ -51,7 +51,7 @@ def update_group_info(
         conn.commit()
 
 
-async def GetMessage(websocket,message_id:int,echo:str):
+async def GetMessage(websocket, message_id: int, echo: str):
     payload = {
         "action": "get_msg",
         "params": {
@@ -161,7 +161,7 @@ async def poor_point(websocket, user_id: int, group_id: int):
             conn.commit()
             bot_database.change_point(user_id, group_id, 5)
             payload = {
-                "action": "send_msg",
+                "action": "send_msg_async",
                 "params": {
                     "group_id": group_id,
                     "message": "{},领取群低保成功喵，目前你的积分为:5。({}/3)".format(
@@ -171,7 +171,7 @@ async def poor_point(websocket, user_id: int, group_id: int):
             }
         elif data[0][2] >= 3 and tools.is_today(time.time(), data[0][3]):
             payload = {
-                "action": "send_msg",
+                "action": "send_msg_async",
                 "params": {
                     "group_id": group_id,
                     "message": "{},领取群低保失败喵,领取群低保次数达到今日上限了喵,请明天再来喵。".format(
@@ -186,7 +186,7 @@ async def poor_point(websocket, user_id: int, group_id: int):
             )
             conn.commit()
             payload = {
-                "action": "send_msg",
+                "action": "send_msg_async",
                 "params": {
                     "group_id": group_id,
                     "message": "{},领取群低保成功喵，目前你的积分为:5。(1/3)".format(
@@ -197,7 +197,7 @@ async def poor_point(websocket, user_id: int, group_id: int):
 
     else:
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": "{},你不符合群低保领取条件。".format(sender_name),

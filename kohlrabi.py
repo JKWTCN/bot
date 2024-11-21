@@ -156,7 +156,7 @@ async def ShowHand(websocket, user_id: int, group_id: int):
             user_id, group_id, all_buy, all_buy_cost, all_sell, all_sell_price
         )
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": [
@@ -175,7 +175,7 @@ async def ShowHand(websocket, user_id: int, group_id: int):
         }
     else:
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": [
@@ -211,7 +211,7 @@ async def BuyKohlrabi(websocket, user_id: int, group_id: int, num: int):
             user_id, group_id, all_buy, all_buy_cost, all_sell, all_sell_price
         )
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": [
@@ -230,7 +230,7 @@ async def BuyKohlrabi(websocket, user_id: int, group_id: int, num: int):
         }
     else:
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": [
@@ -303,7 +303,7 @@ async def SellKohlrabiAll(websocket, user_id: int, group_id: int):
             user_id, group_id, all_buy, all_buy_cost, all_sell, all_sell_price
         )
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": [
@@ -318,7 +318,7 @@ async def SellKohlrabiAll(websocket, user_id: int, group_id: int):
         }
     else:
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": [
@@ -354,7 +354,7 @@ async def SellKohlrabi(websocket, user_id: int, group_id: int, num: int):
             user_id, group_id, all_buy, all_buy_cost, all_sell, all_sell_price
         )
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": [
@@ -369,7 +369,7 @@ async def SellKohlrabi(websocket, user_id: int, group_id: int, num: int):
         }
     else:
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": [

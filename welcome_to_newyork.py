@@ -7,7 +7,7 @@ async def return_function(websocket, user_id: int, group_id: int):
         image_data = image_file.read()
     image_base64 = base64.b64encode(image_data)
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -27,7 +27,7 @@ async def ban_new(websocket, user_id: int, group_id: int, duration: int):
 
     if IsAdmin(user_id, group_id):
         payload = {
-            "action": "send_msg",
+            "action": "send_msg_async",
             "params": {
                 "group_id": group_id,
                 "message": "我，打管理?真的假的?",
@@ -47,7 +47,7 @@ async def new_group_vcode(websocket, user_id: int, group_id: int):
         image_data = image_file.read()
     image_base64 = base64.b64encode(image_data)
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -73,7 +73,7 @@ async def welcome_new(websocket, user_id: int, group_id: int):
         image_data = image_file.read()
     image_base64 = base64.b64encode(image_data)
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -99,7 +99,7 @@ async def welcom_new_no_admin(websocket, user_id: int, group_id: int):
         image_data = image_file.read()
     image_base64 = base64.b64encode(image_data)
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -120,7 +120,7 @@ async def welcom_new_no_admin(websocket, user_id: int, group_id: int):
 
 async def leave(websocket, user_id: int, group_id: int):
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [

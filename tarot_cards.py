@@ -7,7 +7,7 @@ import json
 async def photo_new(websocket, user_id: int, group_id: int):
     r = requests.get("https://api.tangdouz.com/60.php")
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -23,7 +23,7 @@ async def photo_new(websocket, user_id: int, group_id: int):
 async def daily_paper(websocket, user_id: int, group_id: int):
     r = requests.get("https://api.tangdouz.com/a/60/")
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -38,7 +38,7 @@ async def daily_paper(websocket, user_id: int, group_id: int):
 # 悲报
 async def SoSad(websocket, group_id: int, text: str):
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -55,7 +55,7 @@ async def SoSad(websocket, group_id: int, text: str):
 # 喜报
 async def SoHappy(websocket, group_id: int, text: str):
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -72,7 +72,7 @@ async def SoHappy(websocket, group_id: int, text: str):
 # 你们看到她了吗
 async def SoCute(websocket, user_id: int, group_id: int):
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -102,7 +102,7 @@ async def get_cos(websocket, user_id: int, group_id: int):
     text = list(filter(None, text))
     # print(text)
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -148,7 +148,7 @@ async def one_word(websocket, user_id: int, group_id: int):
         "https://api.tangdouz.com/a/one.php",
     ]
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -172,7 +172,7 @@ async def radom_real(websocket, user_id: int, group_id: int):
         choice(["https://api.tangdouz.com/mt.php", "https://api.tangdouz.com/mt1.php"])
     )
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -189,7 +189,7 @@ async def radom_real(websocket, user_id: int, group_id: int):
 async def radom_waifu(websocket, user_id: int, group_id: int):
     r = requests.get("https://api.tangdouz.com/abz/dm.php")
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -208,7 +208,7 @@ async def daily_word(websocket, user_id: int, group_id: int):
     text = r.text.split("±")
     # print(text)
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -233,7 +233,7 @@ async def daily_word(websocket, user_id: int, group_id: int):
 async def return_trarot_cards(websocket, user_id: int, group_id: int):
     text = get_tarot_cards()
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -263,7 +263,7 @@ async def AnswerBook(websocket, user_id: int, group_id: int):
     r = requests.get("https://api.tangdouz.com/answer.php")
     # print(r.text)
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -284,7 +284,7 @@ async def drawing(websocket, user_id: int, group_id: int):
     r = requests.get("https://api.tangdouz.com/a/ccscq.php")
     # print(r.text)
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [

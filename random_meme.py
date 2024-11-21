@@ -11,7 +11,7 @@ async def MemeStatistics(websocket, group_id: int):
     all_file = find_all_file("../meme")
     num, unit = GetDirSizeByUnit("../meme")
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [
@@ -38,7 +38,7 @@ def find_all_file(path: str):
 
 async def twenty_random_meme(websocket, group_id: int):
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [],
@@ -65,7 +65,7 @@ async def twenty_random_meme(websocket, group_id: int):
 
 async def ten_random_meme(websocket, group_id: int):
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [],
@@ -92,7 +92,7 @@ async def ten_random_meme(websocket, group_id: int):
 
 async def send_meme_merge_forwarding(websocket, group_id: int, nums: int):
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": [],
@@ -132,7 +132,7 @@ async def send_random_meme(websocket, group_id: int):
     # 对读取的二进制数据进行Base64编码
     image_base64 = base64.b64encode(image_data)
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": {
@@ -190,7 +190,7 @@ async def send_radom_http_cat(websocket, group_id: int):
         505,
     ]
     payload = {
-        "action": "send_msg",
+        "action": "send_msg_async",
         "params": {
             "group_id": group_id,
             "message": {
