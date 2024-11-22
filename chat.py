@@ -63,40 +63,6 @@ async def ColdReplay(websocket):
             )
 
 
-# 回复类型聊天
-def ReplayChat(user_id: int, group_id: int, message_id: int, datas: list):
-    port = "11434"
-    url = f"http://localhost:{port}/api/chat"
-    model = "qwen2.5:0.5b"
-    headers = {"Content-Type": "application/json"}
-    data = {
-        "model": model,  # 模型选择
-        "options": {
-            "temperature": 1.0  # 为0表示不让模型自由发挥，输出结果相对较固定，>0的话，输出的结果会比较放飞自我
-        },
-        "stream": False,  # 流式输出
-        "messages": [
-            {
-                "role": "system",
-                "content": "你叫乐可，现在你将模仿一只傲娇的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上“喵”",
-            },
-        ],
-    }
-    for m in datas:
-        data["messages"].append({"role": "User", "content": m})
-    all = {
-        "user_id": user_id,
-        "group_id": group_id,
-        "message_id": message_id,
-        "data": data,
-    }
-    import websocket
-
-    ws = websocket.WebSocket()
-    ws.connect("ws://127.0.0.1:27432")
-    ws.send(json.dumps(all))
-
-
 # chat内容转发给大模型
 def ColdChat(group: dict) -> str:
     user_id = group["user_id"]
