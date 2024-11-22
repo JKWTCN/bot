@@ -1,1 +1,0 @@
-nohup /home/orangepi/bot/.venv/bin/python main_chat.py > log/chat_output.log
