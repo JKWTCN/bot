@@ -86,6 +86,7 @@ async def SayAndAt(websocket, user_id: int, group_id: int, text: str):
 
 
 async def delete_msg(websocket, message_id: int):
+    print(f"正在撤回消息:message_id{message_id}")
     payload = {
         "action": "delete_msg",
         "params": {

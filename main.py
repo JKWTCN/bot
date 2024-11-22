@@ -27,7 +27,7 @@ from bot_database import (
     recharge_privte,
     write_message,
 )
-from chat import ColdReplay, Joke, UpdateColdGroup, chat, ReplayChat
+from chat import ColdReplay, Joke, UpdateColdGroup, chat
 from kohlrabi import (
     BuyKohlrabi,
     ClearKohlrabi,
@@ -337,11 +337,8 @@ async def echo(websocket):
                                     and BotIsAdmin(group_id)
                                     and group_id == setting["admin_group_main"]
                                 ):
-                                    for i in range(100):
-                                        time.sleep(0.1)
-                                        result = re.search(
-                                            r"\d+", message["raw_message"]
-                                        )
+                                    result = re.search(r"\d+", message["raw_message"])
+                                    for i in range(setting["defense_times"]):
                                         payload = {
                                             "action": "send_msg_rate_limited",
                                             "params": {
@@ -916,12 +913,13 @@ async def echo(websocket):
                                                     user_id
                                                     in setting["developers_list"]
                                                 ):
-                                                    for i in range(100):
-                                                        time.sleep(0.1)
-                                                        result = re.search(
-                                                            r"\d+",
-                                                            message["raw_message"],
-                                                        )
+                                                    result = re.search(
+                                                        r"\d+",
+                                                        message["raw_message"],
+                                                    )
+                                                    for i in range(
+                                                        setting["defense_times"]
+                                                    ):
                                                         qq = int(result.group())
                                                         if qq is not None:
                                                             payload = {
@@ -1231,18 +1229,10 @@ async def echo(websocket):
                                             elif HasKeyWords(raw_message, ["笑话"]):
                                                 await Joke(websocket, group_id)
                                             else:
-                                                # await chat(
-                                                #     websocket,
-                                                #     group_id,
-                                                #     sender_name,
-                                                #     message["message"][0]["data"][
-                                                #         "text"
-                                                #     ],
-                                                # )
-                                                ReplayChat(
-                                                    user_id,
+                                                await chat(
+                                                    websocket,
                                                     group_id,
-                                                    message_id,
+                                                    sender_name,
                                                     message["message"][0]["data"][
                                                         "text"
                                                     ],
@@ -1582,7 +1572,7 @@ async def echo(websocket):
                                     websocket, user.user_id, user.group_id
                                 )
                 case "defense":
-                    print(message)
+                    # print(message)
                     await delete_msg(websocket, message["data"]["message_id"])
                 case "get_group_list":
                     print("开始更新群列表")
@@ -1677,9 +1667,6 @@ async def main():
         await asyncio.get_running_loop().create_future()  # run forever
 
 
-
-
-
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
 now = GetLogTime()
@@ -1691,4 +1678,3 @@ logging.basicConfig(
     encoding="utf-8",
 )
 asyncio.run(main())
-
