@@ -4,6 +4,8 @@ import logging
 import os
 import random
 import time
+from venv import logger
+import requests
 import websockets
 import json
 from Class.Group_member import (
@@ -25,7 +27,7 @@ from bot_database import (
     recharge_privte,
     write_message,
 )
-from chat import ColdReplay, Joke, UpdateColdGroup, chat
+from chat import ColdReplay, Joke, UpdateColdGroup, chat, ReplayChat
 from kohlrabi import (
     BuyKohlrabi,
     ClearKohlrabi,
@@ -78,6 +80,7 @@ from tarot_cards import (
     AnswerBook,
 )
 from tools import (
+    ReplySay,
     dump_setting,
     is_today,
     load_setting,
@@ -127,6 +130,7 @@ async def echo(websocket):
                             sender_name = sender["card"]
                             group_id = message["group_id"]
                             user_id = message["user_id"]
+                            message_id = message["message_id"]
                             group_name = GetGroupName(group_id)
                             raw_message = message["raw_message"]
                             if len(sender["card"]) == 0:
@@ -1227,10 +1231,18 @@ async def echo(websocket):
                                             elif HasKeyWords(raw_message, ["笑话"]):
                                                 await Joke(websocket, group_id)
                                             else:
-                                                await chat(
-                                                    websocket,
+                                                # await chat(
+                                                #     websocket,
+                                                #     group_id,
+                                                #     sender_name,
+                                                #     message["message"][0]["data"][
+                                                #         "text"
+                                                #     ],
+                                                # )
+                                                ReplayChat(
+                                                    user_id,
                                                     group_id,
-                                                    sender_name,
+                                                    message_id,
                                                     message["message"][0]["data"][
                                                         "text"
                                                     ],
@@ -1630,6 +1642,17 @@ async def echo(websocket):
                     await websocket.send(json.dumps(payload))
                 case _:
                     print(message)
+        elif "action" in message:
+            if "message_id" in message:
+                group_id = message["group_id"]
+                message_id = message["message_id"]
+                re_text = message["message"]
+                await ReplySay(
+                    websocket,
+                    group_id,
+                    message_id,
+                    re_text,
+                )
         else:
             if "status" in message:
                 match message["status"]:
@@ -1654,6 +1677,9 @@ async def main():
         await asyncio.get_running_loop().create_future()  # run forever
 
 
+
+
+
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
 now = GetLogTime()
@@ -1665,3 +1691,4 @@ logging.basicConfig(
     encoding="utf-8",
 )
 asyncio.run(main())
+
