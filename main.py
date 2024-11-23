@@ -365,7 +365,7 @@ async def echo(websocket):
                                             {
                                                 "user_id": user_id,
                                                 "group_id": group_id,
-                                                "now_num": 0,
+                                                "num": 0,
                                             }
                                         )
                                         dump_setting(setting)
@@ -944,7 +944,7 @@ async def echo(websocket):
                                                             {
                                                                 "user_id": qq,
                                                                 "group_id": group_id,
-                                                                "now_num": 0,
+                                                                "num": 0,
                                                             }
                                                         )
                                                         dump_setting(setting)
@@ -1635,7 +1635,7 @@ async def echo(websocket):
                 del_list.append(i)
                 i += 1
             else:
-                SayAndAt(
+                await SayAndAt(
                     websocket,
                     admin["user_id"],
                     admin["group_id"],
