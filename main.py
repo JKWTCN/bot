@@ -125,6 +125,26 @@ async def echo(websocket):
                     match message["message_type"]:
                         # 群聊消息
                         case "group":
+                            # 以下是艾特惩罚 痛苦虽小折磨永存
+                            i = 0
+                            del_list = []
+                            for admin in setting["bleak_admin"]:
+                                if admin["num"] >= setting["defense_times"]:
+                                    del_list.append(i)
+                                    i += 1
+                                else:
+                                    await SayAndAtDefense(
+                                        websocket,
+                                        admin["user_id"],
+                                        admin["group_id"],
+                                        f"艾特惩罚,({admin["num"]+1}/{setting["defense_times"]})",
+                                    )
+                                    admin["num"] += 1
+                                    i += 1
+                            for i in del_list:
+                                del setting["bleak_admin"][i]
+                            dump_setting(setting)
+
                             sender = message["sender"]
                             sender_name = sender["card"]
                             group_id = message["group_id"]
@@ -1618,6 +1638,7 @@ async def echo(websocket):
                     re_text,
                 )
         else:
+
             if "status" in message:
                 match message["status"]:
                     case "ok":
@@ -1626,25 +1647,6 @@ async def echo(websocket):
                         print(message)
             else:
                 print(message)
-        # 以下是艾特惩罚
-        i = 0
-        del_list = []
-        for admin in setting["bleak_admin"]:
-            if admin["num"] >= setting["defense_times"]:
-                del_list.append(i)
-                i += 1
-            else:
-                await SayAndAtDefense(
-                    websocket,
-                    admin["user_id"],
-                    admin["group_id"],
-                    f"艾特惩罚,({admin["num"]+1}/{setting["defense_times"]})",
-                )
-                admin["num"] += 1
-                i += 1
-        for i in del_list:
-            del setting["bleak_admin"][i]
-        dump_setting(setting)
 
 
 # def beijing(sec, what):
