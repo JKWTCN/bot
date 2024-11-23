@@ -172,14 +172,11 @@ async def echo(websocket):
                                         now_point + 50,
                                     )
                                     all_num, today_num = SendRewards(user_id, group_id)
-                                    payload = {
-                                        "action": "send_group_msg",
-                                        "params": {
-                                            "group_id": group_id,
-                                            "message": f"恭喜群友{sender_name}获得乐可派发的水群积分！积分{now_point}->{now_point + 50}。\n总共:{all_num}次,今日:{today_num}次",
-                                        },
-                                    }
-                                    await websocket.send(json.dumps(payload))
+                                    await say(
+                                        websocket,
+                                        group_id,
+                                        f"恭喜群友{sender_name}获得乐可派发的水群积分！积分{now_point}->{now_point + 50}。\n总共:{all_num}次,今日:{today_num}次",
+                                    )
                             # 0.5% 的概率复读
                             if random.random() < 0.005:
                                 payload = {
@@ -1376,7 +1373,10 @@ async def echo(websocket):
                                         (is_in_unwelcome, quit_time) = in_unwelcome(
                                             user_id, group_id
                                         )
-                                        if is_in_unwelcome:
+                                        if (
+                                            is_in_unwelcome
+                                            and group_id != setting["admin_group_main"]
+                                        ):
                                             await ban_new(
                                                 websocket,
                                                 user_id,
@@ -1386,25 +1386,11 @@ async def echo(websocket):
                                             await say(
                                                 websocket,
                                                 group_id,
-                                                "世界上是没有后悔药的，开弓也是没有回头箭的。{},已于{}已经做出了自己的选择".format(
-                                                    user_id,
-                                                    time.strftime(
-                                                        "%Y-%m-%d %H:%M:%S",
-                                                        quit_time,
-                                                    ),
-                                                ),
+                                                "世界上是没有后悔药的，开弓也是没有回头箭的。",
                                             )
-
-                                            payload = {
-                                                "action": "set_group_kick",
-                                                "params": {
-                                                    "group_id": setting[
-                                                        "admin_group_main"
-                                                    ],
-                                                    "user_id": user_id,
-                                                },
-                                            }
-                                            await websocket.send(json.dumps(payload))
+                                            await kick_member(
+                                                websocket, user_id, group_id
+                                            )
                                         else:
                                             await welcome_verify(
                                                 websocket, user_id, group_id
