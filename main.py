@@ -25,7 +25,15 @@ from bot_database import (
     recharge_privte,
     write_message,
 )
-from chat import AtPunish, ColdReplay, Joke, UpdateColdGroup, chat, GetWhoAtMe, AddWhoAtMe
+from chat import (
+    AtPunish,
+    ColdReplay,
+    Joke,
+    UpdateColdGroup,
+    chat,
+    GetWhoAtMe,
+    AddWhoAtMe,
+)
 from kohlrabi import (
     BuyKohlrabi,
     ClearKohlrabi,
@@ -314,7 +322,7 @@ async def echo(websocket):
                                     in message["raw_message"]
                                 )
                                 and "reply" not in message["raw_message"]
-                                and user_id not in setting["AtWhiteList"]
+                                and user_id not in setting["other_bots"]
                             ):
                                 if (
                                     user_id not in setting["developers_list"]
