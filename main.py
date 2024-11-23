@@ -27,7 +27,7 @@ from bot_database import (
     recharge_privte,
     write_message,
 )
-from chat import ColdReplay, Joke, UpdateColdGroup, chat
+from chat import ColdReplay, Joke, UpdateColdGroup, chat, GetWhoAtMe, AddWhoAtMe
 from kohlrabi import (
     BuyKohlrabi,
     ClearKohlrabi,
@@ -321,12 +321,21 @@ async def echo(websocket):
                                     and BotIsAdmin(group_id)
                                     and group_id == setting["admin_group_main"]
                                 ):
-                                    await ban_new(websocket, user_id, group_id, 60)
-                                    await say(
-                                        websocket,
-                                        group_id,
-                                        f"{sender_name},不要随便艾特☁️喵，禁言你了喵。",
-                                    )
+                                    AddWhoAtMe(user_id)
+                                    now_num = GetWhoAtMe(user_id)
+                                    if now_num >= 3:
+                                        await ban_new(websocket, user_id, group_id, 60)
+                                        await say(
+                                            websocket,
+                                            group_id,
+                                            f"{sender_name},不要随便艾特☁️喵，禁言你了喵。",
+                                        )
+                                    else:
+                                        await say(
+                                            websocket,
+                                            group_id,
+                                            f"{sender_name},不要随便艾特☁️喵，你被警告了喵,事不过三,你现在是第{now_num}次,超过后会直接被禁言喵。",
+                                        )
 
                                 elif (
                                     user_id not in setting["developers_list"]
@@ -334,28 +343,38 @@ async def echo(websocket):
                                     and BotIsAdmin(group_id)
                                     and group_id == setting["admin_group_main"]
                                 ):
-                                    result = re.search(r"\d+", message["raw_message"])
-                                    for i in range(setting["defense_times"]):
-                                        payload = {
-                                            "action": "send_msg_rate_limited",
-                                            "params": {
+                                    AddWhoAtMe(user_id)
+                                    now_num = GetWhoAtMe(user_id)
+                                    sender_name = get_user_name(user_id, group_id)
+                                    if now_num >= 3:
+                                        if now_num <= 20:
+                                            SayAndAt(
+                                                websocket,
+                                                user_id,
+                                                group_id,
+                                                f"{sender_name},不要随便艾特☁️喵,管理员惩罚{setting["defense_times"]}次喵。",
+                                            )
+                                        else:
+                                            SayAndAt(
+                                                websocket,
+                                                user_id,
+                                                group_id,
+                                                f"{sender_name},你是个巨婴嘛?现在已经是第{now_num}次了！！！管理员惩罚{setting["defense_times"]}次。",
+                                            )
+                                        setting["bleak_admin"].append(
+                                            {
+                                                "user_id": user_id,
                                                 "group_id": group_id,
-                                                "message": [
-                                                    {
-                                                        "type": "at",
-                                                        "data": {"qq": user_id},
-                                                    },
-                                                    {
-                                                        "type": "text",
-                                                        "data": {
-                                                            "text": ",不要随便艾特☁️喵。"
-                                                        },
-                                                    },
-                                                ],
-                                            },
-                                            "echo": "defense",
-                                        }
-                                        await websocket.send(json.dumps(payload))
+                                                "now_num": 0,
+                                            }
+                                        )
+                                        dump_setting(setting)
+                                    else:
+                                        await say(
+                                            websocket,
+                                            group_id,
+                                            f"{sender_name},不要随便艾特☁️喵，你被警告了喵,事不过三,你现在是第{now_num}次,超过后会施加{setting["defense_times"]}次的艾特惩罚。",
+                                        )
                             if (
                                 re.search(
                                     r"CQ:reply,id=\d+]好好好", message["raw_message"]
@@ -536,7 +555,6 @@ async def echo(websocket):
                                                 await daily_word(
                                                     websocket, user_id, group_id
                                                 )
-
                                             elif (
                                                 "查询黑名单"
                                                 in message["message"][0]["data"]["text"]
@@ -914,29 +932,22 @@ async def echo(websocket):
                                                         r"\d+",
                                                         message["raw_message"],
                                                     )
-                                                    for i in range(
-                                                        setting["defense_times"]
-                                                    ):
-                                                        qq = int(result.group())
-                                                        if qq is not None:
-                                                            payload = {
-                                                                "action": "send_msg_rate_limited",
-                                                                "params": {
-                                                                    "group_id": group_id,
-                                                                    "message": [
-                                                                        {
-                                                                            "type": "at",
-                                                                            "data": {
-                                                                                "qq": qq
-                                                                            },
-                                                                        },
-                                                                    ],
-                                                                },
-                                                                "echo": "defense",
+                                                    qq = int(result.group())
+                                                    if qq is not None:
+                                                        SayAndAt(
+                                                            websocket,
+                                                            qq,
+                                                            group_id,
+                                                            f"惩罚性艾特{setting["defense_times"]}次。",
+                                                        )
+                                                        setting["bleak_admin"].append(
+                                                            {
+                                                                "user_id": qq,
+                                                                "group_id": group_id,
+                                                                "now_num": 0,
                                                             }
-                                                            await websocket.send(
-                                                                json.dumps(payload)
-                                                            )
+                                                        )
+                                                        dump_setting(setting)
                                             elif (
                                                 "随机梗图"
                                                 in message["message"][0]["data"]["text"]
@@ -1254,29 +1265,7 @@ async def echo(websocket):
                                                 rev_id,
                                             )
                                         )
-                                        # if str(rev_id) == str(setting["bot_id"]):
-                                        #     if (
-                                        #         group_id in setting["admin_group_list"]
-                                        #         and user_id
-                                        #         not in setting["admin_list"]
-                                        #     ):
-                                        #         await websocket.send(
-                                        #             ban_new(
-                                        #                 user_id,
-                                        #                 group_id,
-                                        #                 60,
-                                        #             )
-                                        #         )
-                                        #     await websocket.send(
-                                        #         json.dumps(
-                                        #             say(
-                                        #                 group_id,
-                                        #                 "请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，统计。”。",
-                                        #             )
-                                        #         )
-                                        #     )
                                     case _:
-                                        # print(message)
                                         pass
                         case "private":
                             print(
@@ -1638,6 +1627,25 @@ async def echo(websocket):
                         print(message)
             else:
                 print(message)
+        # 以下是艾特惩罚
+        i = 0
+        del_list = []
+        for admin in setting["bleak_admin"]:
+            if admin["num"] >= setting["defense_times"]:
+                del_list.append(i)
+                i += 1
+            else:
+                SayAndAt(
+                    websocket,
+                    admin["user_id"],
+                    admin["group_id"],
+                    f"艾特惩罚,({admin["num"]+1}/{setting["defense_times"]})",
+                )
+                admin["num"] += 1
+                i += 1
+        for i in del_list:
+            del setting["bleak_admin"][i]
+        dump_setting(setting)
 
 
 # def beijing(sec, what):

@@ -1,9 +1,40 @@
 import json
+import sqlite3
 from venv import logger
 import requests
 from tools import HasKeyWords, dump_setting, load_setting, say, ReplySay
 from Class.Group_member import get_user_name
 import time
+
+
+# 查找艾特开发者的次数
+def GetWhoAtMe(user_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute("SELECT nums FROM who_at_me where user_id=?;", (user_id,))
+    data = cur.fetchall()
+    if len(data) == 0:
+        cur.execute("INSERT INTO who_at_me (user_id,nums) VALUES (?,?);", (user_id, 0))
+        conn.commit()
+        return 0
+    else:
+        return data[0][0]
+
+
+# 增加数据库中艾特开发者的次数
+def AddWhoAtMe(user_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    now_num = GetWhoAtMe(user_id)
+    cur.execute(
+        "UPDATE who_at_me SET nums = ? WHERE user_id = ?;",
+        (
+            now_num + 1,
+            user_id,
+        ),
+    )
+    conn.commit()
+    conn.close()
 
 
 # 讲笑话
