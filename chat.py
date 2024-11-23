@@ -49,7 +49,6 @@ async def ColdReplay(websocket):
             and time.time() - group["time"]
             >= setting["cold_group_king_setting"]["time_out"]
             and group["num"] > setting["cold_group_king_setting"]["num_out"]
-            and group["group_id"] not in setting["developers_list"]
         ):
             group["is_replay"] = True
             group["num"] = 0
