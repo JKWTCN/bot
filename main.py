@@ -4,8 +4,6 @@ import logging
 import os
 import random
 import time
-from venv import logger
-import requests
 import websockets
 import json
 from Class.Group_member import (
@@ -96,6 +94,7 @@ from tools import (
     FindNum,
     SayPrivte,
     delete_msg,
+    SayAndAtDefense,
 )
 from vcode import (
     check_validation_timeout,
@@ -1635,7 +1634,7 @@ async def echo(websocket):
                 del_list.append(i)
                 i += 1
             else:
-                await SayAndAt(
+                await SayAndAtDefense(
                     websocket,
                     admin["user_id"],
                     admin["group_id"],

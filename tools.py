@@ -85,6 +85,21 @@ async def SayAndAt(websocket, user_id: int, group_id: int, text: str):
     await websocket.send(json.dumps(payload))
 
 
+async def SayAndAtDefense(websocket, user_id: int, group_id: int, text: str):
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "at", "data": {"qq": user_id}},
+                {"type": "text", "data": {"text": " " + text}},
+            ],
+        },
+        "echo": "defense",
+    }
+    await websocket.send(json.dumps(payload))
+
+
 async def delete_msg(websocket, message_id: int):
     print(f"正在撤回消息:message_id{message_id}")
     payload = {
