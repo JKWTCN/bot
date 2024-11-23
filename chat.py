@@ -2,7 +2,14 @@ import json
 import sqlite3
 from venv import logger
 import requests
-from tools import HasKeyWords, dump_setting, load_setting, say, ReplySay
+from tools import (
+    HasKeyWords,
+    SayAndAtDefense,
+    dump_setting,
+    load_setting,
+    say,
+    ReplySay,
+)
 from Class.Group_member import get_user_name
 import time
 
@@ -35,6 +42,29 @@ def AddWhoAtMe(user_id: int):
     )
     conn.commit()
     conn.close()
+
+
+# 艾特惩罚
+async def AtPunish(websocket):
+    setting = load_setting()
+    i: int = 0
+    del_list = []
+    for admin in setting["bleak_admin"]:
+        if admin["num"] >= setting["defense_times"]:
+            del_list.append(i)
+            i += 1
+        else:
+            await SayAndAtDefense(
+                websocket,
+                admin["user_id"],
+                admin["group_id"],
+                f"艾特惩罚,({admin["num"]+1}/{setting["defense_times"]})",
+            )
+            admin["num"] += 1
+            i += 1
+    for i in del_list:
+        del setting["bleak_admin"][i]
+    dump_setting(setting)
 
 
 # 讲笑话

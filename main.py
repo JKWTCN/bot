@@ -25,7 +25,7 @@ from bot_database import (
     recharge_privte,
     write_message,
 )
-from chat import ColdReplay, Joke, UpdateColdGroup, chat, GetWhoAtMe, AddWhoAtMe
+from chat import AtPunish, ColdReplay, Joke, UpdateColdGroup, chat, GetWhoAtMe, AddWhoAtMe
 from kohlrabi import (
     BuyKohlrabi,
     ClearKohlrabi,
@@ -126,25 +126,7 @@ async def echo(websocket):
                         # 群聊消息
                         case "group":
                             # 以下是艾特惩罚 痛苦虽小折磨永存
-                            i = 0
-                            del_list = []
-                            for admin in setting["bleak_admin"]:
-                                if admin["num"] >= setting["defense_times"]:
-                                    del_list.append(i)
-                                    i += 1
-                                else:
-                                    await SayAndAtDefense(
-                                        websocket,
-                                        admin["user_id"],
-                                        admin["group_id"],
-                                        f"艾特惩罚,({admin["num"]+1}/{setting["defense_times"]})",
-                                    )
-                                    admin["num"] += 1
-                                    i += 1
-                            for i in del_list:
-                                del setting["bleak_admin"][i]
-                            dump_setting(setting)
-
+                            await AtPunish(websocket)
                             sender = message["sender"]
                             sender_name = sender["card"]
                             group_id = message["group_id"]
