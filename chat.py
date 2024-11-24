@@ -2,6 +2,7 @@ import json
 import sqlite3
 from venv import logger
 import requests
+from group_operate import GetGroupName
 from tools import (
     HasKeyWords,
     SayAndAtDefense,
@@ -162,7 +163,11 @@ def ColdChat(group: dict) -> str:
     try:
         response = requests.post(url, json=data, headers=headers, timeout=60)
         res = response.json()
-        logger.info("(AI)乐可说:{}".format(res["message"]["content"]))
+        logger.info(
+            "(AI)乐可在{}({})说:{}".format(
+                GetGroupName(group_id), group_id, res["message"]["content"]
+            )
+        )
         return res["message"]["content"]
     except:
         logger.info("连接超时")
@@ -195,9 +200,11 @@ async def chat(websocket, group_id: int, nick_name: str, text: str):
     try:
         response = requests.post(url, json=data, headers=headers, timeout=30)
         res = response.json()
-        # print(len(response.text))
-        # print(res["message"])
-        logger.info("(AI)乐可说:{}".format(res["message"]["content"]))
+        logger.info(
+            "(AI)乐可在{}({})说:{}".format(
+                GetGroupName(group_id), group_id, res["message"]["content"]
+            )
+        )
         re_text = res["message"]["content"]
 
     except:
