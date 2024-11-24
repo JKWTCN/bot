@@ -374,7 +374,7 @@ async def echo(websocket):
                                             {
                                                 "user_id": user_id,
                                                 "group_id": group_id,
-                                                "num": 0,
+                                                "num": 100,
                                             }
                                         )
                                         dump_setting(setting)
@@ -524,6 +524,7 @@ async def echo(websocket):
                                                         60,
                                                     )
                                                     await say(
+                                                        websocket,
                                                         group_id,
                                                         "{},每月25号是本群喵喵日，你因为说话不带喵被禁言了喵。".format(
                                                             sender_name
@@ -536,6 +537,14 @@ async def echo(websocket):
                                                         group_id,
                                                         user_id,
                                                     )
+                                                    setting["bleak_admin"].append(
+                                                        {
+                                                            "user_id": user_id,
+                                                            "group_id": group_id,
+                                                            "num": 50,
+                                                        }
+                                                    )
+                                                    dump_setting(setting)
 
                                         if message["message"][0]["data"][
                                             "text"
@@ -953,7 +962,7 @@ async def echo(websocket):
                                                             {
                                                                 "user_id": qq,
                                                                 "group_id": group_id,
-                                                                "num": 0,
+                                                                "num": 100,
                                                             }
                                                         )
                                                         dump_setting(setting)

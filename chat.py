@@ -51,7 +51,7 @@ async def AtPunish(websocket):
     i: int = 0
     del_list = []
     for admin in setting["bleak_admin"]:
-        if admin["num"] >= setting["defense_times"]:
+        if admin["num"] <= 0:
             del_list.append(i)
             i += 1
         else:
@@ -59,9 +59,9 @@ async def AtPunish(websocket):
                 websocket,
                 admin["user_id"],
                 admin["group_id"],
-                f"艾特惩罚,({admin["num"]+1}/{setting["defense_times"]})",
+                f"艾特惩罚,剩余:{admin["num"]-1}次)",
             )
-            admin["num"] += 1
+            admin["num"] -= 1
             i += 1
     for i in del_list:
         del setting["bleak_admin"][i]
