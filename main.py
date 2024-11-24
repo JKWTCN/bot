@@ -505,8 +505,6 @@ async def echo(websocket):
                                         if (
                                             datetime.datetime.now().day == 25
                                             and BotIsAdmin(group_id)
-                                            and user_id
-                                            not in setting["developers_list"]
                                             and group_id not in setting["other_group"]
                                         ):
                                             if (
