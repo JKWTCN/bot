@@ -896,7 +896,7 @@ async def echo(websocket):
 
                                                 else:
                                                     nums = num
-                                                    if nums > 20:
+                                                    if nums >= 20:
                                                         for i in range(
                                                             math.trunc(nums / 20.0)
                                                         ):
