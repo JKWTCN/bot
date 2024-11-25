@@ -26,6 +26,7 @@ from bot_database import (
     write_message,
 )
 from chat import (
+    AddAtPunishList,
     AtPunish,
     ColdReplay,
     Joke,
@@ -544,12 +545,8 @@ async def echo(websocket):
                                                         group_id,
                                                         user_id,
                                                     )
-                                                    setting["bleak_admin"].append(
-                                                        {
-                                                            "user_id": user_id,
-                                                            "group_id": group_id,
-                                                            "num": 10,
-                                                        }
+                                                    AddAtPunishList(
+                                                        user_id, group_id, 10
                                                     )
                                                     dump_setting(setting)
 

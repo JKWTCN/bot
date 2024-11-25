@@ -45,6 +45,18 @@ def AddWhoAtMe(user_id: int):
     conn.close()
 
 
+def AddAtPunishList(user_id: int, group_id: int, num: int):
+    setting = load_setting()
+    for admin in setting["bleak_admin"]:
+        if admin["user_id"] == user_id and admin["group_id"] == group_id:
+            admin["num"] += 10
+            dump_setting(setting)
+            return
+    setting["bleak_admin"].append(
+        {"user_id": user_id, "group_id": group_id, "num": num}
+    )
+
+
 # 艾特惩罚
 async def AtPunish(websocket):
     setting = load_setting()
