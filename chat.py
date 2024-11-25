@@ -45,6 +45,7 @@ def AddWhoAtMe(user_id: int):
     conn.close()
 
 
+# 添加惩罚名单
 def AddAtPunishList(user_id: int, group_id: int, num: int):
     setting = load_setting()
     for admin in setting["bleak_admin"]:
@@ -53,7 +54,11 @@ def AddAtPunishList(user_id: int, group_id: int, num: int):
             dump_setting(setting)
             return
     setting["bleak_admin"].append(
-        {"user_id": user_id, "group_id": group_id, "num": num}
+        {
+            "user_id": user_id,
+            "group_id": group_id,
+            "num": num,
+        }
     )
     dump_setting(setting)
 

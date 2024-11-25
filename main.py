@@ -371,14 +371,7 @@ async def echo(websocket):
                                                 group_id,
                                                 f"{sender_name},你是个巨婴嘛?现在已经是第{now_num}次了！！！管理员惩罚{setting["defense_times"]}次。",
                                             )
-                                        setting["bleak_admin"].append(
-                                            {
-                                                "user_id": user_id,
-                                                "group_id": group_id,
-                                                "num": 100,
-                                            }
-                                        )
-                                        dump_setting(setting)
+                                            AddAtPunishList(user_id, group_id, 100)
                                     else:
                                         await say(
                                             websocket,
@@ -962,14 +955,11 @@ async def echo(websocket):
                                                             group_id,
                                                             f"惩罚性艾特{setting["defense_times"]}次。",
                                                         )
-                                                        setting["bleak_admin"].append(
-                                                            {
-                                                                "user_id": qq,
-                                                                "group_id": group_id,
-                                                                "num": 100,
-                                                            }
+                                                        AddAtPunishList(
+                                                            qq,
+                                                            group_id,
+                                                            setting["defense_times"],
                                                         )
-                                                        dump_setting(setting)
                                             elif (
                                                 "随机梗图"
                                                 in message["message"][0]["data"]["text"]
