@@ -55,6 +55,7 @@ def AddAtPunishList(user_id: int, group_id: int, num: int):
     setting["bleak_admin"].append(
         {"user_id": user_id, "group_id": group_id, "num": num}
     )
+    dump_setting(setting)
 
 
 # 艾特惩罚
