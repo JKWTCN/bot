@@ -514,7 +514,11 @@ async def echo(websocket):
                                                 and "[CQ:reply"
                                                 not in message["raw_message"]
                                             ):
-                                                if not IsAdmin(user_id, group_id):
+                                                if (
+                                                    not IsAdmin(user_id, group_id)
+                                                    and user_id
+                                                    not in setting["other_bots"]
+                                                ):
                                                     await ban_new(
                                                         websocket,
                                                         user_id,
@@ -529,7 +533,7 @@ async def echo(websocket):
                                                         ),
                                                     )
 
-                                                else:
+                                                elif IsAdmin(user_id, group_id):
                                                     await cxgl(
                                                         websocket,
                                                         group_id,
