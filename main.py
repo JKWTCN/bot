@@ -500,6 +500,7 @@ async def echo(websocket):
                                             datetime.datetime.now().day == 25
                                             and BotIsAdmin(group_id)
                                             and group_id not in setting["other_group"]
+                                            and user_id not in setting["other_bots"]
                                         ):
                                             if (
                                                 "喵" not in message["raw_message"]
@@ -508,11 +509,7 @@ async def echo(websocket):
                                                 and "[CQ:reply"
                                                 not in message["raw_message"]
                                             ):
-                                                if (
-                                                    not IsAdmin(user_id, group_id)
-                                                    and user_id
-                                                    not in setting["other_bots"]
-                                                ):
+                                                if not IsAdmin(user_id, group_id):
                                                     await ban_new(
                                                         websocket,
                                                         user_id,
@@ -522,7 +519,7 @@ async def echo(websocket):
                                                     await say(
                                                         websocket,
                                                         group_id,
-                                                        "{},每月25号是本群喵喵日，你因为说话不带喵被禁言了喵。".format(
+                                                        "{},每月25号是本群喵喵日,你因为说话不带喵被禁言了喵。".format(
                                                             sender_name
                                                         ),
                                                     )
@@ -532,7 +529,7 @@ async def echo(websocket):
                                                         group_id,
                                                         0,
                                                     )
-                                                elif IsAdmin(user_id, group_id):
+                                                else:
                                                     await cxgl(
                                                         websocket,
                                                         group_id,
@@ -541,8 +538,6 @@ async def echo(websocket):
                                                     AddAtPunishList(
                                                         user_id, group_id, 10
                                                     )
-                                                    dump_setting(setting)
-
                                         if message["message"][0]["data"][
                                             "text"
                                         ].startswith("可乐"):
