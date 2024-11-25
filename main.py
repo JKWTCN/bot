@@ -532,7 +532,12 @@ async def echo(websocket):
                                                             sender_name
                                                         ),
                                                     )
-
+                                                    await ban_new(
+                                                        websocket,
+                                                        user_id,
+                                                        group_id,
+                                                        0,
+                                                    )
                                                 elif IsAdmin(user_id, group_id):
                                                     await cxgl(
                                                         websocket,
@@ -543,7 +548,7 @@ async def echo(websocket):
                                                         {
                                                             "user_id": user_id,
                                                             "group_id": group_id,
-                                                            "num": 50,
+                                                            "num": 10,
                                                         }
                                                     )
                                                     dump_setting(setting)
