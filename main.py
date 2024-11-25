@@ -536,7 +536,7 @@ async def echo(websocket):
                                                         user_id,
                                                     )
                                                     AddAtPunishList(
-                                                        user_id, group_id, 10
+                                                        user_id, group_id, 3
                                                     )
                                         if message["message"][0]["data"][
                                             "text"
