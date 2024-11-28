@@ -1048,22 +1048,7 @@ async def echo(websocket):
                                                 or "v我50"
                                                 in message["message"][0]["data"]["text"]
                                             ):
-                                                # if user_id in [
-                                                #     1505617447,
-                                                #     3070004098,
-                                                # ]:
-                                                #     await websocket.send(
-                                                #         json.dumps(
-                                                #             bot_database.recharge(
-                                                #                 user_id,
-                                                #                 group_id,
-                                                #                 50,
-                                                #             )
-                                                #         )
-                                                #     )
-                                                # else:
                                                 await kfc_v_me_50(websocket, group_id)
-                                            # print("{} {}".format(type(user_id),user_id))
                                             elif (
                                                 "塔罗牌"
                                                 in message["message"][0]["data"]["text"]
@@ -1351,7 +1336,10 @@ async def echo(websocket):
                             logging.info("{}加入入群{}".format(user_id, group_id))
                             if user_id != setting["bot_id"]:
                                 if BotIsAdmin(group_id):
-                                    if str(user_id) in setting["blacklist"].keys():
+                                    if (
+                                        str(user_id) in setting["blacklist"].keys()
+                                        and group_id == setting["admin_group_main"]
+                                    ):
                                         if not IsAdmin(user_id, group_id):
                                             await kick_member(
                                                 websocket, user_id, group_id
@@ -1371,7 +1359,7 @@ async def echo(websocket):
                                         )
                                         if (
                                             is_in_unwelcome
-                                            and group_id != setting["admin_group_main"]
+                                            and group_id == setting["admin_group_main"]
                                         ):
                                             await ban_new(
                                                 websocket,
@@ -1383,6 +1371,9 @@ async def echo(websocket):
                                                 websocket,
                                                 group_id,
                                                 "世界上是没有后悔药的，开弓也是没有回头箭的。",
+                                            )
+                                            logging.info(
+                                                f"{get_user_name(user_id, group_id)}({user_id}),因为以前退出过群想重新加入而被踢出。"
                                             )
                                             await kick_member(
                                                 websocket, user_id, group_id
