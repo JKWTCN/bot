@@ -77,7 +77,7 @@ async def AtPunish(websocket):
                 websocket,
                 admin["user_id"],
                 admin["group_id"],
-                f"艾特惩罚,剩余:{admin["num"]-1}次)",
+                f"艾特惩罚,剩余:{admin["num"]-1}次喵。",
             )
             admin["num"] -= 1
             i += 1
