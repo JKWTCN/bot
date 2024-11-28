@@ -185,6 +185,7 @@ async def poor_point(websocket, user_id: int, group_id: int):
                 (1, time.time(), user_id, group_id),
             )
             conn.commit()
+            bot_database.change_point(user_id, group_id, 5)
             payload = {
                 "action": "send_msg_async",
                 "params": {
