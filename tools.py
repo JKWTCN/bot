@@ -131,6 +131,26 @@ def FindNum(text: str):
         num = int(result.group())
         return num
     else:
+        if "二十" in text:
+            return 20
+        elif "三十" in text:
+            return 30
+        elif "四十" in text:
+            return 40
+        elif "五十" in text:
+            return 50
+        elif "六十" in text:
+            return 60
+        elif "七十" in text:
+            return 70
+        elif "八十" in text:
+            return 80
+        elif "九十" in text:
+            return 90
+        elif "一百" in text:
+            return 100
+        elif "十" in text:
+            return 10
         return 0
 
 

@@ -748,36 +748,6 @@ async def echo(websocket):
                                                     1,
                                                 )
                                             elif (
-                                                "二十连"
-                                                in message["message"][0]["data"]["text"]
-                                                and "梗图"
-                                                not in message["message"][0]["data"][
-                                                    "text"
-                                                ]
-                                            ):
-                                                await luck_dog.luck_choice_mut(
-                                                    websocket,
-                                                    user_id,
-                                                    sender_name,
-                                                    group_id,
-                                                    20,
-                                                )
-                                            elif (
-                                                "十连"
-                                                in message["message"][0]["data"]["text"]
-                                                and "梗图"
-                                                not in message["message"][0]["data"][
-                                                    "text"
-                                                ]
-                                            ):
-                                                await luck_dog.luck_choice_mut(
-                                                    websocket,
-                                                    user_id,
-                                                    sender_name,
-                                                    group_id,
-                                                    10,
-                                                )
-                                            elif (
                                                 "积分"
                                                 in message["message"][0]["data"]["text"]
                                             ):
@@ -859,20 +829,6 @@ async def echo(websocket):
                                                             group_id,
                                                             num,
                                                         )
-                                            elif (
-                                                "梗图二十"
-                                                in message["message"][0]["data"]["text"]
-                                            ):
-                                                await send_meme_merge_forwarding(
-                                                    websocket, group_id, 20
-                                                )
-                                            elif (
-                                                "梗图十"
-                                                in message["message"][0]["data"]["text"]
-                                            ):
-                                                await send_meme_merge_forwarding(
-                                                    websocket, group_id, 10
-                                                )
                                             elif (
                                                 "梗图"
                                                 in message["message"][0]["data"]["text"]
