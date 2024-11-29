@@ -153,7 +153,7 @@ async def poor_point(websocket, user_id: int, group_id: int):
                 ),
             )
             data = cur.fetchall()
-        if data[0][2] < 3:
+        if data[0][2] < 3 and tools.is_today(time.time(), data[0][3]):
             cur.execute(
                 "UPDATE poor SET times = ? WHERE user_id = ? AND group_id = ?;",
                 (data[0][2] + 1, user_id, group_id),
@@ -179,7 +179,7 @@ async def poor_point(websocket, user_id: int, group_id: int):
                     ),
                 },
             }
-        elif data[0][2] >= 3 and not tools.is_today(time.time(), data[0][3]):
+        elif not tools.is_today(time.time(), data[0][3]):
             cur.execute(
                 "UPDATE poor SET times = ?,time=? WHERE user_id = ? AND group_id = ?;",
                 (1, time.time(), user_id, group_id),
