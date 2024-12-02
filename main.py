@@ -1486,7 +1486,7 @@ async def echo(websocket):
                                     await cute(websocket, group_id)
                                 # 定期清理过期的大头菜
                                 ClearKohlrabi()
-                                for user in setting["alarm_member"]:
+                                for index, user in enumerate(setting["alarm_member"]):
                                     if datetime.datetime.now().hour >= user[
                                         "time_hour"
                                     ] and not is_today(time.time(), user["time"]):
@@ -1496,7 +1496,9 @@ async def echo(websocket):
                                             user["group_id"],
                                             user["text"],
                                         )
-                                        user["time"] = time.time()
+                                        setting["alarm_member"][index][
+                                            "time"
+                                        ] = time.time()
                                         dump_setting(setting)
                             case _:
                                 print(message)

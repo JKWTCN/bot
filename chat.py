@@ -115,14 +115,14 @@ async def Joke(websocket, group_id):
 # 更新冷群状态
 def UpdateColdGroup(user_id: int, group_id: int, message_id: int, raw_message: str):
     setting = load_setting()
-    for group in setting["cold_group_king"]:
+    for index, group in enumerate(setting["cold_group_king"]):
         if group["group_id"] == group_id:
-            group["user_id"] = user_id
-            group["message_id"] = message_id
-            group["time"] = time.time()
-            group["is_replay"] = False
-            group["num"] += 1
-            group["raw_message"] = raw_message
+            setting["cold_group_king"][index]["user_id"] = user_id
+            setting["cold_group_king"][index]["message_id"] = message_id
+            setting["cold_group_king"][index]["time"] = time.time()
+            setting["cold_group_king"][index]["is_replay"] = False
+            setting["cold_group_king"][index]["num"] += 1
+            setting["cold_group_king"][index]["raw_message"] = raw_message
             dump_setting(setting)
             return
     setting["cold_group_king"].append(
@@ -142,8 +142,8 @@ def UpdateColdGroup(user_id: int, group_id: int, message_id: int, raw_message: s
 # 检测是否冷群并回复
 async def ColdReplay(websocket):
     setting = load_setting()
-    for group in setting["cold_group_king"]:
-        logger.info(f"before:{group}")
+    for index, group in enumerate(setting["cold_group_king"]):
+        # logger.info(f"before:{group}")
         if (
             group["is_replay"] == False
             and time.time() - group["time"]
@@ -152,10 +152,10 @@ async def ColdReplay(websocket):
             and group["user_id"] not in setting["other_bots"]
             and GetColdGroupStatus(group["group_id"])
         ):
-            group["is_replay"] = True
-            group["num"] = 0
+            setting["cold_group_king"][index]["is_replay"] = True
+            setting["cold_group_king"][index]["num"] = 0
             dump_setting(setting)
-            logger.info(f"after:{group}")
+            # logger.info(f"after:{group}")
             # name = get_user_name(group["user_id"], group["group_id"])
             await ReplySay(
                 websocket,
