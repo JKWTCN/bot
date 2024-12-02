@@ -245,6 +245,7 @@ async def luck_choice_mut(
             "group_id": group_id,
             "message": [],
         },
+        "echo": "delete_message_list",
     }
     if group_id == setting["admin_group_main"]:
         payload["params"]["message"].append(

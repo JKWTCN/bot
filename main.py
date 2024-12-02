@@ -1437,6 +1437,12 @@ async def echo(websocket):
                                     await get_group_list(websocket)
                                     # for group in setting["group_list"]:
                                     #     await get_group_member_list(websocket, group)
+                                for delete_message in setting["delete_message_list"]:
+                                    await delete_msg(websocket, delete_message)
+                                    setting["delete_message_list"].remove(
+                                        delete_message
+                                    )
+                                dump_setting(setting)
                                 # 定期检测新入群友验证码
                                 for i in os.listdir("./vcode"):
                                     user_id = i.split(".")[0].split("_")[0]
@@ -1542,6 +1548,9 @@ async def echo(websocket):
                                 await kick_member(
                                     websocket, user.user_id, user.group_id
                                 )
+                case "delete_message_list":
+                    setting["delete_message_list"].append(message["data"]["message_id"])
+                    dump_setting(setting)
                 case "defense":
                     # print(message)
                     await delete_msg(websocket, message["data"]["message_id"])
