@@ -168,9 +168,7 @@ async def echo(websocket):
                             )
                             AddChatRecord(user_id, group_id)
                             logging.info(log)
-                            if IsAdmin(
-                                setting["bot_id"], group_id
-                            ) or GetColdGroupStatus(group_id):
+                            if GetColdGroupStatus(group_id):
                                 # 如果是更新冷群
                                 UpdateColdGroup(
                                     user_id,
@@ -279,6 +277,11 @@ async def echo(websocket):
                                         message["raw_message"], ["开启", "冷群回复"]
                                     ):
                                         now_status = GetColdGroupStatus(group_id)
+                                        sender_name = get_user_name(user_id, group_id)
+                                        group_name = GetGroupName(group_id)
+                                        logging.info(
+                                            f"{group_name}({group_id}):{sender_name}({user_id})尝试开启冷群回复，当前状态为{now_status}"
+                                        )
                                         if not now_status:
                                             SwitchColdGroupChat(group_id)
                                         await say(
@@ -290,6 +293,11 @@ async def echo(websocket):
                                         message["raw_message"], ["关闭", "冷群回复"]
                                     ):
                                         now_status = GetColdGroupStatus(group_id)
+                                        sender_name = get_user_name(user_id, group_id)
+                                        group_name = GetGroupName(group_id)
+                                        logging.info(
+                                            f"{group_name}({group_id}):{sender_name}({user_id})尝试关闭冷群回复，当前状态为{now_status}"
+                                        )
                                         if not now_status:
                                             SwitchColdGroupChat(group_id)
                                         await say(
