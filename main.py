@@ -231,20 +231,6 @@ async def echo(websocket):
                                                 websocket, at_id, group_id
                                             )
                                     elif HasKeyWords(
-                                        message["raw_message"], ["开启", "冷群回复"]
-                                    ):
-                                        now_status = GetColdGroupStatus(group_id)
-                                        if not now_status:
-                                            SwitchColdGroupChat(group_id)
-                                        say("本群已经开启冷群回复喵。")
-                                    elif HasKeyWords(
-                                        message["raw_message"], ["关闭", "冷群回复"]
-                                    ):
-                                        now_status = GetColdGroupStatus(group_id)
-                                        if not now_status:
-                                            SwitchColdGroupChat(group_id)
-                                        say("本群已经关闭冷群回复喵。")
-                                    elif HasKeyWords(
                                         message["raw_message"], ["通过验证", "验证通过"]
                                     ):
                                         (mod, vcode_str) = find_vcode(at_id, group_id)
@@ -288,6 +274,20 @@ async def echo(websocket):
                                         await websocket.send(
                                             json.dumps(SetGroupWholeBan(group_id))
                                         )
+                                    elif HasKeyWords(
+                                        message["raw_message"], ["开启", "冷群回复"]
+                                    ):
+                                        now_status = GetColdGroupStatus(group_id)
+                                        if not now_status:
+                                            SwitchColdGroupChat(group_id)
+                                        say("本群已经开启冷群回复喵。")
+                                    elif HasKeyWords(
+                                        message["raw_message"], ["关闭", "冷群回复"]
+                                    ):
+                                        now_status = GetColdGroupStatus(group_id)
+                                        if not now_status:
+                                            SwitchColdGroupChat(group_id)
+                                        say("本群已经关闭冷群回复喵。")
                                     else:
                                         await say(
                                             websocket,
