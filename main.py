@@ -307,6 +307,7 @@ async def echo(websocket):
                                         for _ in delete_list:
                                             del setting["cold_group_king"][_]
                                         dump_setting(setting)
+                                        setting = load_setting()
                                         if now_status:
                                             SwitchColdGroupChat(group_id)
                                         await say(
@@ -1151,6 +1152,7 @@ async def echo(websocket):
                                                 setting["thanos_time"] = time.time()
                                                 setting["is_thanos"] = True
                                                 dump_setting(setting)
+                                                setting = load_setting()
                                             elif (
                                                 "清楚明白"
                                                 in message["message"][0]["data"]["text"]
@@ -1167,6 +1169,7 @@ async def echo(websocket):
                                                 await nomoral_qq_avatar(websocket)
                                                 setting["is_thanos"] = False
                                                 dump_setting(setting)
+                                                setting = load_setting()
                                                 await say(
                                                     websocket,
                                                     group_id,
@@ -1440,6 +1443,7 @@ async def echo(websocket):
                                     setting["is_thanos"] = False
                                     setting["thanos_time"] = time.time()
                                     dump_setting(setting)
+                                    setting = load_setting()
                                     await say(websocket, group_id, "乐可不是紫薯精喵。")
                                 # 定期更新群友列表
                                 if time.time() - setting["last_update_time"] > 300:
@@ -1450,6 +1454,7 @@ async def echo(websocket):
                                     await delete_msg(websocket, delete_message)
                                 setting["delete_message_list"] = []
                                 dump_setting(setting)
+                                setting = load_setting()
                                 # 定期检测新入群友验证码
                                 for i in os.listdir("./vcode"):
                                     user_id = i.split(".")[0].split("_")[0]
@@ -1500,6 +1505,7 @@ async def echo(websocket):
                                             "time"
                                         ] = time.time()
                                         dump_setting(setting)
+                                        setting = load_setting()
                             case _:
                                 print(message)
                     else:
@@ -1560,6 +1566,7 @@ async def echo(websocket):
                 case "delete_message_list":
                     setting["delete_message_list"].append(message["data"]["message_id"])
                     dump_setting(setting)
+                    setting = load_setting()
                 case "defense":
                     # print(message)
                     await delete_msg(websocket, message["data"]["message_id"])
@@ -1580,9 +1587,11 @@ async def echo(websocket):
                         if group["group_id"] not in setting["group_list"]:
                             setting["group_list"].append(group["group_id"])
                             dump_setting(setting)
+                            setting = load_setting()
                         await update_group_member_list(websocket, group["group_id"])
                     setting["last_update_time"] = time.time()
                     dump_setting(setting)
+                    setting = load_setting()
                     print("更新全部群列表完毕")
                     logging.info("更新全部群列表完毕")
                 case "so_cute":
