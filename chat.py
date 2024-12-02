@@ -31,6 +31,7 @@ def SwitchColdGroupChat(group_id: int):
         setting["need_cold_reply_list"].remove(group_id)
     else:
         setting["need_cold_reply_list"].append(group_id)
+    dump_setting(setting)
 
 
 # 查找艾特开发者的次数
