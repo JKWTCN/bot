@@ -273,7 +273,7 @@ async def echo(websocket):
                                         await websocket.send(
                                             json.dumps(SetGroupWholeBan(group_id))
                                         )
-                                    elif HasKeyWords(
+                                    elif HasAllKeyWords(
                                         message["raw_message"], ["开启", "冷群回复"]
                                     ):
                                         now_status = GetColdGroupStatus(group_id)
@@ -289,7 +289,7 @@ async def echo(websocket):
                                             group_id,
                                             "本群已经开启冷群回复喵。",
                                         )
-                                    elif HasKeyWords(
+                                    elif HasAllKeyWords(
                                         message["raw_message"], ["关闭", "冷群回复"]
                                     ):
                                         now_status = GetColdGroupStatus(group_id)
