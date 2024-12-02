@@ -280,14 +280,22 @@ async def echo(websocket):
                                         now_status = GetColdGroupStatus(group_id)
                                         if not now_status:
                                             SwitchColdGroupChat(group_id)
-                                        say("本群已经开启冷群回复喵。")
+                                        await say(
+                                            websocket,
+                                            group_id,
+                                            "本群已经开启冷群回复喵。",
+                                        )
                                     elif HasKeyWords(
                                         message["raw_message"], ["关闭", "冷群回复"]
                                     ):
                                         now_status = GetColdGroupStatus(group_id)
                                         if not now_status:
                                             SwitchColdGroupChat(group_id)
-                                        say("本群已经关闭冷群回复喵。")
+                                        await say(
+                                            websocket,
+                                            group_id,
+                                            "本群已经关闭冷群回复喵。",
+                                        )
                                     else:
                                         await say(
                                             websocket,
