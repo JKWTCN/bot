@@ -15,6 +15,24 @@ from Class.Group_member import get_user_name
 import time
 
 
+# 获取群聊是否开启冷群
+def GetColdGroupStatus(group_id: int):
+    setting = load_setting()
+    if group_id in setting["need_cold_reply_list"]:
+        return True
+    else:
+        return False
+
+
+# 切换群聊是否开启冷群回复状态
+def SwitchColdGroupChat(group_id: int):
+    setting = load_setting()
+    if group_id in setting["need_cold_reply_list"]:
+        setting["need_cold_reply_list"].remove(group_id)
+    else:
+        setting["need_cold_reply_list"].append(group_id)
+
+
 # 查找艾特开发者的次数
 def GetWhoAtMe(user_id: int):
     conn = sqlite3.connect("bot.db")

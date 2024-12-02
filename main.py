@@ -29,7 +29,9 @@ from chat import (
     AddAtPunishList,
     AtPunish,
     ColdReplay,
+    GetColdGroupStatus,
     Joke,
+    SwitchColdGroupChat,
     UpdateColdGroup,
     chat,
     GetWhoAtMe,
@@ -165,14 +167,17 @@ async def echo(websocket):
                             )
                             AddChatRecord(user_id, group_id)
                             logging.info(log)
-                            if IsAdmin(setting["bot_id"], group_id):
-                                # 如果是管理员就更新冷群
+                            if IsAdmin(
+                                setting["bot_id"], group_id
+                            ) or GetColdGroupStatus(group_id):
+                                # 如果是更新冷群
                                 UpdateColdGroup(
                                     user_id,
                                     group_id,
                                     message["message_id"],
                                     message["raw_message"],
                                 )
+                            if IsAdmin(setting["bot_id"], group_id):
                                 # 2%的概率派发50积分
                                 if random.random() < 0.02:
                                     now_point = find_point(user_id)
@@ -225,6 +230,20 @@ async def echo(websocket):
                                             await kick_member(
                                                 websocket, at_id, group_id
                                             )
+                                    elif HasKeyWords(
+                                        message["raw_message"], ["开启", "冷群回复"]
+                                    ):
+                                        now_status = GetColdGroupStatus(group_id)
+                                        if not now_status:
+                                            SwitchColdGroupChat(group_id)
+                                        say("本群已经开启冷群回复喵。")
+                                    elif HasKeyWords(
+                                        message["raw_message"], ["关闭", "冷群回复"]
+                                    ):
+                                        now_status = GetColdGroupStatus(group_id)
+                                        if not now_status:
+                                            SwitchColdGroupChat(group_id)
+                                        say("本群已经关闭冷群回复喵。")
                                     elif HasKeyWords(
                                         message["raw_message"], ["通过验证", "验证通过"]
                                     ):
