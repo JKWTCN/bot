@@ -1117,9 +1117,15 @@ async def echo(websocket):
                                                 )
 
                                             elif (
-                                                "打响指"
-                                                in message["message"][0]["data"]["text"]
-                                            ) and IsAdmin(user_id, group_id):
+                                                (
+                                                    "打响指"
+                                                    in message["message"][0]["data"][
+                                                        "text"
+                                                    ]
+                                                )
+                                                and IsAdmin(user_id, group_id)
+                                                and BotIsAdmin(group_id)
+                                            ):
                                                 await say(
                                                     websocket,
                                                     group_id,
