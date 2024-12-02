@@ -8,6 +8,7 @@ import websockets
 import json
 from Class.Group_member import (
     Group_member,
+    IsDeveloper,
     get_user_info,
     get_user_name,
     updata_user_info,
@@ -256,9 +257,9 @@ async def echo(websocket):
                                                     await welcom_new_no_admin(
                                                         websocket, at_id, group_id
                                                     )
-                                elif (IsAdmin(user_id, group_id)) and at_id == setting[
-                                    "bot_id"
-                                ]:
+                                elif (
+                                    IsAdmin(user_id, group_id) or IsDeveloper(user_id)
+                                ) and at_id == setting["bot_id"]:
                                     # 管理员功能 at乐可
                                     if "解除全体禁言" in message["raw_message"]:
                                         logging.info(

@@ -168,6 +168,12 @@ def IsAdmin(user_id: int, group_id: int):
         return False
 
 
+# 检测用户是否为开发者
+def IsDeveloper(user_id: int):
+    setting = load_setting()
+    return user_id in setting["developers_list"]
+
+
 # 检测机器人是否为该群的管理员
 def BotIsAdmin(group_id: int):
     setting = load_setting()
