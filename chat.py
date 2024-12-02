@@ -153,7 +153,6 @@ async def ColdReplay(websocket):
         ):
             group["is_replay"] = True
             group["num"] = 0
-            dump_setting(setting)
             name = get_user_name(group["user_id"], group["group_id"])
             await ReplySay(
                 websocket,
@@ -161,6 +160,7 @@ async def ColdReplay(websocket):
                 group["message_id"],
                 ColdChat(group),
             )
+    dump_setting(setting)
 
 
 # chat内容转发给大模型
