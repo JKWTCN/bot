@@ -143,6 +143,7 @@ def UpdateColdGroup(user_id: int, group_id: int, message_id: int, raw_message: s
 async def ColdReplay(websocket):
     setting = load_setting()
     for group in setting["cold_group_king"]:
+        logger.info(f"before:{group}")
         if (
             group["is_replay"] == False
             and time.time() - group["time"]
@@ -153,14 +154,15 @@ async def ColdReplay(websocket):
         ):
             group["is_replay"] = True
             group["num"] = 0
-            name = get_user_name(group["user_id"], group["group_id"])
+            dump_setting(setting)
+            logger.info(f"after:{group}")
+            # name = get_user_name(group["user_id"], group["group_id"])
             await ReplySay(
                 websocket,
                 group["group_id"],
                 group["message_id"],
                 ColdChat(group),
             )
-    dump_setting(setting)
 
 
 # chat内容转发给大模型
