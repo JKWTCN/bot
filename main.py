@@ -298,6 +298,15 @@ async def echo(websocket):
                                         logging.info(
                                             f"{group_name}({group_id}):{sender_name}({user_id})尝试关闭冷群回复。"
                                         )
+                                        i = 0
+                                        delete_list = []
+                                        for group in setting["cold_group_king"]:
+                                            if group["group_id"] == group_id:
+                                                delete_list.append(i)
+                                            i += 1
+                                        for _ in delete_list:
+                                            del setting["cold_group_king"][_]
+                                        dump_setting(setting)
                                         if now_status:
                                             SwitchColdGroupChat(group_id)
                                         await say(
