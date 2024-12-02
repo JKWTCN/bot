@@ -139,7 +139,7 @@ def UpdateColdGroup(user_id: int, group_id: int, message_id: int, raw_message: s
     dump_setting(setting)
 
 
-# 检测是否冷群
+# 检测是否冷群并回复
 async def ColdReplay(websocket):
     setting = load_setting()
     for group in setting["cold_group_king"]:
@@ -149,6 +149,7 @@ async def ColdReplay(websocket):
             >= setting["cold_group_king_setting"]["time_out"]
             and group["num"] > setting["cold_group_king_setting"]["num_out"]
             and group["user_id"] not in setting["other_bots"]
+            and GetColdGroupStatus(group["group_id"])
         ):
             group["is_replay"] = True
             group["num"] = 0
