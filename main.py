@@ -280,7 +280,7 @@ async def echo(websocket):
                                         sender_name = get_user_name(user_id, group_id)
                                         group_name = GetGroupName(group_id)
                                         logging.info(
-                                            f"{group_name}({group_id}):{sender_name}({user_id})尝试开启冷群回复，当前状态为{now_status}"
+                                            f"{group_name}({group_id}):{sender_name}({user_id})尝试开启冷群回复。"
                                         )
                                         if not now_status:
                                             SwitchColdGroupChat(group_id)
@@ -296,9 +296,9 @@ async def echo(websocket):
                                         sender_name = get_user_name(user_id, group_id)
                                         group_name = GetGroupName(group_id)
                                         logging.info(
-                                            f"{group_name}({group_id}):{sender_name}({user_id})尝试关闭冷群回复，当前状态为{now_status}"
+                                            f"{group_name}({group_id}):{sender_name}({user_id})尝试关闭冷群回复。"
                                         )
-                                        if not now_status:
+                                        if now_status:
                                             SwitchColdGroupChat(group_id)
                                         await say(
                                             websocket,
