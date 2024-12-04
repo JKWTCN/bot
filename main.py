@@ -231,9 +231,9 @@ async def echo(websocket):
                                             await kick_member(
                                                 websocket, at_id, group_id
                                             )
-                                    elif "取消惩罚" in message["raw_message"] and (
-                                        user_id != at_id or IsDeveloper(user_id)
-                                    ):
+                                    elif HasKeyWords(
+                                        raw_message, ["惩罚取消", "取消惩罚"]
+                                    ) and (user_id != at_id or IsDeveloper(user_id)):
                                         DelAtPunish(at_id, group_id)
                                         setting = load_setting()
                                         logging.info(
@@ -977,17 +977,35 @@ async def echo(websocket):
                                                     websocket, group_id
                                                 )
                                             elif HasKeyWords(raw_message, ["睡眠套餐"]):
-                                                say(
-                                                    websocket,
-                                                    group_id,
-                                                    f"{get_user_name(user_id,group_id)}睡眠套餐已开启,明天早上6点见。",
-                                                )
-                                                await ban_new(
-                                                    websocket,
-                                                    user_id,
-                                                    group_id,
-                                                    GetSleepSeconds(),
-                                                )
+                                                if BotIsAdmin(group_id) and not IsAdmin(
+                                                    user_id, group_id
+                                                ):
+                                                    say(
+                                                        websocket,
+                                                        group_id,
+                                                        f"{get_user_name(user_id,group_id)}睡眠套餐已开启,明天早上6点见。",
+                                                    )
+                                                    await ban_new(
+                                                        websocket,
+                                                        user_id,
+                                                        group_id,
+                                                        GetSleepSeconds(),
+                                                    )
+                                                elif BotIsAdmin() and IsAdmin(
+                                                    user_id, group_id
+                                                ):
+                                                    await ReplySay(
+                                                        websocket,
+                                                        group_id,
+                                                        message["message_id"],
+                                                        "惩罚性艾特1000次。",
+                                                    )
+                                                    AddAtPunishList(
+                                                        qq,
+                                                        group_id,
+                                                        1000,
+                                                    )
+
                                             elif (
                                                 "涩"
                                                 in message["message"][0]["data"]["text"]
@@ -1012,7 +1030,7 @@ async def echo(websocket):
                                                 )
                                             elif HasKeyWords(
                                                 message["message"][0]["data"]["text"],
-                                                "再见",
+                                                "再也不见",
                                             ):
                                                 if BotIsAdmin(group_id) and not IsAdmin(
                                                     user_id, group_id
@@ -1026,20 +1044,20 @@ async def echo(websocket):
                                                         message["message_id"],
                                                         "再见,再也不见。",
                                                     )
-                                            elif BotIsAdmin() and IsAdmin(
-                                                user_id, group_id
-                                            ):
-                                                await ReplySay(
-                                                    websocket,
-                                                    group_id,
-                                                    message["message_id"],
-                                                    "惩罚性艾特1000次。",
-                                                )
-                                                AddAtPunishList(
-                                                    qq,
-                                                    group_id,
-                                                    1000,
-                                                )
+                                                elif BotIsAdmin() and IsAdmin(
+                                                    user_id, group_id
+                                                ):
+                                                    await ReplySay(
+                                                        websocket,
+                                                        group_id,
+                                                        message["message_id"],
+                                                        "惩罚性艾特1000次。",
+                                                    )
+                                                    AddAtPunishList(
+                                                        qq,
+                                                        group_id,
+                                                        1000,
+                                                    )
 
                                             elif (
                                                 "二次元"
