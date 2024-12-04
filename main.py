@@ -246,6 +246,12 @@ async def echo(websocket):
                                             f"{group_id}:{sender_name}({user_id})取消了{rev_name}({at_id})的惩罚"
                                         )
                                     elif HasKeyWords(
+                                        raw_message, ["打他", "打它", "打她"]
+                                    ) and (user_id != at_id or IsDeveloper(user_id)):
+                                        AddAtPunishList(
+                                            at_id, group_id, setting["defense_times"]
+                                        )
+                                    elif HasKeyWords(
                                         message["raw_message"], ["通过验证", "验证通过"]
                                     ):
                                         (mod, vcode_str) = find_vcode(at_id, group_id)
