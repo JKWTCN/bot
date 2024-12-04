@@ -27,6 +27,34 @@ async def cute(websocket, group_id: int):
     await websocket.send(json.dumps(payload))
 
 
+# 不要叫乐可可乐
+async def cute2(websocket, group_id: int):
+    path = "res/cute2.gif"
+    logging.info("有人叫乐可可乐。")
+    with open(path, "rb") as image_file:
+        image_data = image_file.read()
+    image_base64 = base64.b64encode(image_data)
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {
+                    "type": "text",
+                    "data": {
+                        "text": "抗议！！！抗议！！！人家叫乐可喵，不叫可乐喵！！！！",
+                    },
+                },
+                {
+                    "type": "image",
+                    "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
 # 发送一张绝对涩的涩图
 async def sex_img(websocket, user_id: int, group_id: int):
     now_point = find_point(user_id)

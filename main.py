@@ -49,6 +49,7 @@ from kohlrabi import (
 import luck_dog
 from easter_egg import (
     cute,
+    cute2,
     kfc_v_me_50,
     sex_img,
 )
@@ -587,10 +588,9 @@ async def echo(websocket):
                                         if message["message"][0]["data"][
                                             "text"
                                         ].startswith("可乐"):
-                                            await say(
+                                            await cute2(
                                                 websocket,
                                                 group_id,
-                                                "抗议！！！抗议！！！人家叫乐可喵，不叫可乐喵！！！！",
                                             )
                                         if message["message"][0]["data"][
                                             "text"
@@ -1268,7 +1268,16 @@ async def echo(websocket):
                                             )
                                         )
                                     case _:
-                                        pass
+                                        if HasKeyWords(raw_message, ["乐可"]):
+                                            sender_name = get_user_name(
+                                                user_id, group_id
+                                            )
+                                            await chat(
+                                                websocket,
+                                                group_id,
+                                                sender_name,
+                                                raw_message,
+                                            )
                         case "private":
                             print(
                                 "{}:{}({})私聊说:{}".format(
