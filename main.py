@@ -231,7 +231,9 @@ async def echo(websocket):
                                             await kick_member(
                                                 websocket, at_id, group_id
                                             )
-                                    elif "取消惩罚" in message["raw_message"]:
+                                    elif "取消惩罚" in message["raw_message"] and (
+                                        user_id != at_id or IsDeveloper(user_id)
+                                    ):
                                         DelAtPunish(at_id, group_id)
                                         setting = load_setting()
                                         logging.info(
@@ -384,6 +386,7 @@ async def echo(websocket):
                                     and not IsAdmin(user_id, group_id)
                                     and BotIsAdmin(group_id)
                                     and group_id == setting["admin_group_main"]
+                                    and not IsDeveloper(user_id)
                                 ):
                                     AddWhoAtMe(user_id)
                                     now_num = GetWhoAtMe(user_id)
