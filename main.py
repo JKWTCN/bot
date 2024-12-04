@@ -1247,6 +1247,16 @@ async def echo(websocket):
                                                         "text"
                                                     ],
                                                 )
+                                        elif HasKeyWords(raw_message, ["乐可"]):
+                                            sender_name = get_user_name(
+                                                user_id, group_id
+                                            )
+                                            await chat(
+                                                websocket,
+                                                group_id,
+                                                sender_name,
+                                                raw_message,
+                                            )
 
                                     case "at":
                                         rev_id = message["message"][0]["data"]["qq"]
