@@ -30,6 +30,7 @@ from chat import (
     AddAtPunishList,
     AtPunish,
     ColdReplay,
+    DelAtPunish,
     GetColdGroupStatus,
     Joke,
     SwitchColdGroupChat,
@@ -230,6 +231,12 @@ async def echo(websocket):
                                             await kick_member(
                                                 websocket, at_id, group_id
                                             )
+                                    elif "取消惩罚" in message["raw_message"]:
+                                        DelAtPunish(at_id, group_id)
+                                        setting = load_setting()
+                                        logging.info(
+                                            f"{group_id}:{sender_name}({user_id})取消了{rev_name}({at_id})的惩罚"
+                                        )
                                     elif HasKeyWords(
                                         message["raw_message"], ["通过验证", "验证通过"]
                                     ):
@@ -987,6 +994,36 @@ async def echo(websocket):
                                             ):
                                                 await get_cos(
                                                     websocket, user_id, group_id
+                                                )
+                                            elif HasKeyWords(
+                                                message["message"][0]["data"]["text"],
+                                                "再见",
+                                            ):
+                                                if BotIsAdmin() and not IsAdmin(
+                                                    user_id, group_id
+                                                ):
+                                                    await kick_member(
+                                                        websocket, user_id, group_id
+                                                    )
+                                                    await ReplySay(
+                                                        websocket,
+                                                        group_id,
+                                                        message["message_id"],
+                                                        "再见,再也不见。",
+                                                    )
+                                            elif BotIsAdmin() and IsAdmin(
+                                                user_id, group_id
+                                            ):
+                                                await ReplySay(
+                                                    websocket,
+                                                    group_id,
+                                                    message["message_id"],
+                                                    "惩罚性艾特1000次。",
+                                                )
+                                                AddAtPunishList(
+                                                    qq,
+                                                    group_id,
+                                                    1000,
                                                 )
 
                                             elif (

@@ -64,6 +64,16 @@ def AddWhoAtMe(user_id: int):
     conn.close()
 
 
+# 删除特定惩罚
+def DelAtPunish(user_id: int, group_id: int):
+    setting = load_setting()
+    for index, admin in enumerate(setting["bleak_admin"]):
+        if admin["user_id"] == user_id and admin["group_id"] == group_id:
+            del setting["bleak_admin"][index]
+            dump_setting(setting)
+            return
+
+
 # 添加惩罚名单
 def AddAtPunishList(user_id: int, group_id: int, num: int):
     setting = load_setting()
