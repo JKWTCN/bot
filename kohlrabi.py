@@ -81,8 +81,17 @@ def GetDogeCoin():
 
 # 获取大头菜价格
 def GetNowPrice():
-    now_price = GetDogeCoinV2()
-    return round(float(now_price) * 1000, 3)
+    setting = load_setting()
+    if setting["kohlrabi_version"] == 0:
+        now_price = GetBShock()
+        now_price = round(float(now_price), 3)
+    elif setting["kohlrabi_version"] == 1:
+        now_price = GetDogeCoin()
+        now_price = round(float(now_price) * 1000, 3)
+    else:
+        now_price = GetDogeCoinV2()
+        now_price = round(float(now_price) * 1000, 3)
+    return now_price
 
 
 # 获取我的本周交易记录
