@@ -207,7 +207,13 @@ async def echo(websocket):
                                 at_id = re.findall(
                                     r"\[CQ:at,qq=(\d+)]", message["raw_message"]
                                 )
-                                at_id = int(at_id[0])
+                                if at_id != None:
+                                    at_id = int(at_id[0])
+                                else:
+                                    at_id = re.findall(
+                                        r"\[CQ:at,qq=-(\d+)]", message["raw_message"]
+                                    )
+                                    at_id = int(at_id[0])
                                 # 管理员管理功能
                                 if (
                                     IsAdmin(setting["bot_id"], group_id)
@@ -1030,7 +1036,7 @@ async def echo(websocket):
                                                 )
                                             elif HasKeyWords(
                                                 message["message"][0]["data"]["text"],
-                                                "再也不见",
+                                                ["再也不见", "重开"],
                                             ):
                                                 if BotIsAdmin(group_id) and not IsAdmin(
                                                     user_id, group_id
