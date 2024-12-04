@@ -1036,6 +1036,15 @@ async def echo(websocket):
                                                 )
                                             elif HasKeyWords(
                                                 message["message"][0]["data"]["text"],
+                                                ["打我"],
+                                            ):
+                                                AddAtPunishList(
+                                                    user_id,
+                                                    group_id,
+                                                    setting["defense_times"],
+                                                )
+                                            elif HasKeyWords(
+                                                message["message"][0]["data"]["text"],
                                                 ["再也不见", "重开"],
                                             ):
                                                 if BotIsAdmin(group_id) and not IsAdmin(
