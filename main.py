@@ -976,6 +976,18 @@ async def echo(websocket):
                                                 await send_random_meme(
                                                     websocket, group_id
                                                 )
+                                            elif HasKeyWords(raw_message, ["睡眠套餐"]):
+                                                say(
+                                                    websocket,
+                                                    group_id,
+                                                    f"{get_user_name(user_id,group_id)}睡眠套餐已开启,明天早上6点见。",
+                                                )
+                                                await ban_new(
+                                                    websocket,
+                                                    user_id,
+                                                    group_id,
+                                                    GetSleepSeconds(),
+                                                )
                                             elif (
                                                 "涩"
                                                 in message["message"][0]["data"]["text"]
@@ -1002,7 +1014,7 @@ async def echo(websocket):
                                                 message["message"][0]["data"]["text"],
                                                 "再见",
                                             ):
-                                                if BotIsAdmin() and not IsAdmin(
+                                                if BotIsAdmin(group_id) and not IsAdmin(
                                                     user_id, group_id
                                                 ):
                                                     await kick_member(
