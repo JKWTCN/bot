@@ -545,6 +545,11 @@ async def echo(websocket):
                                             and "喵" not in message["raw_message"]
                                             and "[CQ:image"
                                             not in message["raw_message"]
+                                            and BotIsAdmin(group_id)
+                                            and not IsAdmin(
+                                                setting["miaomiao_group_member"],
+                                                group_id,
+                                            )
                                         ):
                                             await ban_new(
                                                 websocket,
