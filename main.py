@@ -1633,47 +1633,46 @@ async def echo(websocket):
                         user.init_by_dict(group_member)
                         updata_user_info(user)
                         name = get_user_name(user.user_id, user.group_id)
-                        if user.group_id not in setting["other_group"]:
-                            timeout = 2592000
-                        else:
-                            timeout = 15552000
-                        if (
-                            time.time() - user.last_sent_time > timeout
-                            and BotIsAdmin(user.group_id)
-                            and user.group_id not in setting["sepcial_group"]
-                        ):
-                            if not IsAdmin(user.user_id, user.group_id):
-                                print(
-                                    "{}({}),最后发言时间:{}".format(
-                                        name,
-                                        user.user_id,
-                                        time.strftime(
-                                            "%Y-%m-%d %H:%M:%S",
-                                            time.localtime(user.last_sent_time),
+                        if user.group_id in setting["kick_time"]:
+                            timeout = setting["kick_time"][user.group_id]
+                            if (
+                                time.time() - user.last_sent_time > timeout
+                                and BotIsAdmin(user.group_id)
+                                and user.group_id not in setting["sepcial_group"]
+                                and timeout != -1
+                            ):
+                                if not IsAdmin(user.user_id, user.group_id):
+                                    print(
+                                        "{}({}),最后发言时间:{}".format(
+                                            name,
+                                            user.user_id,
+                                            time.strftime(
+                                                "%Y-%m-%d %H:%M:%S",
+                                                time.localtime(user.last_sent_time),
+                                            ),
+                                        )
+                                    )
+                                    logging.info(
+                                        "{}({})因{}个月未活跃被请出群聊".format(
+                                            name, user.user_id, timeout / 2592000
+                                        )
+                                    )
+                                    await say(
+                                        websocket,
+                                        user.group_id,
+                                        "{}({})，乐可要踢掉你了喵！\n原因:{}个月未活跃。\n最后发言时间为:{}".format(
+                                            name,
+                                            user.user_id,
+                                            timeout / 2592000,
+                                            time.strftime(
+                                                "%Y-%m-%d %H:%M:%S",
+                                                time.localtime(user.last_sent_time),
+                                            ),
                                         ),
                                     )
-                                )
-                                logging.info(
-                                    "{}({})因{}个月未活跃被请出群聊".format(
-                                        name, user.user_id, timeout / 2592000
+                                    await kick_member(
+                                        websocket, user.user_id, user.group_id
                                     )
-                                )
-                                await say(
-                                    websocket,
-                                    user.group_id,
-                                    "{}({})，乐可要踢掉你了喵！\n原因:{}个月未活跃。\n最后发言时间为:{}".format(
-                                        name,
-                                        user.user_id,
-                                        timeout / 2592000,
-                                        time.strftime(
-                                            "%Y-%m-%d %H:%M:%S",
-                                            time.localtime(user.last_sent_time),
-                                        ),
-                                    ),
-                                )
-                                await kick_member(
-                                    websocket, user.user_id, user.group_id
-                                )
                 case "delete_message_list":
                     setting["delete_message_list"].append(message["data"]["message_id"])
                     dump_setting(setting)
