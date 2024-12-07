@@ -1634,7 +1634,7 @@ async def echo(websocket):
                         updata_user_info(user)
                         name = get_user_name(user.user_id, user.group_id)
                         if user.group_id not in setting["other_group"]:
-                            timeout = 5184000
+                            timeout = 2592000
                         else:
                             timeout = 15552000
                         if (
