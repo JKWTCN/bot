@@ -263,16 +263,24 @@ async def echo(websocket):
                                             )
                                             if mod:
                                                 # 通过验证
-                                                if (
-                                                    group_id
-                                                    not in setting["other_group"]
-                                                ):
-                                                    await ban_new(
-                                                        websocket, at_id, group_id, 60
-                                                    )
-                                                    await welcome_new(
-                                                        websocket, at_id, group_id
-                                                    )
+                                                if BotIsAdmin(group_id):
+                                                    if (
+                                                        group_id
+                                                        == setting["admin_group_main"]
+                                                    ):
+                                                        await ban_new(
+                                                            websocket,
+                                                            at_id,
+                                                            group_id,
+                                                            60,
+                                                        )
+                                                        await welcome_new(
+                                                            websocket, at_id, group_id
+                                                        )
+                                                    else:
+                                                        await welcom_new_no_admin(
+                                                            websocket, at_id, group_id
+                                                        )
                                                 else:
                                                     await welcom_new_no_admin(
                                                         websocket, at_id, group_id
@@ -501,7 +509,7 @@ async def echo(websocket):
                                     )
                                     if mod:
                                         # 通过验证
-                                        if group_id not in setting["other_group"]:
+                                        if group_id == setting["admin_group_main"]:
                                             await ban_new(
                                                 websocket,
                                                 user_id,
@@ -573,7 +581,7 @@ async def echo(websocket):
                                         if (
                                             datetime.datetime.now().day == 25
                                             and BotIsAdmin(group_id)
-                                            and group_id not in setting["other_group"]
+                                            and group_id == setting["admin_group_main"]
                                             and user_id not in setting["other_bots"]
                                         ):
                                             if (
@@ -1519,7 +1527,7 @@ async def echo(websocket):
                             if (
                                 message["sub_type"] == "leave"
                                 and BotIsAdmin(group_id)
-                                and group_id not in setting["other_group"]
+                                and group_id == setting["admin_group_main"]
                             ):
                                 print(
                                     "{}:{}离开了群{}。\n".format(
@@ -1527,6 +1535,7 @@ async def echo(websocket):
                                     )
                                 )
                                 sender_name = get_user_name(user_id, group_id)
+                                group_name = GetGroupName(group_id)
                                 add_unwelcome(user_id, message["time"], group_id)
                                 await say(
                                     websocket,
@@ -1536,7 +1545,21 @@ async def echo(websocket):
                                     ),
                                 )
 
-                                logging.info("{}离开了群{}".format(user_id, group_id))
+                                logging.info(
+                                    "{sender_name}({user_id})离开了群{group_name}({group_id})"
+                                )
+                            elif BotIsAdmin(group_id):
+                                sender_name = get_user_name(user_id, group_id)
+                                group_name = GetGroupName(group_id)
+                                await say(
+                                    websocket,
+                                    group_id,
+                                    "{sender_name}({user_id})离开了群{group_name}({group_id})。天要下雨，娘要嫁人，由他去吧",
+                                )
+                                logging.info(
+                                    "{sender_name}({user_id})离开了群{group_name}({group_id})"
+                                )
+
                 case "meta_event":
                     # OneBot元事件
                     if "meta_event_type" in message:
