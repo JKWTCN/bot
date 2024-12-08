@@ -293,9 +293,7 @@ async def echo(websocket):
                                         logging.info(
                                             f"{group_id}:{sender_name}({user_id})解除了全体禁言"
                                         )
-                                        await websocket.send(
-                                            json.dumps(SetGroupWholeNoBan(group_id))
-                                        )
+                                        await SetGroupWholeNoBan(websocket, group_id)
                                     elif "全体禁言" in message["raw_message"]:
                                         logging.info(
                                             f"{group_id}:{sender_name}({user_id})全体禁言"
@@ -1016,7 +1014,7 @@ async def echo(websocket):
                                                         group_id,
                                                         GetSleepSeconds(),
                                                     )
-                                                elif BotIsAdmin() and IsAdmin(
+                                                elif BotIsAdmin(group_id) and IsAdmin(
                                                     user_id, group_id
                                                 ):
                                                     await ReplySay(
@@ -1537,13 +1535,20 @@ async def echo(websocket):
                                 sender_name = get_user_name(user_id, group_id)
                                 group_name = GetGroupName(group_id)
                                 add_unwelcome(user_id, message["time"], group_id)
-                                await say(
-                                    websocket,
-                                    group_id,
-                                    "{}({})离开了群{}。\n十个小兵人，外出去吃饭；\n一个被呛死，还剩九个人。\n九个小兵人，熬夜熬得深；\n一个睡过头，还剩八个人。\n八个小兵人，动身去德文；\n一个要留下，还剩七个人。\n七个小兵人，一起去砍柴；\n一个砍自己，还剩六个人。\n六个小兵人，无聊玩蜂箱；\n一个被蛰死，还剩五个人。\n五个小兵人，喜欢学法律；\n一个当法官，还剩四个人。\n四个小兵人，下海去逞能；\n一个葬鱼腹，还剩三个人。\n三个小兵人，进了动物园；\n一个遭熊袭，还剩两个人。\n两个小兵人，外出晒太阳；\n一个被晒焦，还剩一个人。\n这个小兵人，孤单又影只；\n投缳上了吊，一个也没剩。".format(
-                                        sender_name, user_id, group_id
-                                    ),
-                                )
+                                if random.random() > 0.5:
+                                    await say(
+                                        websocket,
+                                        group_id,
+                                        "{}({})离开了群{}({})。\n十个小兵人，外出去吃饭；\n一个被呛死，还剩九个人。\n九个小兵人，熬夜熬得深；\n一个睡过头，还剩八个人。\n八个小兵人，动身去德文；\n一个要留下，还剩七个人。\n七个小兵人，一起去砍柴；\n一个砍自己，还剩六个人。\n六个小兵人，无聊玩蜂箱；\n一个被蛰死，还剩五个人。\n五个小兵人，喜欢学法律；\n一个当法官，还剩四个人。\n四个小兵人，下海去逞能；\n一个葬鱼腹，还剩三个人。\n三个小兵人，进了动物园；\n一个遭熊袭，还剩两个人。\n两个小兵人，外出晒太阳；\n一个被晒焦，还剩一个人。\n这个小兵人，孤单又影只；\n投缳上了吊，一个也没剩。".format(
+                                            sender_name, user_id, sender_name, group_id
+                                        ),
+                                    )
+                                else:
+                                    await say(
+                                        websocket,
+                                        group_id,
+                                        "{sender_name}({user_id})离开了群{group_name}({group_id})。天要下雨，娘要嫁人，由他去吧",
+                                    )
 
                                 logging.info(
                                     "{sender_name}({user_id})离开了群{group_name}({group_id})"
