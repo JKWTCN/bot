@@ -109,6 +109,7 @@ from tools import (
     SayPrivte,
     delete_msg,
     SayAndAtDefense,
+    SayAndAtImage
 )
 from vcode import (
     check_validation_timeout,
@@ -1639,12 +1640,21 @@ async def echo(websocket):
                                     if datetime.datetime.now().hour >= user[
                                         "time_hour"
                                     ] and not is_today(time.time(), user["time"]):
-                                        await SayAndAt(
-                                            websocket,
-                                            user["user_id"],
-                                            user["group_id"],
-                                            user["text"],
-                                        )
+                                        if "res" in user:
+                                            await SayAndAtImage(
+                                                websocket,
+                                                user["user_id"],
+                                                user["group_id"],
+                                                user["text"],
+                                                user["res"],
+                                            )
+                                        else:
+                                            await SayAndAt(
+                                                websocket,
+                                                user["user_id"],
+                                                user["group_id"],
+                                                user["text"],
+                                            )
                                         setting["alarm_member"][index][
                                             "time"
                                         ] = time.time()

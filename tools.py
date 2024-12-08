@@ -85,6 +85,31 @@ async def SayAndAt(websocket, user_id: int, group_id: int, text: str):
     await websocket.send(json.dumps(payload))
 
 
+async def SayAndAtImage(
+    websocket, user_id: int, group_id: int, text: str, file_dir: str
+):
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "at", "data": {"qq": user_id}},
+                {"type": "text", "data": {"text": " " + text}},
+            ],
+        },
+    }
+    with open(file_dir, "rb") as image_file:
+        image_data = image_file.read()
+    image_base64 = base64.b64encode(image_data)
+    payload["params"]["message"].append(
+        {
+            "type": "image",
+            "data": {"file": "base64://" + image_base64.decode("utf-8")},
+        }
+    )
+    await websocket.send(json.dumps(payload))
+
+
 async def SayAndAtDefense(websocket, user_id: int, group_id: int, text: str):
     payload = {
         "action": "send_msg_async",
