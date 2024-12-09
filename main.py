@@ -109,7 +109,7 @@ from tools import (
     SayPrivte,
     delete_msg,
     SayAndAtDefense,
-    SayAndAtImage
+    SayAndAtImage,
 )
 from vcode import (
     check_validation_timeout,
@@ -1548,11 +1548,11 @@ async def echo(websocket):
                                     await say(
                                         websocket,
                                         group_id,
-                                        "{sender_name}({user_id})离开了群{group_name}({group_id})。天要下雨，娘要嫁人，由他去吧",
+                                        f"{sender_name}({user_id})离开了群{group_name}({group_id})。天要下雨，娘要嫁人，由他去吧",
                                     )
 
                                 logging.info(
-                                    "{sender_name}({user_id})离开了群{group_name}({group_id})"
+                                    f"{sender_name}({user_id})离开了群{group_name}({group_id})"
                                 )
                             elif BotIsAdmin(group_id):
                                 sender_name = get_user_name(user_id, group_id)
@@ -1560,10 +1560,10 @@ async def echo(websocket):
                                 await say(
                                     websocket,
                                     group_id,
-                                    "{sender_name}({user_id})离开了群{group_name}({group_id})。天要下雨，娘要嫁人，由他去吧",
+                                    f"{sender_name}({user_id})离开了群{group_name}({group_id})。天要下雨，娘要嫁人，由他去吧",
                                 )
                                 logging.info(
-                                    "{sender_name}({user_id})离开了群{group_name}({group_id})"
+                                    f"{sender_name}({user_id})离开了群{group_name}({group_id})"
                                 )
 
                 case "meta_event":
