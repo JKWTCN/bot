@@ -1499,8 +1499,9 @@ async def echo(websocket):
                                                 group_id,
                                                 60,
                                             )
-                                            await say(
+                                            await SayAndAt(
                                                 websocket,
+                                                user_id,
                                                 group_id,
                                                 "世界上是没有后悔药的，开弓也是没有回头箭的。",
                                             )
