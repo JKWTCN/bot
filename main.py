@@ -1473,16 +1473,16 @@ async def echo(websocket):
                                         and group_id == setting["admin_group_main"]
                                     ):
                                         if not IsAdmin(user_id, group_id):
-                                            await kick_member(
-                                                websocket, user_id, group_id
-                                            )
-                                            await say(
+                                            await SayAndAt(
                                                 websocket,
+                                                user_id,
                                                 group_id,
-                                                "{},你已因{}被本群拉黑，无法加入本群".format(
-                                                    user_id,
+                                                "你已因{},被本群拉黑，无法加入本群".format(
                                                     setting["blacklist"][str(user_id)],
                                                 ),
+                                            )
+                                            await kick_member(
+                                                websocket, user_id, group_id
                                             )
 
                                     else:
