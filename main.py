@@ -1499,6 +1499,7 @@ async def echo(websocket):
                                                 group_id,
                                                 60,
                                             )
+
                                             await SayAndAt(
                                                 websocket,
                                                 user_id,
@@ -1506,7 +1507,7 @@ async def echo(websocket):
                                                 "世界上是没有后悔药的，开弓也是没有回头箭的。",
                                             )
                                             logging.info(
-                                                f"{get_user_name(user_id, group_id)}({user_id}),因为以前退出过群想重新加入而被踢出。"
+                                                f"{get_user_name(user_id, group_id)}({user_id}),因为{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(quit_time))}退出过群现在想重新加入而被踢出。"
                                             )
                                             await kick_member(
                                                 websocket, user_id, group_id
