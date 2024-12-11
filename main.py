@@ -92,6 +92,7 @@ from tarot_cards import (
     AnswerBook,
 )
 from tools import (
+    HasChinese,
     ReplySay,
     dump_setting,
     is_today,
@@ -557,6 +558,7 @@ async def echo(websocket):
                                                 setting["miaomiao_group_member"],
                                                 group_id,
                                             )
+                                            and HasChinese(message["raw_message"])
                                         ):
                                             await ban_new(
                                                 websocket,

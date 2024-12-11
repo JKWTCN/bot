@@ -70,6 +70,14 @@ async def say(websocket, group_id: int, text: str):
     }
     await websocket.send(json.dumps(payload))
 
+# 判断是否是中文
+def HasChinese(self, string):
+    for ch in string:
+        if "\u4e00" <= ch <= "\u9fff":
+            return True
+
+    return True
+
 
 async def SayAndAt(websocket, user_id: int, group_id: int, text: str):
     payload = {
