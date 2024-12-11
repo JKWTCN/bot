@@ -32,8 +32,10 @@ from chat import (
     ColdReplay,
     DelAtPunish,
     GetColdGroupStatus,
+    GetGroupDecreaseMessageStatus,
     Joke,
     SwitchColdGroupChat,
+    SwitchGroupDecreaseMessage,
     UpdateColdGroup,
     chat,
     GetWhoAtMe,
@@ -302,6 +304,43 @@ async def echo(websocket):
                                         )
                                         await websocket.send(
                                             json.dumps(SetGroupWholeBan(group_id))
+                                        )
+                                    elif HasAllKeyWords(
+                                        message["raw_message"], ["开启", "退群提醒"]
+                                    ):
+                                        now_status = GetGroupDecreaseMessageStatus(
+                                            group_id
+                                        )
+                                        sender_name = get_user_name(user_id, group_id)
+                                        group_name = GetGroupName(group_id)
+                                        logging.info(
+                                            f"{group_name}({group_id}):{sender_name}({user_id})尝试开启退群提醒。"
+                                        )
+                                        if not now_status:
+                                            SwitchGroupDecreaseMessage(group_id)
+                                        await say(
+                                            websocket,
+                                            group_id,
+                                            "本群已经开启退群提醒喵。",
+                                        )
+                                    elif HasAllKeyWords(
+                                        message["raw_message"], ["关闭", "退群提醒"]
+                                    ):
+                                        now_status = GetGroupDecreaseMessageStatus(
+                                            group_id
+                                        )
+                                        sender_name = get_user_name(user_id, group_id)
+                                        group_name = GetGroupName(group_id)
+                                        logging.info(
+                                            f"{group_name}({group_id}):{sender_name}({user_id})尝试关闭冷群回复。"
+                                        )
+                                        i = 0
+                                        if now_status:
+                                            SwitchGroupDecreaseMessage(group_id)
+                                        await say(
+                                            websocket,
+                                            group_id,
+                                            "本群已经关闭退群提醒喵。",
                                         )
                                     elif HasAllKeyWords(
                                         message["raw_message"], ["开启", "冷群回复"]
@@ -1558,7 +1597,7 @@ async def echo(websocket):
                                 logging.info(
                                     f"{sender_name}({user_id})离开了群{group_name}({group_id})"
                                 )
-                            elif BotIsAdmin(group_id):
+                            elif GetGroupDecreaseMessageStatus(group_id):
                                 sender_name = get_user_name(user_id, group_id)
                                 group_name = GetGroupName(group_id)
                                 await say(

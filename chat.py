@@ -15,6 +15,25 @@ from Class.Group_member import get_user_name
 import time
 
 
+# 获取群聊是否开启退群提醒
+def GetGroupDecreaseMessageStatus(group_id: int):
+    setting = load_setting()
+    if group_id in setting["group_decrease_reply_list"]:
+        return True
+    else:
+        return False
+
+
+# 切换群聊是否开启退群提醒
+def SwitchGroupDecreaseMessage(group_id: int):
+    setting = load_setting()
+    if group_id in setting["group_decrease_reply_list"]:
+        setting["group_decrease_reply_list"].remove(group_id)
+    else:
+        setting["group_decrease_reply_list"].append(group_id)
+    dump_setting(setting)
+
+
 # 获取群聊是否开启冷群
 def GetColdGroupStatus(group_id: int):
     setting = load_setting()
