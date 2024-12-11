@@ -332,7 +332,7 @@ async def echo(websocket):
                                         sender_name = get_user_name(user_id, group_id)
                                         group_name = GetGroupName(group_id)
                                         logging.info(
-                                            f"{group_name}({group_id}):{sender_name}({user_id})尝试关闭冷群回复。"
+                                            f"{group_name}({group_id}):{sender_name}({user_id})尝试关闭退群提醒。"
                                         )
                                         i = 0
                                         if now_status:
