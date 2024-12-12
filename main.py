@@ -1724,7 +1724,6 @@ async def echo(websocket):
                             if (
                                 time.time() - user.last_sent_time > timeout
                                 and BotIsAdmin(user.group_id)
-                                and user.group_id not in setting["sepcial_group"]
                                 and timeout != -1
                             ):
                                 if not IsAdmin(user.user_id, user.group_id):
