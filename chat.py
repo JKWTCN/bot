@@ -18,6 +18,53 @@ from Class.Group_member import get_user_name
 import time
 
 
+# 设置冷群王次数
+def SetColdGroupTimes(user_id: int, group_id: int, times: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE cold_group_times SET times=? where user_id=? and group_id=?",
+        (
+            times,
+            user_id,
+            group_id,
+        ),
+    )
+    conn.commit()
+
+
+# 获取冷群王次数
+def GetColdGroupTimes(user_id: int, group_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT times FROM cold_group_times where user_id=? and group_id=?;",
+            (user_id, group_id),
+        )
+    except sqlite3.OperationalError:
+        logger.info("数据库表不存在,正在创建表cold_group_times")
+        cur.execute(
+            "CREATE TABLE cold_group_times ( user_id  INTEGER, group_id INTEGER, times INTEGER ); "
+        )
+        conn.commit()
+        cur.execute(
+            "SELECT times FROM cold_group_times where user_id=? and group_id=?;",
+            (user_id, group_id),
+        )
+    data = cur.fetchall()
+    if len(data) == 0:
+        cur.execute(
+            "INSERT INTO cold_group_times (user_id,group_id,times ) VALUES (?,?,?);",
+            (user_id, group_id, 1),
+        )
+        conn.commit()
+        conn.close()
+        return 0
+    else:
+        return data[0][0]
+
+
 # 获取群聊是否开启退群提醒
 def GetGroupDecreaseMessageStatus(group_id: int):
     setting = load_setting()
@@ -196,6 +243,7 @@ def UpdateColdGroup(user_id: int, group_id: int, message_id: int, raw_message: s
             "raw_message": raw_message,
         }
     )
+    SetColdGroupTimes(user_id, group_id, GetColdGroupTimes(user_id, group_id) + 1)
     dump_setting(setting)
 
 

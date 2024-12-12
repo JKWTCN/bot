@@ -3,6 +3,7 @@ from datetime import datetime
 import random
 import json
 import time
+from chat import GetColdGroupTimes
 from kohlrabi import GetMyKohlrabi, GetRecordKohlrabi
 from rankings import update_value
 from Class.Ranking import Ranking
@@ -276,6 +277,7 @@ async def get_statistics(websocket, user_id: int, group_id: int):
         user_id, group_id
     )
     _check_num = round(all_sell_price - all_buy_cost, 3)
+    _cold_king_times = GetColdGroupTimes(user_id, group_id)
     data = {
         "项目": [
             "目前积分",
@@ -288,6 +290,7 @@ async def get_statistics(websocket, user_id: int, group_id: int):
             "生涯卖出个数",
             "生涯卖出赚入",
             "大头菜贸易利润",
+            "冷群王次数",
         ],
         "值": [
             now_point,
@@ -300,6 +303,7 @@ async def get_statistics(websocket, user_id: int, group_id: int):
             all_sell,
             all_sell_price,
             _check_num,
+            _cold_king_times,
         ],
     }
     payload = {
