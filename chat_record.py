@@ -111,6 +111,38 @@ async def GetNowChatRecord(websocket, group_id: int):
     await websocket.send(json.dumps(payload))
 
 
+# 获取水群次数
+def GetChatRecord(user_id: int, group_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT all_num,today_num,today FROM ChatRecord where user_id=? and group_id=?;",
+        (
+            user_id,
+            group_id,
+        ),
+    )
+    data = cur.fetchall()
+    if len(data) == 0:
+        cur.execute(
+            "INSERT INTO ChatRecord (user_id,group_id,all_num,today_num,today)\
+                VALUES (?,?,?,?,?);",
+            (user_id, group_id, 0, 0, GetNowDay()),
+        )
+        conn.commit()
+        cur.execute(
+            "SELECT all_num,today_num,today FROM ChatRecord where user_id=? and group_id=?;",
+            (
+                user_id,
+                group_id,
+            ),
+        )
+        data = cur.fetchall()
+    all_num = data[0][0]
+    today_num = data[0][1]
+    return (today_num, all_num)
+
+
 # 统计水群次数
 def AddChatRecord(user_id: int, group_id: int):
     conn = sqlite3.connect("bot.db")

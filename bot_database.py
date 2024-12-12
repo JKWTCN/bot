@@ -7,6 +7,7 @@ from chat import GetColdGroupTimes
 from kohlrabi import GetMyKohlrabi, GetRecordKohlrabi
 from rankings import update_value
 from Class.Ranking import Ranking
+from chat_record import GetChatRecord
 
 
 # 统计群友抽奖次数
@@ -278,6 +279,7 @@ async def get_statistics(websocket, user_id: int, group_id: int):
     )
     _check_num = round(all_sell_price - all_buy_cost, 3)
     _cold_king_times = GetColdGroupTimes(user_id, group_id)
+    _today_chat_times, _all_chat_times = GetChatRecord(user_id, group_id)
     data = {
         "项目": [
             "目前积分",
@@ -290,6 +292,8 @@ async def get_statistics(websocket, user_id: int, group_id: int):
             "生涯卖出个数",
             "生涯卖出赚入",
             "大头菜贸易利润",
+            "今日水群次数",
+            "生涯水群次数",
             "冷群王次数",
         ],
         "值": [
@@ -303,6 +307,8 @@ async def get_statistics(websocket, user_id: int, group_id: int):
             all_sell,
             all_sell_price,
             _check_num,
+            _today_chat_times,
+            _all_chat_times,
             _cold_king_times,
         ],
     }
