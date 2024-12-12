@@ -1713,14 +1713,18 @@ async def echo(websocket):
         elif "echo" in message:
             match message["echo"]:
                 case "update_group_member_list":
-                    print("{}:开始更新群友列表！".format(time.time()))
+                    print(
+                        "{}:开始更新{}({})群友列表！".format(
+                            time.time(), message["group_name"], message["group_id"]
+                        )
+                    )
                     for group_member in message["data"]:
                         user = Group_member()
                         user.init_by_dict(group_member)
                         updata_user_info(user)
                         name = get_user_name(user.user_id, user.group_id)
-                        if user.group_id in setting["kick_time"]:
-                            timeout = setting["kick_time"][user.group_id]
+                        if str(user.group_id) in setting["kick_time"]:
+                            timeout = setting["kick_time"][str(user.group_id)]
                             if (
                                 time.time() - user.last_sent_time > timeout
                                 and BotIsAdmin(user.group_id)
