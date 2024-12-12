@@ -84,7 +84,7 @@ async def run_or_shot(websocket, user_id, group_id):
             await say(
                 websocket,
                 group_id,
-                f"{get_user_name(user_id, group_id)},梭哈失败,跑路失败喵!(施加100次艾特惩罚)",
+                f"{get_user_name(user_id, group_id)},梭哈失败,跑路失败喵!(清空全部积分和大头菜并施加100次艾特惩罚)",
             )
             if GetMyKohlrabi(user_id, group_id) != 0:
                 ChangeMyKohlrabi(user_id, group_id, 0)
@@ -96,7 +96,7 @@ async def run_or_shot(websocket, user_id, group_id):
             await say(
                 websocket,
                 group_id,
-                f"{get_user_name(user_id, group_id)},梭哈失败,跑路成功喵!(踢了!?)",
+                f"{get_user_name(user_id, group_id)},梭哈失败,跑路成功喵!(清空全部积分和大头菜,踢了!?)",
             )
             if GetMyKohlrabi(user_id, group_id) != 0:
                 ChangeMyKohlrabi(user_id, group_id, 0)
@@ -244,6 +244,9 @@ def UpdateColdGroup(user_id: int, group_id: int, message_id: int, raw_message: s
             setting["cold_group_king"][index]["num"] += 1
             setting["cold_group_king"][index]["raw_message"] = raw_message
             dump_setting(setting)
+            SetColdGroupTimes(
+                user_id, group_id, GetColdGroupTimes(user_id, group_id) + 1
+            )
             return
     setting["cold_group_king"].append(
         {
