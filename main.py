@@ -911,7 +911,12 @@ async def echo(websocket):
                                                         group_id,
                                                         num,
                                                     )
-
+                                            elif HasKeyWords(
+                                                raw_message, ["跑路", "梭哈"]
+                                            ) and BotIsAdmin(group_id):
+                                                await run_or_shot(
+                                                    websocket, user_id, group_id
+                                                )
                                             elif (
                                                 "梭哈"
                                                 in message["message"][0]["data"]["text"]
@@ -1082,12 +1087,6 @@ async def echo(websocket):
                                                     websocket,
                                                     user_id,
                                                     group_id,
-                                                )
-                                            elif HasKeyWords(
-                                                raw_message, ["跑路", "梭哈"]
-                                            ) and BotIsAdmin(group_id):
-                                                await run_or_shot(
-                                                    websocket, user_id, group_id
                                                 )
                                             elif (
                                                 "cos"

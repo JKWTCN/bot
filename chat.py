@@ -79,17 +79,30 @@ async def run_or_shot(websocket, user_id, group_id):
     list = [0, 1]
     _ = random.choice(list)
     if _ == 0:
-        await say(
-            websocket,
-            group_id,
-            f"{get_user_name(user_id, group_id)},失败,跑路喵!(施加100次艾特惩罚)",
-        )
-        if GetMyKohlrabi(user_id, group_id) != 0:
-            ChangeMyKohlrabi(user_id, group_id, 0)
-        bot_database.change_point(
-            user_id, group_id, bot_database.find_point(user_id) * 0
-        )
-        AddAtPunishList(user_id, group_id, 100)
+        __ = random.choice(list)
+        if __ == 0:
+            await say(
+                websocket,
+                group_id,
+                f"{get_user_name(user_id, group_id)},梭哈失败,跑路失败喵!(施加100次艾特惩罚)",
+            )
+            if GetMyKohlrabi(user_id, group_id) != 0:
+                ChangeMyKohlrabi(user_id, group_id, 0)
+            bot_database.change_point(
+                user_id, group_id, bot_database.find_point(user_id) * 0
+            )
+            AddAtPunishList(user_id, group_id, 100)
+        else:
+            await say(
+                websocket,
+                group_id,
+                f"{get_user_name(user_id, group_id)},梭哈失败,跑路成功喵!(踢了!?)",
+            )
+            if GetMyKohlrabi(user_id, group_id) != 0:
+                ChangeMyKohlrabi(user_id, group_id, 0)
+            bot_database.change_point(
+                user_id, group_id, bot_database.find_point(user_id) * 0
+            )
     else:
         await say(
             websocket,
