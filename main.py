@@ -1713,11 +1713,11 @@ async def echo(websocket):
         elif "echo" in message:
             match message["echo"]:
                 case "update_group_member_list":
-                    print(
-                        "{}:开始更新{}({})群友列表！".format(
-                            time.time(), message["group_name"], message["group_id"]
-                        )
-                    )
+                    # print(
+                    #     "{}:开始更新{}({})群友列表！".format(
+                    #         time.time(), message["group_name"], message["group_id"]
+                    #     )
+                    # )
                     for group_member in message["data"]:
                         user = Group_member()
                         user.init_by_dict(group_member)
