@@ -1742,8 +1742,12 @@ async def echo(websocket):
                                         )
                                     )
                                     logging.info(
-                                        "{}({})因{}个月未活跃被请出群聊".format(
-                                            name, user.user_id, timeout / 2592000
+                                        "{}({})因{}个月未活跃被请出群聊{}({})".format(
+                                            name,
+                                            user.user_id,
+                                            timeout / 2592000,
+                                            GetGroupName(user.group_id),
+                                            user.group_id,
                                         )
                                     )
                                     await say(
