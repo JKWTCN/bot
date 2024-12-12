@@ -1732,7 +1732,7 @@ async def echo(websocket):
                             ):
                                 if not IsAdmin(user.user_id, user.group_id):
                                     print(
-                                        "{}({}),最后发言时间:{}".format(
+                                        "{}({}),".format(
                                             name,
                                             user.user_id,
                                             time.strftime(
@@ -1742,12 +1742,16 @@ async def echo(websocket):
                                         )
                                     )
                                     logging.info(
-                                        "{}({})因{}个月未活跃被请出群聊{}({})".format(
+                                        "{}({})因{}个月未活跃被请出群聊{}({}),最后发言时间:{}".format(
                                             name,
                                             user.user_id,
                                             timeout / 2592000,
                                             GetGroupName(user.group_id),
                                             user.group_id,
+                                            time.strftime(
+                                                "%Y-%m-%d %H:%M:%S",
+                                                time.localtime(user.last_sent_time),
+                                            ),
                                         )
                                     )
                                     await say(
