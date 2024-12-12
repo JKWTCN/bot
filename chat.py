@@ -1,8 +1,11 @@
 import json
+import random
 import sqlite3
 from venv import logger
 import requests
-from group_operate import GetGroupName
+import bot_database
+from group_operate import GetGroupName, kick_member
+from kohlrabi import ChangeMyKohlrabi, GetMyKohlrabi
 from tools import (
     HasKeyWords,
     SayAndAtDefense,
@@ -22,6 +25,34 @@ def GetGroupDecreaseMessageStatus(group_id: int):
         return True
     else:
         return False
+
+
+# 梭哈或者跑路
+async def run_or_shot(websocket, user_id, group_id):
+    list = [0, 1]
+    _ = random.choice(list)
+    if _ == 0:
+        await say(
+            websocket,
+            group_id,
+            f"{get_user_name(user_id, group_id)},失败,跑路喵!(施加100次艾特惩罚)",
+        )
+        if GetMyKohlrabi(user_id, group_id) != 0:
+            ChangeMyKohlrabi(user_id, group_id, 0)
+        bot_database.change_point(
+            user_id, group_id, bot_database.find_point(user_id) * 0
+        )
+        AddAtPunishList(user_id, group_id, 100)
+    else:
+        await say(
+            websocket,
+            group_id,
+            f"{get_user_name(user_id, group_id)},梭哈成功,积分和大头菜翻10倍喵。",
+        )
+        bot_database.change_point(
+            user_id, group_id, bot_database.find_point(user_id) * 10
+        )
+        ChangeMyKohlrabi(user_id, group_id, GetMyKohlrabi(user_id, group_id) * 10)
 
 
 # 切换群聊是否开启退群提醒

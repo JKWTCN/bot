@@ -6,6 +6,7 @@ from Class.Ranking import Ranking
 import bot_database
 import matplotlib.pyplot as plt
 import numpy as np
+from kohlrabi import ChangeMyKohlrabi, GetMyKohlrabi
 from tools import GetNowDay, load_setting
 from rankings import update_value
 import sqlite3
@@ -311,6 +312,8 @@ async def luck_choice_mut(
                     case 777:
                         luck_list[9] = luck_list[9] + 1
                         now_point = 0
+                        if GetMyKohlrabi(user_id, group_id) != 0:
+                            ChangeMyKohlrabi(user_id, group_id, 0)
                 x.append(i + 1)
                 y.append(now_point)
                 bot_database.change_point(user_id, group_id, now_point)

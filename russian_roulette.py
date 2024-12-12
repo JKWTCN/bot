@@ -2,6 +2,8 @@ import random
 import bot_database
 import json
 
+from kohlrabi import ChangeMyKohlrabi, GetMyKohlrabi
+
 
 # @return (x,y)
 # x=-1代表子弹错误 y=-1代表积分数目错误
@@ -63,12 +65,14 @@ async def russian_pve_shot(websocket, user_id: int, group_id: int, nick_name: st
                     {
                         "type": "text",
                         "data": {
-                            "text": ",对不起喵，你中枪了，乐可要拿走你的全部积分了喵。"
+                            "text": ",对不起喵，你中枪了，乐可要拿走你的全部积分和大头菜了喵。"
                         },
                     },
                 ],
             },
         }
+        if GetMyKohlrabi(user_id, group_id) != 0:
+            ChangeMyKohlrabi(user_id, group_id, 0)
         bot_database.change_point(user_id, group_id, 0)
         bot_database.delete_russian_pve(user_id)
         await websocket.send(json.dumps(payload))
@@ -99,7 +103,7 @@ async def russian_pve_shot(websocket, user_id: int, group_id: int, nick_name: st
             },
         }
         bot_database.change_point(
-            user_id, group_id, bot_database.find_point(user_id) * 10
+            user_id, group_id, bot_database.find_point(user_id) * 2
         )
         bot_database.delete_russian_pve(user_id)
         await websocket.send(json.dumps(payload))
