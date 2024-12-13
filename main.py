@@ -911,7 +911,7 @@ async def echo(websocket):
                                                         group_id,
                                                         num,
                                                     )
-                                            elif HasKeyWords(
+                                            elif HasAllKeyWords(
                                                 raw_message, ["跑路", "梭哈"]
                                             ) and BotIsAdmin(group_id):
                                                 await run_or_shot(
