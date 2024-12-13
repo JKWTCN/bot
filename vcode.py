@@ -25,7 +25,7 @@ def create_vcode(user_id: int, group_id: int):
             user_id,
             group_id,
             chr_4,
-            3,
+            5,
             time.time(),
         ),
     )
@@ -46,7 +46,7 @@ def update_vcode(user_id: int, group_id: int):
         "UPDATE vcode SET text=?,times=?,time=? where user_id=? and group_id=?",
         (
             chr_4,
-            3,
+            5,
             time.time(),
             user_id,
             group_id,
@@ -185,8 +185,6 @@ async def verify_fail_say(websocket, user_id: int, group_id: int, times: int):
     image_base64 = base64.b64encode(image_data)
     from tools import load_setting
 
-    sender_name = get_user_name(user_id, group_id)
-    setting = load_setting()
     payload = {
         "action": "send_msg_async",
         "params": {
@@ -196,9 +194,7 @@ async def verify_fail_say(websocket, user_id: int, group_id: int, times: int):
                 {
                     "type": "text",
                     "data": {
-                        "text": '{},验证码输入错误，你还有{}次机会喵。如果看不清记得说"乐可，看不清"喵。你的验证码如下:'.format(
-                            sender_name, times
-                        )
+                        "text": f'{get_user_name(user_id, group_id)},验证码输入错误，你还有{times}次机会喵。如果看不清记得说"乐可，看不清"喵。你的验证码如下:'
                     },
                 },
                 {
@@ -231,7 +227,7 @@ async def welcome_verify(websocket, user_id: int, group_id: int):
                 {
                     "type": "text",
                     "data": {
-                        "text": '\n请在{}分钟内输入以下验证码喵,注意是全大写字符喵。你有三次输入机会喵,如果看不清说"乐可，看不清",乐可会给你换一张验证码的喵。'.format(
+                        "text": '\n请在{}分钟内输入以下验证码喵,注意是全大写字符喵。你有5次输入机会喵,如果看不清说"乐可，看不清",乐可会给你换一张验证码的喵。'.format(
                             setting["timeout"]
                         )
                     },
