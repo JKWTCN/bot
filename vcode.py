@@ -23,7 +23,7 @@ def create_vcode(user_id: int, group_id: int):
             user_id,
             group_id,
             chr_4,
-            5,
+            3,
             time.time(),
         ),
     )
@@ -196,7 +196,7 @@ async def welcome_verify(websocket, user_id: int, group_id: int):
                 {
                     "type": "text",
                     "data": {
-                        "text": '\n请在{}分钟内输入以下验证码喵,注意是全大写字符喵。你有五次输入机会喵,如果看不清说"乐可，看不清",乐可会给你换一张验证码的喵。'.format(
+                        "text": '\n请在{}分钟内输入以下验证码喵,注意是全大写字符喵。你有三次输入机会喵,如果看不清说"乐可，看不清",乐可会给你换一张验证码的喵。'.format(
                             setting["timeout"]
                         )
                     },
