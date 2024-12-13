@@ -275,7 +275,7 @@ async def ColdReplay(websocket):
             setting["cold_group_king"][index]["is_replay"] = True
             setting["cold_group_king"][index]["num"] = 0
             dump_setting(setting)
-            # logger.info(f"after:{group}")
+            # logger.info(f"after:{group}")    
             # name = get_user_name(group["user_id"], group["group_id"])
             SetColdGroupTimes(
                 group["user_id"],
