@@ -8,6 +8,8 @@ import os
 import logging
 import json
 
+from Class.Group_member import get_user_name
+
 
 # 创建验证码并写入数据库
 def create_vcode(user_id: int, group_id: int):
@@ -174,6 +176,39 @@ def verify(user_id: int, group_id: int, text: str):
             else:
                 update_times(user_id, group_id, times)
                 return (False, times)
+
+
+# 没有验证成功的说辞
+async def verify_fail_say(websocket, user_id: int, group_id: int, times: int):
+    with open("./vcode/{}_{}.jpg".format(user_id, group_id), "rb") as image_file:
+        image_data = image_file.read()
+    image_base64 = base64.b64encode(image_data)
+    from tools import load_setting
+
+    sender_name = get_user_name(user_id, group_id)
+    setting = load_setting()
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "at", "data": {"qq": user_id}},
+                {
+                    "type": "text",
+                    "data": {
+                        "text": '{},验证码输入错误，你还有{}次机会喵。如果看不清记得说"乐可，看不清"喵。你的验证码如下:'.format(
+                            sender_name, times
+                        )
+                    },
+                },
+                {
+                    "type": "image",
+                    "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
 
 
 # 验证的说辞

@@ -122,6 +122,7 @@ from vcode import (
     welcome_verify,
     delete_vcode,
     find_vcode,
+    verify_fail_say,
 )
 from welcome_to_newyork import (
     ban_new,
@@ -564,12 +565,8 @@ async def echo(websocket):
                                                 websocket, user_id, group_id
                                             )
                                     elif times > 0:
-                                        await say(
-                                            websocket,
-                                            group_id,
-                                            '{},验证码输入错误，你还有{}次机会喵。如果看不清记得说"乐可，看不清"喵。'.format(
-                                                sender_name, times
-                                            ),
+                                        await verify_fail_say(
+                                            websocket, user_id, group_id, times
                                         )
 
                                     elif times <= 0:
