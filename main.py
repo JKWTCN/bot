@@ -1660,8 +1660,11 @@ async def echo(websocket):
                                         res, user_info = get_user_info(
                                             user_id, group_id
                                         )
-                                        if user_info.card != "":
-                                            sender_name = user_info.card
+                                        if user_info.card != None:
+                                            if user_info.card != "":
+                                                sender_name = user_info.card
+                                            else:
+                                                sender_name = user_info.nickname
                                         else:
                                             sender_name = user_info.nickname
                                         if not IsAdmin(user_id, group_id):
