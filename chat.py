@@ -244,9 +244,6 @@ def UpdateColdGroup(user_id: int, group_id: int, message_id: int, raw_message: s
             setting["cold_group_king"][index]["num"] += 1
             setting["cold_group_king"][index]["raw_message"] = raw_message
             dump_setting(setting)
-            SetColdGroupTimes(
-                user_id, group_id, GetColdGroupTimes(user_id, group_id) + 1
-            )
             return
     setting["cold_group_king"].append(
         {
@@ -259,7 +256,6 @@ def UpdateColdGroup(user_id: int, group_id: int, message_id: int, raw_message: s
             "raw_message": raw_message,
         }
     )
-    SetColdGroupTimes(user_id, group_id, GetColdGroupTimes(user_id, group_id) + 1)
     dump_setting(setting)
 
 
@@ -281,6 +277,11 @@ async def ColdReplay(websocket):
             dump_setting(setting)
             # logger.info(f"after:{group}")
             # name = get_user_name(group["user_id"], group["group_id"])
+            SetColdGroupTimes(
+                group["user_id"],
+                group["group_id"],
+                GetColdGroupTimes(group["user_id"], group["group_id"]) + 1,
+            )
             await ReplySay(
                 websocket,
                 group["group_id"],
