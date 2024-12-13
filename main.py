@@ -1657,16 +1657,7 @@ async def echo(websocket):
                                         user_id,
                                         group_id,
                                     ):
-                                        res, user_info = get_user_info(
-                                            user_id, group_id
-                                        )
-                                        if user_info.card != None:
-                                            if user_info.card != "":
-                                                sender_name = user_info.card
-                                            else:
-                                                sender_name = user_info.nickname
-                                        else:
-                                            sender_name = user_info.nickname
+                                        sender_name = get_user_name(user_id, group_id)
                                         if not IsAdmin(user_id, group_id):
                                             await ban_new(
                                                 websocket,
@@ -1821,11 +1812,7 @@ async def echo(websocket):
                     group_id = message["data"]["group_id"]
                     now_point = find_point(sender_id)
                     change_point(sender_id, group_id, now_point + 100)
-                    res, user_info = get_user_info(sender_id, group_id)
-                    if user_info.card != "":
-                        sender_name = user_info.card
-                    else:
-                        sender_name = user_info.nickname
+                    sender_name = get_user_name(sender_id, group_id)
                     payload = {
                         "action": "send_group_msg",
                         "params": {
