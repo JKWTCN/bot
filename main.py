@@ -33,6 +33,7 @@ from chat import (
     DelAtPunish,
     GetColdGroupStatus,
     GetGroupDecreaseMessageStatus,
+    GiveGift,
     Joke,
     SwitchColdGroupChat,
     SwitchGroupDecreaseMessage,
@@ -243,6 +244,15 @@ async def echo(websocket):
                                             await kick_member(
                                                 websocket, at_id, group_id
                                             )
+                                    elif HasKeyWords(raw_message, ["送你","V你","v你"]):
+                                        num = re.findall("\d+", raw_message)
+                                        if len(num) >= 2:
+                                            num = int(num[1])
+                                        else:
+                                            num = 0
+                                        await GiveGift(
+                                            websocket, user_id, group_id, at_id, num
+                                        )
                                     elif HasKeyWords(
                                         raw_message, ["惩罚取消", "取消惩罚"]
                                     ) and (user_id != at_id or IsDeveloper(user_id)):

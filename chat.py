@@ -174,6 +174,35 @@ def AddWhoAtMe(user_id: int):
     conn.close()
 
 
+# 赠送积分
+async def GiveGift(
+    websocket, sender_id: int, group_id: int, receiver_id: int, point: int
+):
+    sender_point = bot_database.find_point(sender_id)
+    if point > 0:
+        if point > sender_point:
+            await say(
+                websocket,
+                group_id,
+                f"{get_user_name(sender_id, group_id)},你的积分不足喵!当前积分为{sender_point}喵。",
+            )
+        else:
+            receiver_point = bot_database.find_point(receiver_id)
+            bot_database.change_point(sender_id, group_id, sender_point - point)
+            bot_database.change_point(receiver_id, group_id, receiver_point + point)
+            await say(
+                websocket,
+                group_id,
+                f"{get_user_name(sender_id, group_id)}赠送{get_user_name(receiver_id, group_id)}{point}积分喵!",
+            )
+    else:
+        await say(
+            websocket,
+            group_id,
+            f"{get_user_name(sender_id, group_id)},赠送积分不能为负喵!",
+        )
+
+
 # 删除特定惩罚
 def DelAtPunish(user_id: int, group_id: int):
     setting = load_setting()
