@@ -55,6 +55,7 @@ import luck_dog
 from easter_egg import (
     cute,
     cute2,
+    cute3,
     kfc_v_me_50,
     sex_img,
 )
@@ -244,7 +245,9 @@ async def echo(websocket):
                                             await kick_member(
                                                 websocket, at_id, group_id
                                             )
-                                    elif HasKeyWords(raw_message, ["送你","V你","v你"]):
+                                    elif HasKeyWords(
+                                        raw_message, ["送你", "V你", "v你"]
+                                    ):
                                         num = re.findall("\d+", raw_message)
                                         if len(num) >= 2:
                                             num = int(num[1])
@@ -261,11 +264,22 @@ async def echo(websocket):
                                         logging.info(
                                             f"{group_id}:{sender_name}({user_id})取消了{rev_name}({at_id})的惩罚"
                                         )
+                                        await say(
+                                            websocket,
+                                            group_id,
+                                            f"{rev_name}({at_id})的惩罚被{sender_name}({user_id})取消了,快谢谢人家喵！",
+                                        )
+                                        await ban_new(websocket, at_id, group_id, 0)
                                     elif HasKeyWords(
                                         raw_message, ["打他", "打它", "打她"]
                                     ) and (user_id != at_id or IsDeveloper(user_id)):
                                         AddAtPunishList(
                                             at_id, group_id, setting["defense_times"]
+                                        )
+                                        await say(
+                                            websocket,
+                                            group_id,
+                                            f"{get_user_name(user_id, group_id)},乐可要开始打你了喵！",
                                         )
                                     elif HasKeyWords(
                                         message["raw_message"], ["通过验证", "验证通过"]
@@ -1115,6 +1129,17 @@ async def echo(websocket):
                                                     group_id,
                                                     setting["defense_times"],
                                                 )
+                                                await ban_new(
+                                                    websocket,
+                                                    user_id,
+                                                    group_id,
+                                                    60 * 30,
+                                                )
+                                                await say(
+                                                    websocket,
+                                                    group_id,
+                                                    "口球塞上~乐可要开始打你了喵。",
+                                                )
                                             elif HasKeyWords(
                                                 message["message"][0]["data"]["text"],
                                                 ["再也不见", "重开"],
@@ -1404,6 +1429,10 @@ async def echo(websocket):
                                                         "text"
                                                     ],
                                                 )
+                                        elif HasAllKeyWords(
+                                            raw_message, ["乐可", "可爱"]
+                                        ):
+                                            await cute3(websocket, group_id)
                                         elif HasKeyWords(raw_message, ["乐可"]):
                                             sender_name = get_user_name(
                                                 user_id, group_id

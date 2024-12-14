@@ -206,11 +206,12 @@ async def GiveGift(
 # 删除特定惩罚
 def DelAtPunish(user_id: int, group_id: int):
     setting = load_setting()
-    for admin in enumerate(setting["bleak_admin"]):
+    del_index = -1
+    for i, admin in enumerate(setting["bleak_admin"]):
         if admin["user_id"] == user_id and admin["group_id"] == group_id:
-            del admin
-            dump_setting(setting)
-            return
+            del_index = i
+    del setting["bleak_admin"][del_index]
+    dump_setting(setting)
 
 
 # 添加惩罚名单
