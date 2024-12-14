@@ -177,9 +177,9 @@ def AddWhoAtMe(user_id: int):
 # 删除特定惩罚
 def DelAtPunish(user_id: int, group_id: int):
     setting = load_setting()
-    for index, admin in enumerate(setting["bleak_admin"]):
+    for admin in enumerate(setting["bleak_admin"]):
         if admin["user_id"] == user_id and admin["group_id"] == group_id:
-            del setting["bleak_admin"][index]
+            del admin
             dump_setting(setting)
             return
 
@@ -275,7 +275,7 @@ async def ColdReplay(websocket):
             setting["cold_group_king"][index]["is_replay"] = True
             setting["cold_group_king"][index]["num"] = 0
             dump_setting(setting)
-            # logger.info(f"after:{group}")    
+            # logger.info(f"after:{group}")
             # name = get_user_name(group["user_id"], group["group_id"])
             SetColdGroupTimes(
                 group["user_id"],
