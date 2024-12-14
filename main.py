@@ -1422,7 +1422,7 @@ async def echo(websocket):
                                                 await Joke(websocket, group_id)
                                             elif HasAllKeyWords(
                                                 raw_message, ["乐可", "可爱"]
-                                            ):
+                                            ) and not HasKeyWords(raw_message, "可乐"):
                                                 await cute3(websocket, group_id)
                                             else:
                                                 await chat(
@@ -1435,7 +1435,7 @@ async def echo(websocket):
                                                 )
                                         elif HasAllKeyWords(
                                             raw_message, ["乐可", "可爱"]
-                                        ):
+                                        ) and not HasKeyWords(raw_message, "可乐"):
                                             await cute3(websocket, group_id)
                                         elif HasKeyWords(raw_message, ["乐可"]):
                                             sender_name = get_user_name(
