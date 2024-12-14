@@ -1420,6 +1420,10 @@ async def echo(websocket):
                                                 )
                                             elif HasKeyWords(raw_message, ["笑话"]):
                                                 await Joke(websocket, group_id)
+                                            elif HasAllKeyWords(
+                                                raw_message, ["乐可", "可爱"]
+                                            ):
+                                                await cute3(websocket, group_id)
                                             else:
                                                 await chat(
                                                     websocket,
