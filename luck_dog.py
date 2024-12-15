@@ -236,6 +236,186 @@ async def LuckChoiceMutPrivate(websocket, user_id: int, nums: int):
     await websocket.send(json.dumps(payload))
 
 
+# 超过100w用的抽奖选项
+async def luck_choice_mut_super_rich(
+    websocket, user_id: int, sender_name: str, group_id: int, nums: int
+):
+    setting = load_setting()
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [],
+        },
+        "echo": "delete_message_list",
+    }
+    today_num, today = GetGamblingTimesToday(user_id, group_id)
+    x = []
+    y = []
+    luck_list = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    start_point = bot_database.find_point(user_id)
+    rich_choice_list = ["*10", "*8", "*4", "*2", "*1", "/2", "/4", "/8", "0"]
+    rich_choice_probability = [0.0626, 0.126, 0.25, 0.5, 1, 0.5, 0.25, 0.125, 0.0625]
+    now_point = start_point
+    if today != GetNowDay():
+        today = GetNowDay()
+        today_num = 0
+    if today_num <= setting["gambling_limit"] and start_point >= 5:
+        x.append(0)
+        y.append(start_point)
+        for i in range(nums):
+            if now_point >= 5:
+                bot_database.add_gambling_times(user_id, 1)
+                now_point = now_point - 5
+                choice = random.choices(rich_choice_list, rich_choice_probability)
+                match choice[0]:
+                    case "*10":
+                        now_point = now_point * 10
+                        luck_list[0] = luck_list[0] + 1
+                    case "*8":
+                        now_point = now_point * 8
+                        luck_list[1] = luck_list[1] + 1
+                    case "*4":
+                        now_point = now_point * 4
+                        luck_list[2] = luck_list[2] + 1
+                    case "*2":
+                        now_point = now_point * 2
+                        luck_list[3] = luck_list[3] + 1
+                    case "*1":
+                        now_point = now_point
+                        luck_list[4] = luck_list[4] + 1
+                    case "/2":
+                        now_point = now_point / 2
+                        luck_list[5] = luck_list[5] + 1
+                    case "/4":
+                        now_point = now_point / 4
+                        luck_list[6] = luck_list[6] + 1
+                    case "/8":
+                        now_point = now_point / 8
+                        luck_list[7] = luck_list[7] + 1
+                    case "0":
+                        now_point = 0
+                        luck_list[8] = luck_list[8] + 1
+                x.append(i)
+                y.append(now_point)
+                bot_database.change_point(user_id, group_id, now_point)
+                update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
+                if now_point <= 0 or today_num > setting["gambling_limit"]:
+                    payload["params"]["message"].append(
+                        {
+                            "type": "text",
+                            "data": {
+                                "text": "{},抽奖统计如下：\n10倍奖:{}次\n8倍奖:{}次\n4倍奖:{}次\n2倍奖:{}次\n不变奖:{}次\n除2奖:{}次\n除4奖:{}次\n除8奖:{}次\n除10奖:{}次\n积分清零奖:{}次\n积分总额:{}->{}\n".format(
+                                    sender_name,
+                                    luck_list[0],
+                                    luck_list[1],
+                                    luck_list[2],
+                                    luck_list[3],
+                                    luck_list[4],
+                                    luck_list[5],
+                                    luck_list[6],
+                                    luck_list[7],
+                                    luck_list[8],
+                                    luck_list[9],
+                                    start_point,
+                                    now_point,
+                                )
+                            },
+                        }
+                    )
+                if today_num > setting["gambling_limit"]:
+                    payload["params"]["message"].append(
+                        {
+                            "type": "text",
+                            "data": {
+                                "text": "今日已超过{}次,请明日再来喵。".format(
+                                    setting["gambling_limit"]
+                                )
+                            },
+                        }
+                    )
+                else:
+                    payload["params"]["message"].append(
+                        {
+                            "type": "text",
+                            "data": {
+                                "text": "富人上天堂比骆驼穿过针眼还难。十赌九输喵,赌狗好似喵。"
+                            },
+                        }
+                    )
+                payload["params"]["message"].append(
+                    {
+                        "type": "image",
+                        "data": {
+                            "file": "base64://"
+                            + open_chart_by_base64(user_id, group_id, x, y).decode(
+                                "utf-8"
+                            )
+                        },
+                    }
+                )
+                update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
+                if group_id not in setting["sepcial_group"]:
+                    ChangeGameblingTimesToday(user_id, group_id, today_num, today)
+                    await websocket.send(json.dumps(payload))
+                    return
+        payload["params"]["message"].append(
+            {
+                "type": "text",
+                "data": {
+                    "text": "{},抽奖统计如下：\n10倍奖:{}次\n8倍奖:{}次\n4倍奖:{}次\n2倍奖:{}次\n不变奖:{}次\n除2奖:{}次\n除4奖:{}次\n除8奖:{}次\n除10奖:{}次\n积分清零奖:{}次\n积分总额:{}->{}\n".format(
+                        sender_name,
+                        luck_list[0],
+                        luck_list[1],
+                        luck_list[2],
+                        luck_list[3],
+                        luck_list[4],
+                        luck_list[5],
+                        luck_list[6],
+                        luck_list[7],
+                        luck_list[8],
+                        luck_list[9],
+                        start_point,
+                        now_point,
+                    )
+                },
+            }
+        )
+        payload["params"]["message"].append(
+            {
+                "type": "image",
+                "data": {
+                    "file": "base64://"
+                    + open_chart_by_base64(user_id, group_id, x, y).decode("utf-8")
+                },
+            }
+        )
+    elif today_num > setting["gambling_limit"]:
+        payload["params"]["message"].append(
+            {
+                "type": "text",
+                "data": {
+                    "text": "{},抽奖失败喵,今天已经超过{}次了喵。".format(
+                        sender_name, setting["gambling_limit"]
+                    )
+                },
+            }
+        )
+    else:
+        payload["params"]["message"].append(
+            {
+                "type": "text",
+                "data": {
+                    "text": "{},抽奖失败喵，至少要5积分喵。您当前积分为：{}。\n".format(
+                        sender_name, start_point
+                    )
+                },
+            }
+        )
+    update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
+    await websocket.send(json.dumps(payload))
+
+
 async def luck_choice_mut(
     websocket, user_id: int, sender_name: str, group_id: int, nums: int
 ):
@@ -264,6 +444,9 @@ async def luck_choice_mut(
     luck_list = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     start_point = bot_database.find_point(user_id)
     now_point = start_point
+    if now_point >= 100000000:
+        luck_choice_mut_super_rich(websocket, user_id, sender_name, group_id, nums)
+        return
     today_num, today = GetGamblingTimesToday(user_id, group_id)
     x = []
     y = []
