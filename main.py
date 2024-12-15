@@ -266,7 +266,7 @@ async def echo(websocket):
                                             get_level(at_id, group_id) + 1,
                                         )
                                         change_point(at_id, group_id, 0)
-                                        say(
+                                        await say(
                                             websocket,
                                             group_id,
                                             f"晋升成功,{get_user_name(user_id,group_id)}({at_id})的等级提升为{get_level(at_id, group_id)}级,积分清零喵。",
