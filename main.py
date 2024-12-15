@@ -51,6 +51,7 @@ from kohlrabi import (
     ShowHand,
     SellKohlrabiAll,
 )
+from level import get_level, set_level
 import luck_dog
 from easter_egg import (
     cute,
@@ -255,6 +256,20 @@ async def echo(websocket):
                                             num = 0
                                         await GiveGift(
                                             websocket, user_id, group_id, at_id, num
+                                        )
+                                    elif HasKeyWords(
+                                        raw_message, ["晋升"]
+                                    ) and IsDeveloper(user_id):
+                                        set_level(
+                                            at_id,
+                                            group_id,
+                                            get_level(at_id, group_id) + 1,
+                                        )
+                                        change_point(at_id, group_id, 0)
+                                        say(
+                                            websocket,
+                                            group_id,
+                                            f"晋升成功,{get_user_name(user_id,group_id)}({at_id})的等级提升为{get_level(at_id, group_id)}级",
                                         )
                                     elif HasKeyWords(
                                         raw_message, ["惩罚取消", "取消惩罚"]
