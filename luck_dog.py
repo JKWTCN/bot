@@ -352,6 +352,7 @@ async def luck_choice_mut_super_rich(
                         }
                     )
                     update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
+                    await websocket.send(json.dumps(payload)) 
                     return
         payload["params"]["message"].append(
             {
