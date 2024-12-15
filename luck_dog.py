@@ -339,6 +339,7 @@ async def luck_choice_mut_super_rich(
                         }
                     )
                     update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
+                    return
         payload["params"]["message"].append(
             {
                 "type": "text",
