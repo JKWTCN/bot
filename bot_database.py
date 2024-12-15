@@ -203,7 +203,6 @@ def check_russian_pve(user_id: int):
 
 def change_point(user_id: int, group_id: int, point: int):
     point = round(point, 3)
-    update_value(Ranking(user_id, group_id, point, time.time(), 1))
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
     try:
@@ -222,6 +221,7 @@ def change_point(user_id: int, group_id: int, point: int):
             (0, user_id),
         )
         return False
+    update_value(Ranking(user_id, group_id, point, time.time(), 1))
     conn.commit()
     conn.close()
     return True
