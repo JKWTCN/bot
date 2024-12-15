@@ -309,6 +309,7 @@ async def luck_choice_mut_super_rich(
                         group_id,
                         f"爆分了！！！积分归零，积分等级:{now_level}->{now_level+1}。",
                     )
+                    now_point = 0
                 if now_point <= 0:
                     payload["params"]["message"].append(
                         {
