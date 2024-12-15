@@ -6,8 +6,10 @@ import requests
 import bot_database
 from group_operate import GetGroupName, kick_member
 from kohlrabi import ChangeMyKohlrabi, GetMyKohlrabi
+from level import get_level, set_level
 from tools import (
     HasKeyWords,
+    SayAndAt,
     SayAndAtDefense,
     dump_setting,
     load_setting,
@@ -190,7 +192,20 @@ async def GiveGift(
             else:
                 receiver_point = bot_database.find_point(receiver_id)
                 bot_database.change_point(sender_id, group_id, sender_point - point)
-                bot_database.change_point(receiver_id, group_id, receiver_point + point)
+                res = bot_database.change_point(
+                    receiver_id, group_id, receiver_point + point
+                )
+                if not res:
+                    now_level = get_level(receiver_id, group_id)
+                    set_level(
+                        receiver_id, group_id, get_level(receiver_id, group_id) + 1
+                    )
+                    await SayAndAt(
+                        websocket,
+                        receiver_id,
+                        group_id,
+                        f"爆分了！！！积分归零，积分等级:{now_level}->{now_level+1}。",
+                    )
                 await say(
                     websocket,
                     group_id,
