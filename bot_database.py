@@ -201,6 +201,9 @@ def check_russian_pve(user_id: int):
         return data[0][1]
 
 
+from Class.Group_member import get_user_name
+
+
 def change_point(user_id: int, group_id: int, point: int):
     if point >= 9223372036854775807:
         logging.info(
@@ -223,8 +226,6 @@ def change_point(user_id: int, group_id: int, point: int):
             (point, user_id),
         )
     except OverflowError:
-        from Class.Group_member import get_user_name
-
         logging.info(
             f"{get_user_name(user_id, group_id)}({user_id}),在群{GetGroupName(group_id)}({group_id})爆分了!!!"
         )
