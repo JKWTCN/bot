@@ -313,7 +313,6 @@ async def luck_choice_mut_super_rich(
                                     luck_list[6],
                                     luck_list[7],
                                     luck_list[8],
-                                    luck_list[9],
                                     start_point,
                                     now_point,
                                 )
