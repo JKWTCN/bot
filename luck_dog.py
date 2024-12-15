@@ -302,7 +302,7 @@ async def luck_choice_mut_super_rich(
                         {
                             "type": "text",
                             "data": {
-                                "text": "{},抽奖统计如下：\n10倍奖:{}次\n8倍奖:{}次\n4倍奖:{}次\n2倍奖:{}次\n不变奖:{}次\n除2奖:{}次\n除4奖:{}次\n除8奖:{}次\n除10奖:{}次\n积分清零奖:{}次\n积分总额:{}->{}\n".format(
+                                "text": "{},抽奖统计如下：\n10倍奖:{}次\n8倍奖:{}次\n4倍奖:{}次\n2倍奖:{}次\n不变奖:{}次\n除2奖:{}次\n除4奖:{}次\n除8奖:{}次\n积分清零奖:{}次\n积分总额:{}->{}\n".format(
                                     sender_name,
                                     luck_list[0],
                                     luck_list[1],
@@ -344,7 +344,7 @@ async def luck_choice_mut_super_rich(
             {
                 "type": "text",
                 "data": {
-                    "text": "{},抽奖统计如下：\n10倍奖:{}次\n8倍奖:{}次\n4倍奖:{}次\n2倍奖:{}次\n不变奖:{}次\n除2奖:{}次\n除4奖:{}次\n除8奖:{}次\n除10奖:{}次\n积分清零奖:{}次\n积分总额:{}->{}\n".format(
+                    "text": "{},抽奖统计如下：\n10倍奖:{}次\n8倍奖:{}次\n4倍奖:{}次\n2倍奖:{}次\n不变奖:{}次\n除2奖:{}次\n除4奖:{}次\n除8奖:{}次\n积分清零奖:{}次\n积分总额:{}->{}\n".format(
                         sender_name,
                         luck_list[0],
                         luck_list[1],
@@ -355,7 +355,6 @@ async def luck_choice_mut_super_rich(
                         luck_list[6],
                         luck_list[7],
                         luck_list[8],
-                        luck_list[9],
                         start_point,
                         now_point,
                     )
