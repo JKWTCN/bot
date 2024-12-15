@@ -298,13 +298,17 @@ async def luck_choice_mut_super_rich(
                             ChangeMyKohlrabi(user_id, group_id, 0)
                 x.append(i + 1)
                 y.append(now_point)
+                update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
                 res = bot_database.change_point(user_id, group_id, now_point)
                 if not res:
-                    await SayAndAt(
-                        websocket, user_id, group_id, "爆分了！！！积分归零，等级+1。"
-                    )
+                    now_level = get_level(user_id, group_id)
                     set_level(user_id, group_id, get_level(user_id, group_id) + 1)
-                update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
+                    await SayAndAt(
+                        websocket,
+                        user_id,
+                        group_id,
+                        f"爆分了！！！积分归零，积分等级:{now_level}->{now_level+1}。",
+                    )
                 if now_point <= 0:
                     payload["params"]["message"].append(
                         {
