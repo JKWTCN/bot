@@ -445,7 +445,9 @@ async def luck_choice_mut(
     start_point = bot_database.find_point(user_id)
     now_point = start_point
     if now_point >= 100000000:
-        luck_choice_mut_super_rich(websocket, user_id, sender_name, group_id, nums)
+        await luck_choice_mut_super_rich(
+            websocket, user_id, sender_name, group_id, nums
+        )
         return
     today_num, today = GetGamblingTimesToday(user_id, group_id)
     x = []
