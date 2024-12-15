@@ -257,10 +257,7 @@ async def luck_choice_mut_super_rich(
     rich_choice_list = ["*10", "*8", "*4", "*2", "*1", "/2", "/4", "/8", "0"]
     rich_choice_probability = [0.0626, 0.126, 0.25, 0.5, 1, 0.5, 0.25, 0.125, 0.0625]
     now_point = start_point
-    if today != GetNowDay():
-        today = GetNowDay()
-        today_num = 0
-    if today_num <= setting["gambling_limit"] and start_point >= 5:
+    if start_point >= 5:
         x.append(0)
         y.append(start_point)
         for i in range(nums):
@@ -300,7 +297,7 @@ async def luck_choice_mut_super_rich(
                 y.append(now_point)
                 bot_database.change_point(user_id, group_id, now_point)
                 update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
-                if now_point <= 0 or today_num > setting["gambling_limit"]:
+                if now_point <= 0:
                     payload["params"]["message"].append(
                         {
                             "type": "text",
@@ -323,18 +320,6 @@ async def luck_choice_mut_super_rich(
                             },
                         }
                     )
-                if today_num > setting["gambling_limit"]:
-                    payload["params"]["message"].append(
-                        {
-                            "type": "text",
-                            "data": {
-                                "text": "今日已超过{}次,请明日再来喵。".format(
-                                    setting["gambling_limit"]
-                                )
-                            },
-                        }
-                    )
-                else:
                     payload["params"]["message"].append(
                         {
                             "type": "text",
@@ -343,22 +328,18 @@ async def luck_choice_mut_super_rich(
                             },
                         }
                     )
-                payload["params"]["message"].append(
-                    {
-                        "type": "image",
-                        "data": {
-                            "file": "base64://"
-                            + open_chart_by_base64(user_id, group_id, x, y).decode(
-                                "utf-8"
-                            )
-                        },
-                    }
-                )
-                update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
-                if group_id not in setting["sepcial_group"]:
-                    ChangeGameblingTimesToday(user_id, group_id, today_num, today)
-                    await websocket.send(json.dumps(payload))
-                    return
+                    payload["params"]["message"].append(
+                        {
+                            "type": "image",
+                            "data": {
+                                "file": "base64://"
+                                + open_chart_by_base64(user_id, group_id, x, y).decode(
+                                    "utf-8"
+                                )
+                            },
+                        }
+                    )
+                    update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
         payload["params"]["message"].append(
             {
                 "type": "text",
@@ -387,17 +368,6 @@ async def luck_choice_mut_super_rich(
                 "data": {
                     "file": "base64://"
                     + open_chart_by_base64(user_id, group_id, x, y).decode("utf-8")
-                },
-            }
-        )
-    elif today_num > setting["gambling_limit"]:
-        payload["params"]["message"].append(
-            {
-                "type": "text",
-                "data": {
-                    "text": "{},抽奖失败喵,今天已经超过{}次了喵。".format(
-                        sender_name, setting["gambling_limit"]
-                    )
                 },
             }
         )
