@@ -202,6 +202,18 @@ def check_russian_pve(user_id: int):
 
 
 def change_point(user_id: int, group_id: int, point: int):
+    if point >= 9223372036854775807:
+        logging.info(
+            f"{get_user_name(user_id, group_id)}({user_id}),在群{GetGroupName(group_id)}({group_id})爆分了!!!"
+        )
+        conn = sqlite3.connect("bot.db")
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE user_point SET point=? WHERE user_id=?",
+            (0, user_id),
+        )
+        conn.commit()
+        return False
     point = round(point, 3)
     try:
         conn = sqlite3.connect("bot.db")
