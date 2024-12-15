@@ -293,6 +293,8 @@ async def luck_choice_mut_super_rich(
                     case "0":
                         now_point = 0
                         luck_list[8] = luck_list[8] + 1
+                        if GetMyKohlrabi(user_id, group_id) != 0:
+                            ChangeMyKohlrabi(user_id, group_id, 0)
                 x.append(i)
                 y.append(now_point)
                 bot_database.change_point(user_id, group_id, now_point)
