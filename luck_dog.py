@@ -7,7 +7,8 @@ import bot_database
 import matplotlib.pyplot as plt
 import numpy as np
 from kohlrabi import ChangeMyKohlrabi, GetMyKohlrabi
-from tools import GetNowDay, load_setting
+from level import get_level, set_level
+from tools import GetNowDay, SayAndAt, load_setting
 from rankings import update_value
 import sqlite3
 import json
@@ -255,7 +256,7 @@ async def luck_choice_mut_super_rich(
     luck_list = [0, 0, 0, 0, 0, 0, 0, 0, 0]
     start_point = bot_database.find_point(user_id)
     rich_choice_list = ["*10", "*8", "*4", "*2", "*1", "/2", "/4", "/8", "0"]
-    rich_choice_probability = [0.0626, 0.126, 0.25, 0.5, 1, 0.5, 0.25, 0.125, 0.0625]
+    rich_choice_probability = [0.0625, 0.125, 0.25, 0.5, 1, 0.5, 0.25, 0.125, 0.0625]
     now_point = start_point
     if start_point >= 5:
         x.append(0)
@@ -297,7 +298,12 @@ async def luck_choice_mut_super_rich(
                             ChangeMyKohlrabi(user_id, group_id, 0)
                 x.append(i + 1)
                 y.append(now_point)
-                bot_database.change_point(user_id, group_id, now_point)
+                res = bot_database.change_point(user_id, group_id, now_point)
+                if not res:
+                    await SayAndAt(
+                        websocket, user_id, group_id, "爆分了！！！积分归零，等级+1。"
+                    )
+                    set_level(user_id, group_id, get_level(user_id, group_id) + 1)
                 update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
                 if now_point <= 0:
                     payload["params"]["message"].append(

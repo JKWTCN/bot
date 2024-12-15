@@ -1,10 +1,13 @@
+import logging
 import sqlite3
 from datetime import datetime
 import random
 import json
 import time
 from chat import GetColdGroupTimes
+from group_operate import GetGroupName
 from kohlrabi import GetMyKohlrabi, GetRecordKohlrabi
+from level import get_level
 from rankings import update_value
 from Class.Ranking import Ranking
 from chat_record import GetChatRecord
@@ -203,12 +206,25 @@ def change_point(user_id: int, group_id: int, point: int):
     update_value(Ranking(user_id, group_id, point, time.time(), 1))
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
-    cur.execute(
-        "UPDATE user_point SET point=? WHERE user_id=?",
-        (point, user_id),
-    )
+    try:
+        cur.execute(
+            "UPDATE user_point SET point=? WHERE user_id=?",
+            (point, user_id),
+        )
+    except OverflowError:
+        from Class.Group_member import get_user_name
+
+        logging.info(
+            f"{get_user_name(user_id, group_id)}({user_id}),在群{GetGroupName(group_id)}({group_id})爆分了!!!"
+        )
+        cur.execute(
+            "UPDATE user_point SET point=? WHERE user_id=?",
+            (0, user_id),
+        )
+        return False
     conn.commit()
     conn.close()
+    return True
 
 
 def check_in(user_id: int, group_id: int):
@@ -280,6 +296,7 @@ async def get_statistics(websocket, user_id: int, group_id: int):
     _check_num = round(all_sell_price - all_buy_cost, 3)
     _cold_king_times = GetColdGroupTimes(user_id, group_id)
     _today_chat_times, _all_chat_times = GetChatRecord(user_id, group_id)
+    _now_level = get_level(user_id, group_id)
     data = {
         "项目": [
             "目前积分",
@@ -295,6 +312,7 @@ async def get_statistics(websocket, user_id: int, group_id: int):
             "今日水群次数",
             "生涯水群次数",
             "冷群王次数",
+            "积分等级",
         ],
         "值": [
             now_point,
@@ -310,6 +328,7 @@ async def get_statistics(websocket, user_id: int, group_id: int):
             _today_chat_times,
             _all_chat_times,
             _cold_king_times,
+            _now_level,
         ],
     }
     payload = {
