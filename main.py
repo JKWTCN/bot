@@ -140,6 +140,7 @@ import re
 
 async def echo(websocket):
     async for message in websocket:
+        right_at = False
         message = json.loads(message)
         setting = load_setting()
         if "post_type" in message:
@@ -233,11 +234,13 @@ async def echo(websocket):
                                             f"{group_id}:{sender_name}({user_id})解除禁言了{rev_name}({at_id})"
                                         )
                                         await ban_new(websocket, at_id, group_id, 0)
+                                        right_at = True
                                     elif "禁言" in message["raw_message"]:
                                         logging.info(
                                             f"{group_id}:{sender_name}({user_id})禁言了{rev_name}({at_id})"
                                         )
                                         await ban_new(websocket, at_id, group_id, 1800)
+                                        right_at = True
                                     elif "说再见" in message["raw_message"]:
                                         if not IsAdmin(user_id, group_id):
                                             logging.info(
@@ -246,6 +249,7 @@ async def echo(websocket):
                                             await kick_member(
                                                 websocket, at_id, group_id
                                             )
+                                            right_at = True
                                     elif HasKeyWords(
                                         raw_message, ["送你", "V你", "v你"]
                                     ):
@@ -257,7 +261,7 @@ async def echo(websocket):
                                         await GiveGift(
                                             websocket, user_id, group_id, at_id, num
                                         )
-                                        return
+                                        right_at = True
                                     elif HasKeyWords(
                                         raw_message, ["晋升"]
                                     ) and IsDeveloper(user_id):
@@ -272,6 +276,7 @@ async def echo(websocket):
                                             group_id,
                                             f"晋升成功,{get_user_name(at_id,group_id)}({at_id})的等级提升为{get_level(at_id, group_id)}级,积分清零喵。",
                                         )
+                                        right_at = True
                                     elif HasKeyWords(
                                         raw_message, ["惩罚取消", "取消惩罚"]
                                     ) and (user_id != at_id or IsDeveloper(user_id)):
@@ -286,6 +291,7 @@ async def echo(websocket):
                                             f"{rev_name}({at_id})的惩罚被{sender_name}({user_id})取消了,快谢谢人家喵！",
                                         )
                                         await ban_new(websocket, at_id, group_id, 0)
+                                        right_at = True
                                     elif HasKeyWords(
                                         raw_message, ["打他", "打它", "打她"]
                                     ) and (user_id != at_id or IsDeveloper(user_id)):
@@ -297,9 +303,11 @@ async def echo(websocket):
                                             group_id,
                                             f"{get_user_name(user_id, group_id)},乐可要开始打你了喵！",
                                         )
+                                        right_at = True
                                     elif HasKeyWords(
                                         message["raw_message"], ["通过验证", "验证通过"]
                                     ):
+                                        right_at = True
                                         (mod, vcode_str) = find_vcode(at_id, group_id)
                                         if mod:
                                             (mod, times) = verify(
@@ -481,6 +489,7 @@ async def echo(websocket):
                                 )
                                 and "reply" not in message["raw_message"]
                                 and user_id not in setting["other_bots"]
+                                and not right_at
                             ):
                                 if (
                                     user_id not in setting["developers_list"]
