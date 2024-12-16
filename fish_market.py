@@ -24,11 +24,17 @@ def add_fish_record(record: Fish_record):
     conn.commit()
 
 
+conn.close()
+
+
 def clear_all():
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
     cur.execute("DELETE from fish_record")
     conn.commit()
+
+
+conn.close()
 
 
 def find_all_record_this_week():

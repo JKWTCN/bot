@@ -46,6 +46,7 @@ def GetGamblingTimesToday(user_id: int, group_id: int):
             (user_id, group_id, 0, GetNowDay()),
         )
         conn.commit()
+        conn.close()
         return (0, GetNowDay())
     else:
         return (data[0][0], data[0][1])
@@ -60,6 +61,7 @@ def ChangeGameblingTimesToday(user_id: int, group_id: int, today_num: int, today
         (today_num, today, user_id, group_id),
     )
     conn.commit()
+    conn.close()
 
 
 # 运势
@@ -352,7 +354,7 @@ async def luck_choice_mut_super_rich(
                         }
                     )
                     update_value(Ranking(user_id, group_id, now_point, time.time(), 1))
-                    await websocket.send(json.dumps(payload)) 
+                    await websocket.send(json.dumps(payload))
                     return
         payload["params"]["message"].append(
             {

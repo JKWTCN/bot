@@ -257,6 +257,7 @@ def check_in(user_id: int, group_id: int):
         update_value(Ranking(user_id, group_id, 0, time.time(), 1))
         cur.execute("INSERT INTO user_point VALUES(?,?,?)", (user_id, 0, 0))
         conn.commit()
+        conn.close()
         now_point = 0
         now_time = datetime.fromtimestamp(0)
     else:

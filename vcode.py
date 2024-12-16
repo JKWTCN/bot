@@ -30,6 +30,7 @@ def create_vcode(user_id: int, group_id: int):
         ),
     )
     conn.commit()
+conn.close()
     conn.close()
     return chr_4
 
@@ -53,6 +54,7 @@ def update_vcode(user_id: int, group_id: int):
         ),
     )
     conn.commit()
+conn.close()
     conn.close()
     return chr_4
 
@@ -77,6 +79,7 @@ def delete_vcode(user_id: int, group_id: int):
     cur = conn.cursor()
     cur.execute("delete FROM vcode where user_id=? and group_id=?", (user_id, group_id))
     conn.commit()
+conn.close()
     os.remove("./vcode/{}_{}.jpg".format(user_id, group_id))
 
 
@@ -107,6 +110,7 @@ def updata_last_time(user_id: int, group_id: int):
         ),
     )
     conn.commit()
+conn.close()
 
 
 # 查找所有
@@ -153,6 +157,7 @@ def update_times(user_id: int, group_id: int, times: int):
         ),
     )
     conn.commit()
+conn.close()
 
 
 # 验证 返回(验证结果，剩余验证次数)

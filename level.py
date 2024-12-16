@@ -17,6 +17,7 @@ def get_level(user_id: int, group_id: int):
             "CREATE TABLE level ( user_id  INTEGER, group_id INTEGER, level INTEGER ); "
         )
         conn.commit()
+conn.close()
         cur.execute(
             "SELECT level FROM level where user_id=? and group_id=?;",
             (user_id, group_id),
@@ -28,6 +29,7 @@ def get_level(user_id: int, group_id: int):
             (user_id, group_id, 0),
         )
         conn.commit()
+conn.close()
         conn.close()
         return 0
     else:
@@ -47,3 +49,4 @@ def set_level(user_id: int, group_id: int, level: int):
         ),
     )
     conn.commit()
+conn.close()

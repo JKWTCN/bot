@@ -117,6 +117,7 @@ def GetMyKohlrabi(user_id: int, group_id: int):
             ),
         )
         conn.commit()
+        conn.close()
         return 0
     else:
         return data[0][0]
@@ -130,6 +131,7 @@ def ClearKohlrabi():
         "DELETE FROM kohlrabi_week WHERE  now_weeks != ?;", (time.strftime("%W"),)
     )
     conn.commit()
+    conn.close()
 
 
 # 改变大头菜本周交易记录
@@ -141,6 +143,7 @@ def ChangeMyKohlrabi(user_id: int, group_id: int, nums: int):
         (nums, user_id, group_id),
     )
     conn.commit()
+    conn.close()
 
 
 # 梭哈
@@ -273,6 +276,7 @@ def GetRecordKohlrabi(user_id: int, group_id: int):
             (user_id, group_id, 0, 0, 0, 0),
         )
         conn.commit()
+        conn.close()
         return (0, 0, 0, 0)
     else:
         return (data[0][0], data[0][1], data[0][2], data[0][3])
@@ -289,6 +293,7 @@ def UpdateRecordKohlrabi(
         (all_buy, all_buy_cost, all_sell, all_sell_price, user_id, group_id),
     )
     conn.commit()
+    conn.close()
 
 
 # 售出大头菜

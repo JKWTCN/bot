@@ -33,6 +33,7 @@ def SetColdGroupTimes(user_id: int, group_id: int, times: int):
         ),
     )
     conn.commit()
+    conn.close()
 
 
 # 获取冷群王次数
@@ -155,6 +156,7 @@ def GetWhoAtMe(user_id: int):
     if len(data) == 0:
         cur.execute("INSERT INTO who_at_me (user_id,nums) VALUES (?,?);", (user_id, 0))
         conn.commit()
+        conn.close()
         return 0
     else:
         return data[0][0]
