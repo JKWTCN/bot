@@ -339,6 +339,71 @@ async def echo(websocket):
                                                     await welcom_new_no_admin(
                                                         websocket, at_id, group_id
                                                     )
+                                    elif (
+                                        at_id in setting["developers_list"]
+                                        and "reply" not in message["raw_message"]
+                                        and user_id not in setting["other_bots"]
+                                    ):
+                                        if (
+                                            user_id not in setting["developers_list"]
+                                            and not IsAdmin(user_id, group_id)
+                                            and BotIsAdmin(group_id)
+                                            and group_id == setting["admin_group_main"]
+                                            and not IsDeveloper(user_id)
+                                        ):
+                                            AddWhoAtMe(user_id)
+                                            now_num = GetWhoAtMe(user_id)
+                                            if now_num >= 3:
+                                                await ban_new(
+                                                    websocket, user_id, group_id, 60
+                                                )
+                                                await say(
+                                                    websocket,
+                                                    group_id,
+                                                    f"{sender_name},不要随便艾特☁️喵，禁言你了喵。",
+                                                )
+                                            else:
+                                                await say(
+                                                    websocket,
+                                                    group_id,
+                                                    f"{sender_name},不要随便艾特☁️喵，你被警告了喵,事不过三,你现在是第{now_num}次,超过后会直接被禁言喵。",
+                                                )
+
+                                        elif (
+                                            user_id not in setting["developers_list"]
+                                            and IsAdmin(user_id, group_id)
+                                            and BotIsAdmin(group_id)
+                                            and group_id == setting["admin_group_main"]
+                                        ):
+                                            AddWhoAtMe(user_id)
+                                            now_num = GetWhoAtMe(user_id)
+                                            sender_name = get_user_name(
+                                                user_id, group_id
+                                            )
+                                            if now_num >= 3:
+                                                if now_num <= 20:
+                                                    SayAndAt(
+                                                        websocket,
+                                                        user_id,
+                                                        group_id,
+                                                        f"{sender_name},不要随便艾特☁️喵,管理员惩罚{setting["defense_times"]}次喵。",
+                                                    )
+                                                else:
+                                                    SayAndAt(
+                                                        websocket,
+                                                        user_id,
+                                                        group_id,
+                                                        f"{sender_name},你是个巨婴嘛?现在已经是第{now_num}次了！！！管理员惩罚{setting["defense_times"]}次。",
+                                                    )
+                                                    AddAtPunishList(
+                                                        user_id, group_id, 100
+                                                    )
+                                            else:
+                                                await say(
+                                                    websocket,
+                                                    group_id,
+                                                    f"{sender_name},不要随便艾特☁️喵，你被警告了喵,事不过三,你现在是第{now_num}次,超过后会施加{setting["defense_times"]}次的艾特惩罚。",
+                                                )
                                 elif (
                                     IsAdmin(user_id, group_id) or IsDeveloper(user_id)
                                 ) and at_id == setting["bot_id"]:
@@ -476,75 +541,6 @@ async def echo(websocket):
                             #         },
                             #     }
                             #     await websocket.send(json.dumps(payload))
-                            if (
-                                (
-                                    "[CQ:at,qq={}]".format(
-                                        setting["developers_list"][0]
-                                    )
-                                    in message["raw_message"]
-                                    or "[CQ:at,qq={}]".format(
-                                        setting["developers_list"][1]
-                                    )
-                                    in message["raw_message"]
-                                )
-                                and "reply" not in message["raw_message"]
-                                and user_id not in setting["other_bots"]
-                                and not right_at
-                            ):
-                                if (
-                                    user_id not in setting["developers_list"]
-                                    and not IsAdmin(user_id, group_id)
-                                    and BotIsAdmin(group_id)
-                                    and group_id == setting["admin_group_main"]
-                                    and not IsDeveloper(user_id)
-                                ):
-                                    AddWhoAtMe(user_id)
-                                    now_num = GetWhoAtMe(user_id)
-                                    if now_num >= 3:
-                                        await ban_new(websocket, user_id, group_id, 60)
-                                        await say(
-                                            websocket,
-                                            group_id,
-                                            f"{sender_name},不要随便艾特☁️喵，禁言你了喵。",
-                                        )
-                                    else:
-                                        await say(
-                                            websocket,
-                                            group_id,
-                                            f"{sender_name},不要随便艾特☁️喵，你被警告了喵,事不过三,你现在是第{now_num}次,超过后会直接被禁言喵。",
-                                        )
-
-                                elif (
-                                    user_id not in setting["developers_list"]
-                                    and IsAdmin(user_id, group_id)
-                                    and BotIsAdmin(group_id)
-                                    and group_id == setting["admin_group_main"]
-                                ):
-                                    AddWhoAtMe(user_id)
-                                    now_num = GetWhoAtMe(user_id)
-                                    sender_name = get_user_name(user_id, group_id)
-                                    if now_num >= 3:
-                                        if now_num <= 20:
-                                            SayAndAt(
-                                                websocket,
-                                                user_id,
-                                                group_id,
-                                                f"{sender_name},不要随便艾特☁️喵,管理员惩罚{setting["defense_times"]}次喵。",
-                                            )
-                                        else:
-                                            SayAndAt(
-                                                websocket,
-                                                user_id,
-                                                group_id,
-                                                f"{sender_name},你是个巨婴嘛?现在已经是第{now_num}次了！！！管理员惩罚{setting["defense_times"]}次。",
-                                            )
-                                            AddAtPunishList(user_id, group_id, 100)
-                                    else:
-                                        await say(
-                                            websocket,
-                                            group_id,
-                                            f"{sender_name},不要随便艾特☁️喵，你被警告了喵,事不过三,你现在是第{now_num}次,超过后会施加{setting["defense_times"]}次的艾特惩罚。",
-                                        )
                             if (
                                 re.search(
                                     r"CQ:reply,id=\d+]好好好", message["raw_message"]
