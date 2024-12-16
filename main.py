@@ -1563,7 +1563,7 @@ async def echo(websocket):
                                     )
 
                 case "notice":
-                    logging.info(message["notice_type"])
+                    logging.info(message)
                     match message["notice_type"]:
                         # 有新人入群
                         case "group_increase":
