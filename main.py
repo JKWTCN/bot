@@ -249,7 +249,7 @@ async def echo(websocket):
                                     elif HasKeyWords(
                                         raw_message, ["送你", "V你", "v你"]
                                     ):
-                                        num = re.findall(r"\d+", raw_message)
+                                        num = re.findall("\d+", raw_message)
                                         if len(num) >= 2:
                                             num = int(num[1])
                                         else:
