@@ -377,7 +377,7 @@ def ColdChat(group: dict) -> str:
             },
             {
                 "role": "User",
-                "content": f"在{nick_name}说话前,群友们聊了{num}句,他说的上一句话是:{raw_message},大家前面都聊的好火热,他一说话后大家就都不说话了,快狠狠地嘲笑嘲笑他。",
+                "content": f"在{nick_name}说话前,群友们聊了{num}句,他说的上一句话是:{raw_message},大家前面都聊的好火热,他一说话后大家就都不说话了,他可能今天过的不太好,赶紧鼓励鼓励他。",
             },
         ],
     }
