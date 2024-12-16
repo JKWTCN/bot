@@ -38,7 +38,6 @@ def update_group_info(
             (group_id, group_name, member_count, max_member_count),
         )
         conn.commit()
-conn.close()
     else:
         cur.execute(
             "UPDATE group_info SET group_name = ?,member_count=?,max_member_count=? WHERE group_id = ?;",
@@ -50,7 +49,6 @@ conn.close()
             ),
         )
         conn.commit()
-conn.close()
 
 
 async def GetMessage(websocket, message_id: int, echo: str):
@@ -147,7 +145,6 @@ async def poor_point(websocket, user_id: int, group_id: int):
                 (user_id, group_id, 0, time.time()),
             )
             conn.commit()
-conn.close()
             cur.execute(
                 "SELECT * FROM poor where user_id=? and group_id=?;",
                 (
@@ -162,7 +159,6 @@ conn.close()
                 (data[0][2] + 1, user_id, group_id),
             )
             conn.commit()
-conn.close()
             bot_database.change_point(user_id, group_id, 5)
             payload = {
                 "action": "send_msg_async",
@@ -189,7 +185,6 @@ conn.close()
                 (1, time.time(), user_id, group_id),
             )
             conn.commit()
-conn.close()
             bot_database.change_point(user_id, group_id, 5)
             payload = {
                 "action": "send_msg_async",

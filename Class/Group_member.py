@@ -118,7 +118,6 @@ def updata_user_info(group_member: Group_member):
             ),
         )
         conn.commit()
-conn.close()
     else:
         cur.execute(
             "INSERT INTO group_member_info VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -141,7 +140,6 @@ conn.close()
             ),
         )
         conn.commit()
-conn.close()
     # print(is_had)
 
 

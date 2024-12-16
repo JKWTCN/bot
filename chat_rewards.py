@@ -21,7 +21,6 @@ def SendRewards(user_id: int, group_id: int):
             (user_id, group_id, 0, 0, GetNowDay()),
         )
         conn.commit()
-conn.close()
         cur.execute(
             "SELECT all_num,today_num,today FROM chat_rewards where user_id=? and group_id=?;",
             (
@@ -45,5 +44,4 @@ conn.close()
         (all_num, today_num, today, user_id, group_id),
     )
     conn.commit()
-conn.close()
     return (all_num, today_num)
