@@ -216,6 +216,7 @@ def change_point(user_id: int, group_id: int, point: int):
             (0, user_id),
         )
         conn.commit()
+        conn.close()
         return False
     point = round(point, 3)
     try:
@@ -236,6 +237,7 @@ def change_point(user_id: int, group_id: int, point: int):
             (0, user_id),
         )
         conn.commit()
+        conn.close()
         return False
     update_value(Ranking(user_id, group_id, point, time.time(), 1))
     conn.commit()
