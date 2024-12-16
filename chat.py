@@ -65,6 +65,7 @@ def GetColdGroupTimes(user_id: int, group_id: int):
         conn.close()
         return 0
     else:
+        conn.close()
         return data[0][0]
 
 
@@ -159,6 +160,7 @@ def GetWhoAtMe(user_id: int):
         conn.close()
         return 0
     else:
+        conn.close()
         return data[0][0]
 
 

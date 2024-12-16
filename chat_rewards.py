@@ -44,4 +44,5 @@ def SendRewards(user_id: int, group_id: int):
         (all_num, today_num, today, user_id, group_id),
     )
     conn.commit()
+    conn.close()
     return (all_num, today_num)

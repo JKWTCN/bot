@@ -31,6 +31,7 @@ def get_level(user_id: int, group_id: int):
         conn.close()
         return 0
     else:
+        conn.close()
         return data[0][0]
 
 
@@ -47,3 +48,4 @@ def set_level(user_id: int, group_id: int, level: int):
         ),
     )
     conn.commit()
+    conn.close()

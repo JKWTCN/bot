@@ -49,6 +49,7 @@ def GetGamblingTimesToday(user_id: int, group_id: int):
         conn.close()
         return (0, GetNowDay())
     else:
+        conn.close()
         return (data[0][0], data[0][1])
 
 

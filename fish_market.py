@@ -22,9 +22,8 @@ def add_fish_record(record: Fish_record):
         ),
     )
     conn.commit()
+    conn.close()
 
-
-conn.close()
 
 
 def clear_all():
@@ -32,9 +31,9 @@ def clear_all():
     cur = conn.cursor()
     cur.execute("DELETE from fish_record")
     conn.commit()
+    conn.close()
 
 
-conn.close()
 
 
 def find_all_record_this_week():

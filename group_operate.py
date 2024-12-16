@@ -38,6 +38,7 @@ def update_group_info(
             (group_id, group_name, member_count, max_member_count),
         )
         conn.commit()
+        conn.close()
     else:
         cur.execute(
             "UPDATE group_info SET group_name = ?,member_count=?,max_member_count=? WHERE group_id = ?;",
@@ -49,6 +50,7 @@ def update_group_info(
             ),
         )
         conn.commit()
+        conn.close()
 
 
 async def GetMessage(websocket, message_id: int, echo: str):
@@ -204,4 +206,5 @@ async def poor_point(websocket, user_id: int, group_id: int):
                 "message": "{},你不符合群低保领取条件。".format(sender_name),
             },
         }
+    conn.close()
     await websocket.send(json.dumps(payload))

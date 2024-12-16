@@ -138,6 +138,8 @@ def GetChatRecord(user_id: int, group_id: int):
             ),
         )
         data = cur.fetchall()
+        conn.close()
+    conn.close()
     all_num = data[0][0]
     today_num = data[0][1]
     return (today_num, all_num)
@@ -185,4 +187,5 @@ def AddChatRecord(user_id: int, group_id: int):
         (all_num, today_num, today, user_id, group_id),
     )
     conn.commit()
+    conn.close()
     return (all_num, today_num)

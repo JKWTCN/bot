@@ -120,6 +120,7 @@ def GetMyKohlrabi(user_id: int, group_id: int):
         conn.close()
         return 0
     else:
+        conn.close()
         return data[0][0]
 
 
