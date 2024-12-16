@@ -257,6 +257,7 @@ async def echo(websocket):
                                         await GiveGift(
                                             websocket, user_id, group_id, at_id, num
                                         )
+                                        return
                                     elif HasKeyWords(
                                         raw_message, ["晋升"]
                                     ) and IsDeveloper(user_id):
