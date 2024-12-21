@@ -3,13 +3,13 @@ import logging
 import random
 from random import choice
 import glob
-from tools import GetDirSizeByUnit
+from tools import GetDirSizeByUnit, load_setting
 import json
 
 
 async def MemeStatistics(websocket, group_id: int):
-    all_file = find_all_file("../meme")
-    num, unit = GetDirSizeByUnit("../meme")
+    all_file = find_all_file(load_setting()["meme_path"])
+    num, unit = GetDirSizeByUnit(load_setting()["meme_path"])
     payload = {
         "action": "send_msg_async",
         "params": {
@@ -44,7 +44,7 @@ async def twenty_random_meme(websocket, group_id: int):
             "message": [],
         },
     }
-    all_file = find_all_file("../meme")
+    all_file = find_all_file(load_setting()["meme_path"])
     for i in range(20):
         dir = choice(all_file)
         print(dir)
@@ -71,7 +71,7 @@ async def ten_random_meme(websocket, group_id: int):
             "message": [],
         },
     }
-    all_file = find_all_file("../meme")
+    all_file = find_all_file(load_setting()["meme_path"])
     for i in range(10):
         dir = choice(all_file)
         while dir.endswith(".mp4"):
@@ -98,10 +98,20 @@ async def send_meme_merge_forwarding(websocket, group_id: int, nums: int):
             "message": [],
         },
     }
-    all_file = find_all_file("../meme")
+    all_file = find_all_file(load_setting()["meme_path"])
     for i in range(nums):
         dir = choice(all_file)
-        while dir.endswith(".mp4"):
+        while (
+            not dir.endswith(".jpg")
+            and not dir.endswith(".png")
+            and not dir.endswith(".JPG")
+            and not dir.endswith(".JPG")
+            and not dir.endswith(".PNG")
+            and not dir.endswith(".JEPG")
+            and not dir.endswith(".jpeg")
+            and not dir.endswith(".gif")
+            and not dir.endswith(".GIF")
+        ):
             dir = choice(all_file)
         print(dir)
         logging.info("乐可发送了图片:{}".format(dir))
@@ -118,10 +128,7 @@ async def send_meme_merge_forwarding(websocket, group_id: int, nums: int):
 
 
 async def send_random_meme(websocket, group_id: int):
-    # s = find_all_file("./meme")
-    # files = os.listdir("meme/unchoise")
-    # path = "{}/{}".format("meme/unchoise", choice(files))
-    all_file = find_all_file("../meme")
+    all_file = find_all_file(load_setting()["meme_path"])
     path = choice(all_file)
     while path.endswith(".mp4"):
         path = choice(all_file)
