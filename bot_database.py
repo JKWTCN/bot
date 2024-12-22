@@ -120,26 +120,30 @@ def add_unwelcome(user_id: int, time: int, group_id: int):
 
 # 信息写入数据库
 def write_message(message: json):
-    sender = message["sender"]
-    sender_name = sender["card"]
-    if len(sender["card"]) == 0:
-        sender_name = sender["nickname"]
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO group_message VALUES(?,?,?,?,?,?,?,?)",
-        (
-            message["time"],
-            message["user_id"],
-            sender_name,
-            message["raw_message"],
-            message["group_id"],
-            message["self_id"],
-            message["sub_type"],
-            message["message_id"],
-        ),
-    )
-    conn.commit()
+    try:
+        sender = message["sender"]
+        sender_name = sender["card"]
+        if len(sender["card"]) == 0:
+            sender_name = sender["nickname"]
+
+        cur.execute(
+            "INSERT INTO group_message VALUES(?,?,?,?,?,?,?,?)",
+            (
+                message["time"],
+                message["user_id"],
+                sender_name,
+                message["raw_message"],
+                message["group_id"],
+                message["self_id"],
+                message["sub_type"],
+                message["message_id"],
+            ),
+        )
+        conn.commit()
+    except:
+        pass
     conn.close()
 
 
