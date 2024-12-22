@@ -226,6 +226,8 @@ def change_point(user_id: int, group_id: int, point: int):
             "UPDATE user_point SET point=? WHERE user_id=?",
             (point, user_id),
         )
+        conn.commit()
+        conn.close()
     except OverflowError:
         logging.info(
             f"{get_user_name(user_id, group_id)}({user_id}),在群{GetGroupName(group_id)}({group_id})爆分了!!!"
@@ -240,8 +242,6 @@ def change_point(user_id: int, group_id: int, point: int):
         conn.close()
         return False
     update_value(Ranking(user_id, group_id, point, time.time(), 1))
-    conn.commit()
-    conn.close()
     return True
 
 
