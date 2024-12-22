@@ -224,7 +224,7 @@ async def echo(websocket):
                                         r"\[CQ:at,qq=-(\d+)]", message["raw_message"]
                                     )
                                     at_id = int(at_id[0])
-                                # 管理员管理功能
+                                # (乐可是管理) 艾特其他人
                                 if (
                                     IsAdmin(setting["bot_id"], group_id)
                                 ) and at_id != setting["bot_id"]:
@@ -251,18 +251,6 @@ async def echo(websocket):
                                             )
                                             right_at = True
                                     elif HasKeyWords(
-                                        raw_message, ["送你", "V你", "v你"]
-                                    ):
-                                        num = re.findall(r"\d+", raw_message)
-                                        if len(num) >= 2:
-                                            num = int(num[1])
-                                        else:
-                                            num = 0
-                                        await GiveGift(
-                                            websocket, user_id, group_id, at_id, num
-                                        )
-                                        right_at = True
-                                    elif HasKeyWords(
                                         raw_message, ["晋升"]
                                     ) and IsDeveloper(user_id):
                                         set_level(
@@ -279,7 +267,13 @@ async def echo(websocket):
                                         right_at = True
                                     elif HasKeyWords(
                                         raw_message, ["惩罚取消", "取消惩罚"]
-                                    ) and (user_id != at_id or IsDeveloper(user_id)):
+                                    ) and (
+                                        (
+                                            user_id != at_id
+                                            and IsAdmin(user_id, group_id)
+                                        )
+                                        or IsDeveloper(user_id)
+                                    ):
                                         DelAtPunish(at_id, group_id)
                                         setting = load_setting()
                                         logging.info(
@@ -291,6 +285,18 @@ async def echo(websocket):
                                             f"{rev_name}({at_id})的惩罚被{sender_name}({user_id})取消了,快谢谢人家喵！",
                                         )
                                         await ban_new(websocket, at_id, group_id, 0)
+                                        right_at = True
+                                    elif HasKeyWords(
+                                        raw_message, ["送你", "V你", "v你"]
+                                    ):
+                                        num = re.findall(r"\d+", raw_message)
+                                        if len(num) >= 2:
+                                            num = int(num[1])
+                                        else:
+                                            num = 0
+                                        await GiveGift(
+                                            websocket, user_id, group_id, at_id, num
+                                        )
                                         right_at = True
                                     elif HasKeyWords(
                                         raw_message, ["打他", "打它", "打她"]
@@ -404,6 +410,19 @@ async def echo(websocket):
                                                     group_id,
                                                     f"{sender_name},不要随便艾特☁️喵，你被警告了喵,事不过三,你现在是第{now_num}次,超过后会施加{setting["defense_times"]}次的艾特惩罚。",
                                                 )
+                                # 乐可不需要是管理的时候，艾特其他成员
+                                elif at_id != setting["bot_id"]:
+                                    if HasKeyWords(raw_message, ["送你", "V你", "v你"]):
+                                        num = re.findall(r"\d+", raw_message)
+                                        if len(num) >= 2:
+                                            num = int(num[1])
+                                        else:
+                                            num = 0
+                                        await GiveGift(
+                                            websocket, user_id, group_id, at_id, num
+                                        )
+                                        right_at = True
+                                # 管理艾特乐可
                                 elif (
                                     IsAdmin(user_id, group_id) or IsDeveloper(user_id)
                                 ) and at_id == setting["bot_id"]:
