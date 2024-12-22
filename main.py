@@ -1564,10 +1564,15 @@ async def echo(websocket):
 
                 case "notice":
                     if "sub_type" in message:
-                        # logging.info(message)
                         match message["sub_type"]:
                             case "poke":
-                                await cute3(websocket, message["group_id"])
+                                # 谁拍的
+                                user_id = message["user_id"]
+                                # 拍谁
+                                target_id = message["target_id"]
+                                if target_id == setting["bot_id"]:
+                                    # logging.info(message)
+                                    await cute3(websocket, message["group_id"])
                     match message["notice_type"]:
                         # 有新人入群
                         case "group_increase":
