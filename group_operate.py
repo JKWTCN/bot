@@ -171,6 +171,7 @@ async def poor_point(websocket, user_id: int, group_id: int):
                     ),
                 },
             }
+            conn.close()
         elif data[0][2] >= 3 and tools.is_today(time.time(), data[0][3]):
             payload = {
                 "action": "send_msg_async",
@@ -181,6 +182,7 @@ async def poor_point(websocket, user_id: int, group_id: int):
                     ),
                 },
             }
+            conn.close()
         elif not tools.is_today(time.time(), data[0][3]):
             cur.execute(
                 "UPDATE poor SET times = ?,time=? WHERE user_id = ? AND group_id = ?;",
@@ -197,6 +199,7 @@ async def poor_point(websocket, user_id: int, group_id: int):
                     ),
                 },
             }
+            conn.close()
 
     else:
         payload = {
@@ -206,5 +209,5 @@ async def poor_point(websocket, user_id: int, group_id: int):
                 "message": "{},你不符合群低保领取条件。".format(sender_name),
             },
         }
-    conn.close()
+
     await websocket.send(json.dumps(payload))
