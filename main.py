@@ -692,6 +692,7 @@ async def echo(websocket):
                                                 not in message["raw_message"]
                                                 and "[CQ:reply"
                                                 not in message["raw_message"]
+                                                and HasChinese(message["raw_message"])
                                             ):
                                                 if not IsAdmin(user_id, group_id):
                                                     await ban_new(
