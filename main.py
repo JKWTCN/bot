@@ -864,7 +864,13 @@ async def echo(websocket):
                                                             user_id
                                                         ),
                                                     )
-
+                                            elif HasKeyWords(
+                                                message["message"][0]["data"]["text"],
+                                                ["捡漂流瓶", "捞漂流瓶"],
+                                            ):
+                                                await pick_drifting_bottles_radom(
+                                                    websocket, user_id, group_id
+                                                )
                                             elif (
                                                 "吃什么"
                                                 in message["message"][0]["data"]["text"]
