@@ -49,6 +49,7 @@ from drifting_bottles import (
     throw_drifting_bottles,
     write_bottles_uuid_message_id,
 )
+from e_mail import send_log_email
 from kohlrabi import (
     BuyKohlrabi,
     ClearKohlrabi,
@@ -1620,35 +1621,6 @@ async def echo(websocket):
                                     message["raw_message"],
                                 )
                             )
-                            if (
-                                "抽" in message["raw_message"]
-                                and "连" in message["raw_message"]
-                            ):
-                                num = FindNum(message["raw_message"])
-                                import math
-
-                                num = math.trunc(num)
-                                if num > 100:
-                                    await SayPrivte(
-                                        websocket, message["user_id"], "最大100连喵!"
-                                    )
-
-                                else:
-                                    await websocket.send(
-                                        json.dumps(
-                                            luck_dog.LuckChoiceMutPrivate(
-                                                message["user_id"], num
-                                            )
-                                        )
-                                    )
-                            elif "抽奖" in message["raw_message"]:
-                                await websocket.send(
-                                    json.dumps(
-                                        luck_dog.LuckChoiceMutPrivate(
-                                            message["user_id"], 1
-                                        )
-                                    )
-                                )
                             if message["user_id"] in setting["developers_list"]:
                                 if HasKeyWords(message["raw_message"], ["更新列表"]):
                                     await get_group_list(websocket)
@@ -1666,6 +1638,8 @@ async def echo(websocket):
                                         0,
                                         int(result.group()),
                                     )
+                                if HasKeyWords(message["raw_message"], ["发送日志"]):
+                                    send_log_email()
 
                 case "notice":
                     if "sub_type" in message:
