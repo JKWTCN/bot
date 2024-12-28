@@ -525,11 +525,9 @@ async def echo(websocket):
                                             group_id,
                                             "本群已经关闭冷群回复喵。",
                                         )
-                                    elif HasAllKeyWords(
+                                    elif HasKeyWords(
                                         message["raw_message"],
-                                        [
-                                            f"[CQ:at,qq={load_setting()["bot_id"]}] throw"
-                                        ],
+                                        ["throw"],
                                     ):
                                         if HasKeyWords(
                                             message["raw_message"], ["[CQ:image"]
@@ -567,11 +565,9 @@ async def echo(websocket):
                                             f"{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
                                         )
                                 elif at_id == setting["bot_id"]:
-                                    if HasAllKeyWords(
+                                    if HasKeyWords(
                                         message["raw_message"],
-                                        [
-                                            f"[CQ:at,qq={load_setting()["bot_id"]}] throw"
-                                        ],
+                                        ["throw"],
                                     ):
                                         if HasKeyWords(
                                             message["raw_message"], ["[CQ:image"]
