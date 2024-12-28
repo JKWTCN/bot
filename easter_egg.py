@@ -1,5 +1,6 @@
 import base64
 import logging
+import random
 import requests
 import json
 
@@ -57,7 +58,8 @@ async def cute2(websocket, group_id: int):
 
 # 有人夸乐可可爱
 async def cute3(websocket, group_id: int):
-    path = "res/cute3.gif"
+    list = ["res/cute3.gif", "res/cute4.gif"]
+    path = random.choice(list)
     logging.info("有人夸乐可可爱。")
     with open(path, "rb") as image_file:
         image_data = image_file.read()
