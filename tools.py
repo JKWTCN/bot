@@ -70,6 +70,19 @@ async def say(websocket, group_id: int, text: str):
     }
     await websocket.send(json.dumps(payload))
 
+
+async def say_and_echo(websocket, group_id: int, text: str, echo: str):
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": text,
+        },
+        "echo": echo,
+    }
+    await websocket.send(json.dumps(payload))
+
+
 # 判断是否是中文
 def HasChinese(self, string):
     for ch in string:
@@ -152,7 +165,11 @@ def HasChinese(text: str) -> bool:
     if len(res) != 0:
         return True
     else:
-        return False
+        res = re.findall(r"([\u3400-\u4db5]+)", text)
+        if len(res) != 0:
+            return True
+        else:
+            return False
 
 
 # 寻找数字

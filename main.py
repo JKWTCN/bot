@@ -43,6 +43,7 @@ from chat import (
     AddWhoAtMe,
     run_or_shot,
 )
+from drifting_bottles import pick_drifting_bottles_radom, throw_drifting_bottles
 from kohlrabi import (
     BuyKohlrabi,
     ClearKohlrabi,
@@ -518,6 +519,39 @@ async def echo(websocket):
                                             group_id,
                                             "本群已经关闭冷群回复喵。",
                                         )
+                                    elif HasAllKeyWords(
+                                        message["raw_message"],
+                                        [
+                                            f"[CQ:at,qq={dump_setting()["bot_id"]}] throw"
+                                        ],
+                                    ):
+                                        if HasKeyWords(
+                                            message["raw_message"], ["[CQ:image"]
+                                        ):
+                                            await say(
+                                                f"{get_user_name(user_id, group_id)},暂时不支持图片喵。"
+                                            )
+                                        else:
+                                            match = re.search(
+                                                r"throw\s*(\S+)", raw_message
+                                            )
+                                            if match:
+                                                print(match.group(1))  # 输出: 123
+                                                await throw_drifting_bottles(
+                                                    websocket,
+                                                    user_id,
+                                                    group_id,
+                                                    match.group(1),
+                                                )
+                                    elif HasAllKeyWords(
+                                        message["raw_message"],
+                                        [
+                                            f"[CQ:at,qq={dump_setting()["bot_id"]}] 捡漂流瓶"
+                                        ],
+                                    ):
+                                        await pick_drifting_bottles_radom(
+                                            websocket, user_id, group_id
+                                        )
                                     else:
                                         await say(
                                             websocket,
@@ -525,11 +559,45 @@ async def echo(websocket):
                                             f"{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
                                         )
                                 elif at_id == setting["bot_id"]:
-                                    await say(
-                                        websocket,
-                                        group_id,
-                                        f"{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
-                                    )
+                                    if HasAllKeyWords(
+                                        message["raw_message"],
+                                        [
+                                            f"[CQ:at,qq={dump_setting()["bot_id"]}] throw"
+                                        ],
+                                    ):
+                                        if HasKeyWords(
+                                            message["raw_message"], ["[CQ:image"]
+                                        ):
+                                            await say(
+                                                f"{get_user_name(user_id, group_id)},暂时不支持图片喵。"
+                                            )
+                                        else:
+                                            match = re.search(
+                                                r"throw\s*(\S+)", raw_message
+                                            )
+                                            if match:
+                                                print(match.group(1))  # 输出: 123
+                                                await throw_drifting_bottles(
+                                                    websocket,
+                                                    user_id,
+                                                    group_id,
+                                                    match.group(1),
+                                                )
+                                    elif HasAllKeyWords(
+                                        message["raw_message"],
+                                        [
+                                            f"[CQ:at,qq={dump_setting()["bot_id"]}] 捡漂流瓶"
+                                        ],
+                                    ):
+                                        await pick_drifting_bottles_radom(
+                                            websocket, user_id, group_id
+                                        )
+                                    else:
+                                        await say(
+                                            websocket,
+                                            group_id,
+                                            f"{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
+                                        )
 
                             # 复读大拇哥和忠诚、o/、O/
                             # if (
@@ -701,9 +769,10 @@ async def echo(websocket):
                                                         group_id,
                                                         60,
                                                     )
-                                                    await say(
+                                                    await ReplySay(
                                                         websocket,
                                                         group_id,
+                                                        message["message_id"],
                                                         "{},每月25号是本群喵喵日,你因为说话不带喵被禁言了喵。".format(
                                                             sender_name
                                                         ),
