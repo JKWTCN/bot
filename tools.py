@@ -4,6 +4,11 @@ import base64
 import json
 
 
+# 时间戳转日期字符串
+def timestamp_to_date(timestamp: int):
+    return datetime.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+
+
 # 引用回复
 async def ReplySay(websocket, group_id: int, message_id: int, text: str):
     payload = {

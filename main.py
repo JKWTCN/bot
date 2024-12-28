@@ -43,7 +43,12 @@ from chat import (
     AddWhoAtMe,
     run_or_shot,
 )
-from drifting_bottles import pick_drifting_bottles_radom, throw_drifting_bottles
+from drifting_bottles import (
+    is_comment_write,
+    pick_drifting_bottles_radom,
+    throw_drifting_bottles,
+    write_bottles_uuid_message_id,
+)
 from kohlrabi import (
     BuyKohlrabi,
     ClearKohlrabi,
@@ -214,6 +219,7 @@ async def echo(websocket):
                                     },
                                 }
                                 await websocket.send(json.dumps(payload))
+                            # 艾特事件处理
                             if "[CQ:at,qq=" in message["raw_message"]:
                                 at_id = re.findall(
                                     r"\[CQ:at,qq=(\d+)]", message["raw_message"]
@@ -576,7 +582,7 @@ async def echo(websocket):
                                                 r"throw\s*(\S+)", raw_message
                                             )
                                             if match:
-                                                print(match.group(1))  # 输出: 123
+                                                print(match.group(1))
                                                 await throw_drifting_bottles(
                                                     websocket,
                                                     user_id,
@@ -598,6 +604,10 @@ async def echo(websocket):
                                             group_id,
                                             f"{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
                                         )
+                            elif "CQ:reply,id=" in message["raw_message"]:
+                                await is_comment_write(
+                                    websocket, user_id, group_id, message["raw_message"]
+                                )
 
                             # 复读大拇哥和忠诚、o/、O/
                             # if (
@@ -1875,6 +1885,12 @@ async def echo(websocket):
                     # 请求事件
                     print(message)
         elif "echo" in message:
+            match = re.search(r"bottles\s*(\S+)", message["echo"])
+            if match:
+                uuid = match.group(1)
+                message_id = message["data"]["message_id"]
+                group_id = message["data"]["group_id"]
+                write_bottles_uuid_message_id(message_id, uuid, group_id)
             match message["echo"]:
                 case "update_group_member_list":
                     # print(
