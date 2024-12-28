@@ -528,7 +528,7 @@ async def echo(websocket):
                                     elif HasAllKeyWords(
                                         message["raw_message"],
                                         [
-                                            f"[CQ:at,qq={dump_setting()["bot_id"]}] throw"
+                                            f"[CQ:at,qq={load_setting()["bot_id"]}] throw"
                                         ],
                                     ):
                                         if HasKeyWords(
@@ -568,7 +568,7 @@ async def echo(websocket):
                                     if HasAllKeyWords(
                                         message["raw_message"],
                                         [
-                                            f"[CQ:at,qq={dump_setting()["bot_id"]}] throw"
+                                            f"[CQ:at,qq={load_setting()["bot_id"]}] throw"
                                         ],
                                     ):
                                         if HasKeyWords(
