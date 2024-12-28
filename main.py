@@ -539,20 +539,22 @@ async def echo(websocket):
                                             )
                                         else:
                                             match = re.search(
-                                                r"throw\s*(\S+)", raw_message
+                                                r"throw\s*([\s\S]*)$",
+                                                message["raw_message"],
                                             )
                                             if match:
-                                                print(match.group(1))  # 输出: 123
+                                                print(match.group(1))
                                                 await throw_drifting_bottles(
                                                     websocket,
                                                     user_id,
                                                     group_id,
                                                     match.group(1),
                                                 )
-                                    elif HasAllKeyWords(
+                                    elif HasKeyWords(
                                         message["raw_message"],
                                         [
-                                            f"[CQ:at,qq={dump_setting()["bot_id"]}] 捡漂流瓶"
+                                            "捡漂流瓶",
+                                            "捞漂流瓶",
                                         ],
                                     ):
                                         await pick_drifting_bottles_radom(
@@ -579,7 +581,8 @@ async def echo(websocket):
                                             )
                                         else:
                                             match = re.search(
-                                                r"throw\s*(\S+)", raw_message
+                                                r"throw\s*([\s\S]*)$",
+                                                message["raw_message"],
                                             )
                                             if match:
                                                 print(match.group(1))
@@ -589,10 +592,11 @@ async def echo(websocket):
                                                     group_id,
                                                     match.group(1),
                                                 )
-                                    elif HasAllKeyWords(
+                                    elif HasKeyWords(
                                         message["raw_message"],
                                         [
-                                            f"[CQ:at,qq={dump_setting()["bot_id"]}] 捡漂流瓶"
+                                            "捡漂流瓶",
+                                            "捞漂流瓶",
                                         ],
                                     ):
                                         await pick_drifting_bottles_radom(
@@ -604,7 +608,7 @@ async def echo(websocket):
                                             group_id,
                                             f"{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
                                         )
-                            elif "CQ:reply,id=" in message["raw_message"]:
+                            if "CQ:reply,id=" in message["raw_message"]:
                                 await is_comment_write(
                                     websocket, user_id, group_id, message["raw_message"]
                                 )
@@ -1885,11 +1889,14 @@ async def echo(websocket):
                     # 请求事件
                     print(message)
         elif "echo" in message:
-            match = re.search(r"bottles\s*(\S+)", message["echo"])
-            if match:
-                uuid = match.group(1)
+            matches = re.search(r"\|(\S+)\|(\d+)\|(\d+)", message["echo"])
+            if matches:
+                print(message)
+                uuid = matches.group(1)
+                user_id = matches.group(2)
                 message_id = message["data"]["message_id"]
-                group_id = message["data"]["group_id"]
+                group_id = matches.group(3)
+                print(f"{uuid}|{user_id}|{message_id}|{group_id}")
                 write_bottles_uuid_message_id(message_id, uuid, group_id)
             match message["echo"]:
                 case "update_group_member_list":
