@@ -58,7 +58,7 @@ async def cute2(websocket, group_id: int):
 
 # 有人夸乐可可爱
 async def cute3(websocket, group_id: int):
-    list = ["res/cute3.gif", "res/cute4.gif"]
+    list = ["res/cute3.gif", "res/cute4.gif", "res/cute5.gif"]
     path = random.choice(list)
     logging.info("有人夸乐可可爱。")
     with open(path, "rb") as image_file:

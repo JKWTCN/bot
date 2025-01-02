@@ -211,7 +211,7 @@ async def echo(websocket):
                                         f"恭喜群友{sender_name}获得乐可派发的水群积分！积分{now_point}->{now_point + 50}。\n总共:{all_num}次,今日:{today_num}次",
                                     )
                             # 0.5% 的概率复读
-                            if random.random() < 0.005:
+                            if random.random() < 0.05:
                                 payload = {
                                     "action": "send_group_msg",
                                     "params": {
