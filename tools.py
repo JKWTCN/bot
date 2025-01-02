@@ -220,13 +220,20 @@ def ShowSystemInfoTableByBase64():
 
     plt.rcParams["font.sans-serif"] = ["Unifont"]  # 设置字体
     plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
+    data = {"项目": [], "值": []}
     if platform.system() == "Linux":
         info = platform.freedesktop_os_release()
-        data = {"项目": [], "值": []}
         data["项目"].append("操作系统名称")
         data["值"].append(info["NAME"])
         data["项目"].append("操作系统版本")
         data["值"].append(info["VERSION"])
+    elif platform.system() == "Windows":
+        os_name = platform.system()
+        data["项目"].append("操作系统名称")
+        data["值"].append(f"{os_name}")
+        os_version = platform.version()
+        data["项目"].append("操作系统版本")
+        data["值"].append(f"{os_version}")
     # 获取计算机的处理器名称
     data["项目"].append("处理器名称")
     data["值"].append(platform.processor())
