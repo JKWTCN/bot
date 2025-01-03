@@ -29,6 +29,7 @@ from bot_database import (
 from chat import (
     AddAtPunishList,
     AtPunish,
+    BoringReply,
     ColdReplay,
     DelAtPunish,
     GetColdGroupStatus,
@@ -210,6 +211,12 @@ async def echo(websocket):
                                         group_id,
                                         f"恭喜群友{sender_name}获得乐可派发的水群积分！积分{now_point}->{now_point + 50}。\n总共:{all_num}次,今日:{today_num}次",
                                     )
+                            # 真的是有够无聊
+                            if user_id in load_setting()["boring"]:
+                                
+                                await BoringReply(
+                                    websocket, user_id, group_id, message_id
+                                )
                             # 0.5% 的概率复读
                             if random.random() < 0.05:
                                 payload = {

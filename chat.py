@@ -1,4 +1,6 @@
+import base64
 import json
+import logging
 import random
 import sqlite3
 from venv import logger
@@ -18,6 +20,28 @@ from tools import (
 )
 from Class.Group_member import get_user_name
 import time
+
+
+# 无聊的回复
+async def BoringReply(websocket, user_id: int, group_id: int, message_id: int):
+    path = "res/boring.gif"
+    with open(path, "rb") as image_file:
+        image_data = image_file.read()
+    image_base64 = base64.b64encode(image_data)
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "reply", "data": {"id": message_id}},
+                {
+                    "type": "image",
+                    "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
 
 
 # 设置冷群王次数

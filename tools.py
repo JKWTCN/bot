@@ -376,6 +376,12 @@ def is_today(t1, t2, tz_count=28800):
         return False
 
 
+def get_now_time_emoji():
+    month_emoji = "㋀㋁㋂㋃㋄㋅㋆㋇㋈㋉㋊㋋"
+    day_emoji = "㏠㏡㏢㏣㏤㏥㏦㏧㏨㏩㏪㏫㏬㏭㏮㏯㏰㏱㏲㏳㏴㏵㏶㏷㏸㏹㏺㏻㏼㏽㏾"
+    chock_emjoi = "㍙㍚㍛㍜㍝㍞㍟㍠㍡㍢㍣㍤㍥㍦㍧㍨㍩㍪㍫㍬㍭㍮㍯㍰㍘"
+
+
 def GetFileSize(filePath):
     import os
 
