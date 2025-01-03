@@ -161,6 +161,8 @@ async def update_group_member_list(websocket, group_id: int):
 # 检测该用户是否该群的管理员
 def IsAdmin(user_id: int, group_id: int):
     res, member_info = get_user_info(user_id, group_id)
+    if IsDeveloper(user_id):
+        return True
     if res:
         if member_info.role == "owner" or member_info.role == "admin":
             return True

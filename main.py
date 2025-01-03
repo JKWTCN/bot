@@ -213,7 +213,7 @@ async def echo(websocket):
                                     )
                             # 真的是有够无聊
                             if user_id in load_setting()["boring"]:
-                                
+
                                 await BoringReply(
                                     websocket, user_id, group_id, message_id
                                 )
@@ -313,6 +313,24 @@ async def echo(websocket):
                                             websocket, user_id, group_id, at_id, num
                                         )
                                         right_at = True
+                                    elif HasKeyWords(
+                                        raw_message, ["你是GAY", "你是gay"]
+                                    ) and IsAdmin(user_id, group_id):
+                                        setting = load_setting()
+                                        if at_id not in setting["boring"]:
+                                            setting["boring"].append(at_id)
+                                            dump_setting(setting)
+                                            setting = load_setting()
+                                        await say(websocket, user_id,group_id, f"{get_user_name(at_id, group_id)},你成为本群的GAY了喵。")
+                                    elif HasKeyWords(
+                                        raw_message, ["你不是GAY", "你不是gay"]
+                                    ) and IsAdmin(user_id, group_id):
+                                        setting = load_setting()
+                                        while at_id in setting["boring"]:
+                                            setting["boring"].remove(at_id)
+                                        dump_setting(setting)
+                                        setting = load_setting()
+                                        await say(websocket, user_id,group_id, f"{get_user_name(at_id, group_id)},你不再是本群的GAY了喵。")
                                     elif HasKeyWords(
                                         raw_message, ["打他", "打它", "打她"]
                                     ) and (user_id != at_id or IsDeveloper(user_id)):
@@ -437,6 +455,34 @@ async def echo(websocket):
                                             websocket, user_id, group_id, at_id, num
                                         )
                                         right_at = True
+                                    elif HasKeyWords(
+                                        raw_message, ["你是GAY", "你是gay"]
+                                    ) and IsAdmin(user_id, group_id):
+                                        setting = load_setting()
+                                        if at_id not in setting["boring"]:
+                                            setting["boring"].append(at_id)
+                                            dump_setting(setting)
+                                            setting = load_setting()
+                                        await say(
+                                            websocket,
+                                            user_id,
+                                            group_id,
+                                            f"{get_user_name(at_id, group_id)},你成为本群的GAY了喵。",
+                                        )
+                                    elif HasKeyWords(
+                                        raw_message, ["你不是GAY", "你不是gay"]
+                                    ) and IsAdmin(user_id, group_id):
+                                        setting = load_setting()
+                                        while at_id in setting["boring"]:
+                                            setting["boring"].remove(at_id)
+                                        dump_setting(setting)
+                                        setting = load_setting()
+                                        await say(
+                                            websocket,
+                                            user_id,
+                                            group_id,
+                                            f"{get_user_name(at_id, group_id)},你不再是本群的GAY了喵。",
+                                        )
                                 # 管理艾特乐可
                                 elif (
                                     IsAdmin(user_id, group_id) or IsDeveloper(user_id)
