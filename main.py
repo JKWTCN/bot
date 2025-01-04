@@ -321,7 +321,11 @@ async def echo(websocket):
                                             setting["boring"].append(at_id)
                                             dump_setting(setting)
                                             setting = load_setting()
-                                        await say(websocket, user_id,group_id, f"{get_user_name(at_id, group_id)},你成为本群的GAY了喵。")
+                                        await say(
+                                            websocket,
+                                            group_id,
+                                            f"{get_user_name(at_id, group_id)},你成为本群的GAY了喵。",
+                                        )
                                     elif HasKeyWords(
                                         raw_message, ["你不是GAY", "你不是gay"]
                                     ) and IsAdmin(user_id, group_id):
@@ -330,10 +334,18 @@ async def echo(websocket):
                                             setting["boring"].remove(at_id)
                                         dump_setting(setting)
                                         setting = load_setting()
-                                        await say(websocket, user_id,group_id, f"{get_user_name(at_id, group_id)},你不再是本群的GAY了喵。")
-                                    elif HasKeyWords(
-                                        raw_message, ["打他", "打它", "打她"]
-                                    ) and (user_id != at_id or IsDeveloper(user_id)):
+                                        await say(
+                                            websocket,
+                                            group_id,
+                                            f"{get_user_name(at_id, group_id)},你不再是本群的GAY了喵。",
+                                        )
+                                    elif (
+                                        HasKeyWords(
+                                            raw_message, ["打他", "打它", "打她"]
+                                        )
+                                        and (user_id != at_id or IsDeveloper(user_id))
+                                        and IsAdmin(user_id, group_id)
+                                    ):
                                         AddAtPunishList(
                                             at_id, group_id, setting["defense_times"]
                                         )
@@ -465,7 +477,6 @@ async def echo(websocket):
                                             setting = load_setting()
                                         await say(
                                             websocket,
-                                            user_id,
                                             group_id,
                                             f"{get_user_name(at_id, group_id)},你成为本群的GAY了喵。",
                                         )
@@ -479,7 +490,6 @@ async def echo(websocket):
                                         setting = load_setting()
                                         await say(
                                             websocket,
-                                            user_id,
                                             group_id,
                                             f"{get_user_name(at_id, group_id)},你不再是本群的GAY了喵。",
                                         )
