@@ -14,3 +14,4 @@ private.py
 bot.db-journal
 find_github.sh
 /Class/__pycache__
+bot.service
