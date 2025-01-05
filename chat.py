@@ -420,7 +420,7 @@ def ColdChat(group: dict) -> str:
 
 
 # chat内容转发给大模型
-async def chat(websocket, group_id: int, nick_name: str, text: str):
+async def chat(websocket, user_id: int, group_id: int, message_id: int, text: str):
     port = "11434"
     url = f"http://localhost:{port}/api/chat"
     model = "qwen2.5:0.5b"
@@ -455,14 +455,12 @@ async def chat(websocket, group_id: int, nick_name: str, text: str):
     except:
         logger.info("连接超时")
         re_text = "呜呜不太理解呢喵。"
-    payload = {
-        "action": "send_msg_async",
-        "params": {
-            "group_id": group_id,
-            "message": "{},{}".format(nick_name, re_text),
-        },
-    }
-    await websocket.send(json.dumps(payload))
+    ReplySay(
+        websocket,
+        group_id,
+        message_id,
+        "{},{}".format(get_user_name(user_id, group_id), re_text),
+    )
 
 
 # ollama run qwen2.5:0.5b

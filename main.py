@@ -1617,8 +1617,9 @@ async def echo(websocket):
                                             else:
                                                 await chat(
                                                     websocket,
+                                                    user_id,
                                                     group_id,
-                                                    sender_name,
+                                                    message_id,
                                                     message["message"][0]["data"][
                                                         "text"
                                                     ],
@@ -1633,8 +1634,9 @@ async def echo(websocket):
                                             )
                                             await chat(
                                                 websocket,
+                                                user_id,
                                                 group_id,
-                                                sender_name,
+                                                message_id,
                                                 raw_message,
                                             )
 
@@ -1664,8 +1666,9 @@ async def echo(websocket):
                                             )
                                             await chat(
                                                 websocket,
+                                                user_id,
                                                 group_id,
-                                                sender_name,
+                                                message_id,
                                                 raw_message,
                                             )
                         case "private":
