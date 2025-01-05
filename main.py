@@ -217,8 +217,8 @@ async def echo(websocket):
                                 await BoringReply(
                                     websocket, user_id, group_id, message_id
                                 )
-                            # 0.5% 的概率复读
-                            if random.random() < 0.05:
+                            # 1% 的概率复读
+                            if random.random() < 0.01:
                                 payload = {
                                     "action": "send_group_msg",
                                     "params": {
