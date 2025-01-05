@@ -455,7 +455,7 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
     except:
         logger.info("连接超时")
         re_text = "呜呜不太理解呢喵。"
-    ReplySay(
+    await ReplySay(
         websocket,
         group_id,
         message_id,
