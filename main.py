@@ -1198,17 +1198,10 @@ async def echo(websocket):
 
                                                 else :
                                                     nums = num
-                                                    if nums >= 20:
-                                                        for i in range(
-                                                            math.trunc(nums / 20.0)
-                                                        ):
-                                                            await send_meme_merge_forwarding(
-                                                                websocket, group_id, 20
-                                                            )
                                                     await send_meme_merge_forwarding(
                                                         websocket,
                                                         group_id,
-                                                        nums % 20,
+                                                        nums,
                                                     )
                                                     await say(
                                                         websocket,
