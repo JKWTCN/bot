@@ -1188,7 +1188,7 @@ async def echo(websocket):
                                                 import math
 
                                                 num = math.trunc(num)
-                                                if num > 100:
+                                                if num > 100 and not IsDeveloper(user_id):
                                                     # nums=100
                                                     await say(
                                                         websocket,
@@ -1196,7 +1196,7 @@ async def echo(websocket):
                                                         "最大100连喵！",
                                                     )
 
-                                                else:
+                                                else :
                                                     nums = num
                                                     if nums >= 20:
                                                         for i in range(
