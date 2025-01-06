@@ -3,7 +3,7 @@ import logging
 import random
 from random import choice
 import glob
-from tools import GetDirSizeByUnit, load_setting
+from tools import GetDirSizeByUnit, load_setting, say
 import json
 
 
@@ -98,33 +98,37 @@ async def send_meme_merge_forwarding(websocket, group_id: int, nums: int):
             "message": [],
         },
     }
-    all_file = find_all_file(load_setting()["meme_path"])
-    for i in range(nums):
-        dir = choice(all_file)
-        while (
-            not dir.endswith(".jpg")
-            and not dir.endswith(".png")
-            and not dir.endswith(".JPG")
-            and not dir.endswith(".JPG")
-            and not dir.endswith(".PNG")
-            and not dir.endswith(".JEPG")
-            and not dir.endswith(".jpeg")
-            and not dir.endswith(".gif")
-            and not dir.endswith(".GIF")
-        ):
+    try:
+        all_file = find_all_file(load_setting()["meme_path"])
+        for i in range(nums):
             dir = choice(all_file)
-        print(dir)
-        logging.info("乐可发送了图片:{}".format(dir))
-        with open(dir, "rb") as image_file:
-            image_data = image_file.read()
-        image_base64 = base64.b64encode(image_data)
-        payload["params"]["message"].append(
-            {
-                "type": "image",
-                "data": {"file": "base64://" + image_base64.decode("utf-8")},
-            }
-        )
-    await websocket.send(json.dumps(payload))
+            while (
+                not dir.endswith(".jpg")
+                and not dir.endswith(".png")
+                and not dir.endswith(".JPG")
+                and not dir.endswith(".JPG")
+                and not dir.endswith(".PNG")
+                and not dir.endswith(".JEPG")
+                and not dir.endswith(".jpeg")
+                and not dir.endswith(".gif")
+                and not dir.endswith(".GIF")
+            ):
+                dir = choice(all_file)
+            print(dir)
+            logging.info("乐可发送了图片:{}".format(dir))
+            with open(dir, "rb") as image_file:
+                image_data = image_file.read()
+            image_base64 = base64.b64encode(image_data)
+            payload["params"]["message"].append(
+                {
+                    "type": "image",
+                    "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                }
+            )
+        await websocket.send(json.dumps(payload))
+    except Exception as e:
+        logging.error(e)
+        await say(websocket, group_id, f"图片发送失败了喵。")
 
 
 async def send_random_meme(websocket, group_id: int):
