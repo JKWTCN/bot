@@ -93,6 +93,7 @@ async def ten_random_meme(websocket, group_id: int):
 async def send_meme_merge_forwarding(websocket, group_id: int, nums: int):
     try:
         all_file = find_all_file(load_setting()["meme_path"])
+        logging.info("读取目录完毕")
         while nums > 20:
             payload = {
                 "action": "send_msg_async",
