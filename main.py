@@ -42,6 +42,7 @@ from chat import (
     chat,
     GetWhoAtMe,
     AddWhoAtMe,
+    robot_reply,
     run_or_shot,
 )
 from drifting_bottles import (
@@ -213,8 +214,14 @@ async def echo(websocket):
                                     )
                             # 真的是有够无聊
                             if user_id in load_setting()["boring"]:
-
                                 await BoringReply(
+                                    websocket, user_id, group_id, message_id
+                                )
+                            # 如果有人欺负乐可
+                            if HasAllKeyWords(raw_message, ["乐可"]) and HasKeyWords(
+                                raw_message, ["sb", "SB", "傻逼"]
+                            ):
+                                await robot_reply(
                                     websocket, user_id, group_id, message_id
                                 )
                             # 1% 的概率复读
