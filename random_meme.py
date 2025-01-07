@@ -102,7 +102,7 @@ async def send_meme_merge_forwarding(websocket, group_id: int, nums: int):
                     "message": [],
                 },
             }
-            for i in range(nums):
+            for i in range(20):
                 dir = choice(all_file)
                 while (
                     not dir.endswith(".jpg")
@@ -129,8 +129,10 @@ async def send_meme_merge_forwarding(websocket, group_id: int, nums: int):
                     }
                 )
             await websocket.send(json.dumps(payload))
+            # 发送完毕
+            logging.info("20张发送完毕")
             nums = nums - 20
-        if nums > 0:
+        if nums > 0 and nums <= 20:
             payload = {
                 "action": "send_msg_async",
                 "params": {
