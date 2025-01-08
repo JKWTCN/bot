@@ -117,7 +117,7 @@ async def send_meme_merge_forwarding(websocket, group_id: int, nums: int):
                 ):
                     dir = choice(all_file)
                 print(dir)
-                logging.info("乐可发送了图片:{}".format(dir))
+                logging.info("剩余发送{}张，发送了图片:{}".format(nums - i - 1, dir))
                 with open(dir, "rb") as image_file:
                     image_data = image_file.read()
                 image_base64 = base64.b64encode(image_data)
@@ -155,7 +155,7 @@ async def send_meme_merge_forwarding(websocket, group_id: int, nums: int):
                 ):
                     dir = choice(all_file)
                 print(dir)
-                logging.info("乐可发送了图片:{}".format(dir))
+                logging.info("剩余发送{}张,发送了图片:{}".format(nums - i - 1, dir))
                 with open(dir, "rb") as image_file:
                     image_data = image_file.read()
                 image_base64 = base64.b64encode(image_data)
