@@ -219,7 +219,7 @@ async def echo(websocket):
                                 )
                             # 如果有人欺负乐可
                             if HasAllKeyWords(raw_message, ["乐可"]) and HasKeyWords(
-                                raw_message, ["sb", "SB", "傻逼"]
+                                raw_message, ["sb", "SB", "傻逼","透透","透"]
                             ):
                                 await robot_reply(
                                     websocket, user_id, group_id, message_id
