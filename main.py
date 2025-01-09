@@ -219,7 +219,8 @@ async def echo(websocket):
                                 )
                             # 如果有人欺负乐可
                             if HasAllKeyWords(raw_message, ["乐可"]) and HasKeyWords(
-                                raw_message, ["sb", "SB", "傻逼","透透","透"]
+                                raw_message,
+                                ["sb", "SB", "傻逼", "透透", "透", "打你", "艹"],
                             ):
                                 await robot_reply(
                                     websocket, user_id, group_id, message_id
@@ -1188,7 +1189,9 @@ async def echo(websocket):
                                                 import math
 
                                                 num = math.trunc(num)
-                                                if num > 100 and not IsDeveloper(user_id):
+                                                if num > 100 and not IsDeveloper(
+                                                    user_id
+                                                ):
                                                     # nums=100
                                                     await say(
                                                         websocket,
@@ -1196,7 +1199,7 @@ async def echo(websocket):
                                                         "最大100连喵！",
                                                     )
 
-                                                else :
+                                                else:
                                                     nums = num
                                                     await send_meme_merge_forwarding(
                                                         websocket,
