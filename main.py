@@ -2101,7 +2101,7 @@ async def echo(websocket):
 
 
 async def main():
-    async with websockets.serve(echo, "0.0.0.", 27431):
+    async with websockets.serve(echo, "0.0.0.0", 27431):
         await asyncio.get_running_loop().create_future()  # run forever
 
 
