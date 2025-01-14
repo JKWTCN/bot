@@ -1903,9 +1903,13 @@ async def echo(websocket):
                                 # 定期清理过期的大头菜
                                 ClearKohlrabi()
                                 for index, user in enumerate(setting["alarm_member"]):
-                                    if datetime.datetime.now().hour >= user[
-                                        "time_hour"
-                                    ] and not is_today(time.time(), user["time"]):
+                                    if (
+                                        datetime.datetime.now().hour
+                                        >= user["time_hour"]
+                                        and datetime.datetime.now().minute
+                                        >= user["time_minute"]
+                                        and not is_today(time.time(), user["time"])
+                                    ):
                                         if "res" in user:
                                             await SayAndAtImage(
                                                 websocket,
