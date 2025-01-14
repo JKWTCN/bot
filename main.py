@@ -1904,10 +1904,14 @@ async def echo(websocket):
                                 ClearKohlrabi()
                                 for index, user in enumerate(setting["alarm_member"]):
                                     if (
-                                        datetime.datetime.now().hour
-                                        >= user["time_hour"]
-                                        and datetime.datetime.now().minute
-                                        >= user["time_minute"]
+                                        (
+                                            datetime.datetime.now().hour
+                                            == user["time_hour"]
+                                            and datetime.datetime.now().minute
+                                            >= user["time_minute"]
+                                        )
+                                        and datetime.datetime.now().hour
+                                        > user["time_hour"]
                                         and not is_today(time.time(), user["time"])
                                     ):
                                         if "res" in user:
