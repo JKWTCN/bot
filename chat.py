@@ -447,8 +447,23 @@ def ColdChat(group: dict) -> str:
         return f"{nick_name},大家前面都聊的好好的,你一说话就冷群了喵。"
 
 
+# 多线程chat内容转发给大模型
+def chat_thread(websocket, user_id: int, group_id: int, message_id: int, text: str):
+    import threading
+
+    try:
+        t = threading.Thread(
+            target=chat, args=(websocket, user_id, group_id, message_id, text, 120)
+        )
+        t.start()
+    except:
+        logger.info("多线程创建失败")
+
+
 # chat内容转发给大模型
-async def chat(websocket, user_id: int, group_id: int, message_id: int, text: str):
+async def chat(
+    websocket, user_id: int, group_id: int, message_id: int, text: str, time_out=30
+):
     port = "11434"
     url = f"http://localhost:{port}/api/chat"
     model = "qwen2.5:0.5b"
@@ -471,7 +486,7 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
         ],
     }
     try:
-        response = requests.post(url, json=data, headers=headers, timeout=30)
+        response = requests.post(url, json=data, headers=headers, timeout=time_out)
         res = response.json()
         logger.info(
             "(AI)乐可在{}({})说:{}".format(

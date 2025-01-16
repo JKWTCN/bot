@@ -42,6 +42,7 @@ from chat import (
     chat,
     GetWhoAtMe,
     AddWhoAtMe,
+    chat_thread,
     robot_reply,
     run_or_shot,
 )
@@ -1618,7 +1619,7 @@ async def echo(websocket):
                                             ) and not HasKeyWords(raw_message, ["可乐"]):
                                                 await cute3(websocket, group_id)
                                             else:
-                                                await chat(
+                                                chat_thread(
                                                     websocket,
                                                     user_id,
                                                     group_id,
@@ -1635,7 +1636,7 @@ async def echo(websocket):
                                             sender_name = get_user_name(
                                                 user_id, group_id
                                             )
-                                            await chat(
+                                            chat_thread(
                                                 websocket,
                                                 user_id,
                                                 group_id,
@@ -1667,7 +1668,7 @@ async def echo(websocket):
                                             sender_name = get_user_name(
                                                 user_id, group_id
                                             )
-                                            await chat(
+                                            chat_thread(
                                                 websocket,
                                                 user_id,
                                                 group_id,
