@@ -2112,6 +2112,10 @@ LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
 now = GetLogTime()
 today = datetime.datetime.today()
+if not os.path.exists(f"log/{today.year}"):
+    os.makedirs(f"log/{today.year}")
+if not os.path.exists(f"log/{today.year}/{today.month}"):
+    os.makedirs(f"log/{today.year}/{today.month}")
 logging.basicConfig(
     filename=f"log/{today.year}/{today.month}/{now}.log",
     level=logging.INFO,
