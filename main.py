@@ -1904,16 +1904,15 @@ async def echo(websocket):
                                 ClearKohlrabi()
                                 for index, user in enumerate(setting["alarm_member"]):
                                     if (
-                                       ((
+                                        (
                                             datetime.datetime.now().hour
                                             == user["time_hour"]
                                             and datetime.datetime.now().minute
                                             >= user["time_minute"]
                                         )
                                         or datetime.datetime.now().hour
-                                        > user["time_hour"])
-                                        and not is_today(time.time(), user["time"])
-                                    ):
+                                        > user["time_hour"]
+                                    ) and not is_today(time.time(), user["time"]):
                                         if "res" in user:
                                             await SayAndAtImage(
                                                 websocket,
@@ -2112,8 +2111,9 @@ async def main():
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
 now = GetLogTime()
+today = datetime.datetime.today()
 logging.basicConfig(
-    filename=f"log/{now}.log",
+    filename=f"log/{today.year}/{today.month}/{now}.log",
     level=logging.INFO,
     format=LOG_FORMAT,
     datefmt=DATE_FORMAT,
