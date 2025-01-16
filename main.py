@@ -1619,7 +1619,7 @@ async def echo(websocket):
                                             ) and not HasKeyWords(raw_message, ["可乐"]):
                                                 await cute3(websocket, group_id)
                                             else:
-                                                chat_thread(
+                                                await chat(
                                                     websocket,
                                                     user_id,
                                                     group_id,
@@ -1636,7 +1636,7 @@ async def echo(websocket):
                                             sender_name = get_user_name(
                                                 user_id, group_id
                                             )
-                                            chat_thread(
+                                            await chat(
                                                 websocket,
                                                 user_id,
                                                 group_id,
@@ -1668,7 +1668,7 @@ async def echo(websocket):
                                             sender_name = get_user_name(
                                                 user_id, group_id
                                             )
-                                            chat_thread(
+                                            await chat(
                                                 websocket,
                                                 user_id,
                                                 group_id,
