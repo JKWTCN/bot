@@ -71,7 +71,7 @@ from easter_egg import (
     sex_img,
 )
 from rankings import ranking_point_payload
-from private import cxgl, WhoAskPants
+from private import cxgl, WhoAskPants, get_cx_str
 from group_operate import (
     poor_point,
     get_group_list,
@@ -860,17 +860,20 @@ async def echo(websocket):
                                                             sender_name
                                                         ),
                                                     )
-                                                    await ban_new(
-                                                        websocket,
-                                                        user_id,
-                                                        group_id,
-                                                        0,
-                                                    )
+                                                    # await ban_new(
+                                                    #     websocket,
+                                                    #     user_id,
+                                                    #     group_id,
+                                                    #     0,
+                                                    # )
                                                 else:
-                                                    await cxgl(
+                                                    await ReplySay(
                                                         websocket,
                                                         group_id,
-                                                        user_id,
+                                                        message["message_id"],
+                                                        "{},每月25号是本群喵喵日,你因为说话不带喵被艾特惩罚3次了喵。".format(
+                                                            get_cx_str(user_id)
+                                                        ),
                                                     )
                                                     AddAtPunishList(
                                                         user_id, group_id, 3
