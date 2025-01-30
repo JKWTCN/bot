@@ -289,8 +289,8 @@ def ShowStatisticsTableByBase64(data, name: str):
     import pandas as pd
     import base64
 
-    # plt.rcParams["font.sans-serif"] = ["Unifont"]  # 设置字体
-    plt.rcParams["font.sans-serif"] = ["SimHei"]  # 设置字体
+    plt.rcParams["font.sans-serif"] = ["Unifont"]  # 设置字体
+    # plt.rcParams["font.sans-serif"] = ["SimHei"]  # 设置字体
     plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
     table = pd.DataFrame(data)
     fig, ax = plt.subplots()
