@@ -101,7 +101,7 @@ async def GetNowChatRecord(websocket, group_id: int):
         table_list["排名"].append(i + 1)
         table_list["QQ"].append(data[i][0])
         table_list["昵称"].append(name)
-        table_list["次数"].append(data[i][1])
+        table_list["生涯次数"].append(data[i][1])
     payload["params"]["message"].append(
         {
             "type": "image",
