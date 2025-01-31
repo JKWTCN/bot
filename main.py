@@ -1608,6 +1608,30 @@ async def echo(websocket):
                                                 await AnswerBook(
                                                     websocket, user_id, group_id
                                                 )
+                                            elif HasKeyWords(
+                                                raw_message,
+                                                ["throw", "THROW", "丢漂流瓶"],
+                                            ):
+                                                if HasKeyWords(
+                                                    message["raw_message"],
+                                                    ["[CQ:image"],
+                                                ):
+                                                    await say(
+                                                        f"{get_user_name(user_id, group_id)},暂时不支持图片喵。"
+                                                    )
+                                                else:
+                                                    match = re.search(
+                                                        r"throw\s*([\s\S]*)$",
+                                                        message["raw_message"],
+                                                    )
+                                                    if match:
+                                                        print(match.group(1))
+                                                        await throw_drifting_bottles(
+                                                            websocket,
+                                                            user_id,
+                                                            group_id,
+                                                            match.group(1),
+                                                        )
                                             elif (
                                                 "status"
                                                 in message["message"][0]["data"]["text"]
