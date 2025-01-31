@@ -1576,7 +1576,7 @@ async def echo(websocket):
                                                 in message["message"][0]["data"]["text"]
                                             ):
                                                 text = re.findall(
-                                                    r"喜报.*?([\u4e00-\u9fa5]+).*?",
+                                                    r"喜报\s*([\s\S]*)$",
                                                     message["message"][0]["data"][
                                                         "text"
                                                     ],
@@ -1591,7 +1591,7 @@ async def echo(websocket):
                                                 in message["message"][0]["data"]["text"]
                                             ):
                                                 text = re.findall(
-                                                    r"悲报.*?([\u4e00-\u9fa5]+).*?",
+                                                    r"悲报\s*([\s\S]*)$",
                                                     message["message"][0]["data"][
                                                         "text"
                                                     ],
