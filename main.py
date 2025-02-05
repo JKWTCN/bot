@@ -32,6 +32,7 @@ from chat import (
     BoringReply,
     ColdReplay,
     DelAtPunish,
+    FlyReply,
     GetColdGroupStatus,
     GetGroupDecreaseMessageStatus,
     GiveGift,
@@ -218,6 +219,8 @@ async def echo(websocket):
                                 await BoringReply(
                                     websocket, user_id, group_id, message_id
                                 )
+                            if user_id in load_setting()["fly"]:
+                                await FlyReply(websocket, user_id, group_id, message_id)
                             # 如果有人欺负乐可
                             if HasAllKeyWords(raw_message, ["乐可"]) and HasKeyWords(
                                 raw_message,
@@ -347,6 +350,32 @@ async def echo(websocket):
                                             websocket,
                                             group_id,
                                             f"{get_user_name(at_id, group_id)},你不再是本群的GAY了喵。",
+                                        )
+                                    elif HasKeyWords(
+                                        raw_message, ["不要装了"]
+                                    ) and IsAdmin(user_id, group_id):
+                                        setting = load_setting()
+                                        if at_id not in setting["fly"]:
+                                            setting["fly"].append(at_id)
+                                            dump_setting(setting)
+                                            setting = load_setting()
+                                        await say(
+                                            websocket,
+                                            group_id,
+                                            f"{get_user_name(at_id, group_id)},不要再装了喵。",
+                                        )
+                                    elif HasKeyWords(
+                                        raw_message, ["可以装了"]
+                                    ) and IsAdmin(user_id, group_id):
+                                        setting = load_setting()
+                                        while at_id in setting["fly"]:
+                                            setting["fly"].remove(at_id)
+                                        dump_setting(setting)
+                                        setting = load_setting()
+                                        await say(
+                                            websocket,
+                                            group_id,
+                                            f"{get_user_name(at_id, group_id)},可以开始装了喵。",
                                         )
                                     elif (
                                         HasKeyWords(
