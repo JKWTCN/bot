@@ -352,7 +352,10 @@ async def echo(websocket):
                                             f"{get_user_name(at_id, group_id)},你不再是本群的GAY了喵。",
                                         )
                                     elif HasKeyWords(
-                                        raw_message, ["不要装了"]
+                                        raw_message,
+                                        [
+                                            "不要装",
+                                        ],
                                     ) and IsAdmin(user_id, group_id):
                                         setting = load_setting()
                                         if at_id not in setting["fly"]:
@@ -365,7 +368,10 @@ async def echo(websocket):
                                             f"{get_user_name(at_id, group_id)},不要再装了喵。",
                                         )
                                     elif HasKeyWords(
-                                        raw_message, ["可以装了"]
+                                        raw_message,
+                                        [
+                                            "可以装",
+                                        ],
                                     ) and IsAdmin(user_id, group_id):
                                         setting = load_setting()
                                         while at_id in setting["fly"]:
