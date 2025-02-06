@@ -478,36 +478,37 @@ async def echo(websocket):
                                             sender_name = get_user_name(
                                                 user_id, group_id
                                             )
-                                            if now_num >= 3:
-                                                SayAndAt(
-                                                    websocket,
-                                                    user_id,
-                                                    group_id,
-                                                    f"{sender_name},不要随便艾特☁️喵,引用记得删除艾特,管理员惩罚{setting["defense_times"]*now_num}次喵。",
-                                                )
-                                                # if now_num <= 20:
-                                                # SayAndAt(
-                                                #     websocket,
-                                                #     user_id,
-                                                #     group_id,
-                                                #     f"{sender_name},不要随便艾特☁️喵,引用记得删除艾特,管理员惩罚{setting["defense_times"]*now_num}次喵。",
-                                                # )
-                                                # else:
-                                                #     SayAndAt(
-                                                #         websocket,
-                                                #         user_id,
-                                                #         group_id,
-                                                #         f"{sender_name},你是个巨婴嘛?引用记得删除艾特,现在已经是第{now_num}次了！！！管理员惩罚{setting["defense_times"]}次。",
-                                                #     )
-                                                AddAtPunishList(
-                                                    user_id, group_id, 100 * now_num
-                                                )
-                                            else:
-                                                await say(
-                                                    websocket,
-                                                    group_id,
-                                                    f"{sender_name},不要随便艾特☁️喵，引用记得删除艾特,你被警告了喵,事不过三,你现在是第{now_num}次,超过后会施加{setting["defense_times"]}*总艾特次数的艾特惩罚。",
-                                                )
+                                            # if now_num >= 3:
+                                            #     await SayAndAt(
+                                            #         websocket,
+                                            #         user_id,
+                                            #         group_id,
+                                            #         f"{sender_name},不要随便艾特☁️喵,引用记得删除艾特,管理员惩罚{setting["defense_times"]*now_num}次喵。",
+                                            #     )
+                                            #     # if now_num <= 20:
+                                            #     # SayAndAt(
+                                            #     #     websocket,
+                                            #     #     user_id,
+                                            #     #     group_id,
+                                            #     #     f"{sender_name},不要随便艾特☁️喵,引用记得删除艾特,管理员惩罚{setting["defense_times"]*now_num}次喵。",
+                                            #     # )
+                                            #     # else:
+                                            #     #     SayAndAt(
+                                            #     #         websocket,
+                                            #     #         user_id,
+                                            #     #         group_id,
+                                            #     #         f"{sender_name},你是个巨婴嘛?引用记得删除艾特,现在已经是第{now_num}次了！！！管理员惩罚{setting["defense_times"]}次。",
+                                            #     #     )
+                                            #     AddAtPunishList(
+                                            #         user_id, group_id, 100 * now_num
+                                            #     )
+                                            # else:
+                                            #     await say(
+                                            #         websocket,
+                                            #         group_id,
+                                            #         f"{sender_name},不要随便艾特☁️喵，引用记得删除艾特,你被警告了喵,事不过三,你现在是第{now_num}次,超过后会施加{setting["defense_times"]}*总艾特次数的艾特惩罚。",
+                                            #     )
+                                            pass
                                 # 乐可不需要是管理的时候，艾特其他成员
                                 elif at_id != setting["bot_id"]:
                                     if HasKeyWords(raw_message, ["送你", "V你", "v你"]):
