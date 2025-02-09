@@ -436,7 +436,7 @@ def ColdChat(group: dict) -> str:
     nick_name = get_user_name(user_id, group_id)
     port = "11434"
     url = f"http://localhost:{port}/api/chat"
-    model = "qwen2.5:0.5b"
+    model = load_setting()["model"]
     headers = {"Content-Type": "application/json"}
     data = {
         "model": model,  # 模型选择
@@ -483,12 +483,10 @@ def chat_thread(websocket, user_id: int, group_id: int, message_id: int, text: s
 
 
 # chat内容转发给大模型
-async def chat(
-    websocket, user_id: int, group_id: int, message_id: int, text: str, time_out=30
-):
+async def chat(websocket, user_id: int, group_id: int, message_id: int, text: str):
     port = "11434"
     url = f"http://localhost:{port}/api/chat"
-    model = "qwen2.5:0.5b"
+    model = load_setting()["model"]
     headers = {"Content-Type": "application/json"}
     data = {
         "model": model,  # 模型选择
@@ -508,7 +506,7 @@ async def chat(
         ],
     }
     try:
-        response = requests.post(url, json=data, headers=headers, timeout=time_out)
+        response = requests.post(url, json=data, headers=headers)
         res = response.json()
         logger.info(
             "(AI)乐可在{}({})说:{}".format(
@@ -528,4 +526,17 @@ async def chat(
     )
 
 
+# 切换模型
+def switch_model():
+    setting = load_setting()
+    model = setting["model"]
+    if model == "qwen2.5:0.5b":
+        model = "deepseek-r1:1.5b"
+    else:
+        model = "qwen2.5:0.5b"
+    dump_setting(setting)
+    return model
+
+
 # ollama run qwen2.5:0.5b
+# ollama run deepseek-r1:1.5b

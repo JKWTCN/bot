@@ -46,6 +46,7 @@ from chat import (
     chat_thread,
     robot_reply,
     run_or_shot,
+    switch_model,
 )
 from drifting_bottles import (
     is_comment_write,
@@ -1540,6 +1541,13 @@ async def echo(websocket):
                                             ):
                                                 await daily_paper(
                                                     websocket, user_id, group_id
+                                                )
+                                            elif HasKeyWords(raw_message, ["切换模型"]):
+                                                now_model = switch_model()
+                                                await say(
+                                                    websocket,
+                                                    group_id,
+                                                    f"切换模型成功，当前模型为{now_model}",
                                                 )
 
                                             elif (
