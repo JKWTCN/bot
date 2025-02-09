@@ -10,9 +10,7 @@ from Class.Group_member import get_user_name
 
 
 # 丢漂流瓶
-async def throw_drifting_bottles(
-    websocket, user_id: int, group_id: int,  text: str
-):
+async def throw_drifting_bottles(websocket, user_id: int, group_id: int, text: str):
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
     uid = str(uuid.uuid4())
@@ -34,12 +32,12 @@ async def throw_drifting_bottles(
         )
         conn.commit()
     conn.close()
-    await say_and_echo(
+    await say(
         websocket,
         group_id,
         f"{get_user_name(user_id,group_id)},成功丢出了一个漂流瓶,标识ID为:{uid}",
-        f"bottles|{uid}|{user_id}|{group_id}",
     )
+    return uid
 
 
 # 随机捞漂流瓶

@@ -662,11 +662,14 @@ async def echo(websocket):
                                             )
                                             if match:
                                                 print(match.group(1))
-                                                await throw_drifting_bottles(
+                                                uid = await throw_drifting_bottles(
                                                     websocket,
                                                     user_id,
                                                     group_id,
                                                     match.group(1),
+                                                )
+                                                write_bottles_uuid_message_id(
+                                                    message_id, uid, group_id
                                                 )
                                     elif HasKeyWords(
                                         message["raw_message"],
@@ -702,11 +705,14 @@ async def echo(websocket):
                                             )
                                             if match:
                                                 print(match.group(1))
-                                                await throw_drifting_bottles(
+                                                uid = await throw_drifting_bottles(
                                                     websocket,
                                                     user_id,
                                                     group_id,
                                                     match.group(1),
+                                                )
+                                                write_bottles_uuid_message_id(
+                                                    message_id, uid, group_id
                                                 )
                                     elif HasKeyWords(
                                         message["raw_message"],
@@ -1691,11 +1697,14 @@ async def echo(websocket):
                                                     )
                                                     if match:
                                                         print(match.group(1))
-                                                        await throw_drifting_bottles(
+                                                        uid = await throw_drifting_bottles(
                                                             websocket,
                                                             user_id,
                                                             group_id,
                                                             match.group(1),
+                                                        )
+                                                        write_bottles_uuid_message_id(
+                                                            message_id, uid, group_id
                                                         )
                                             elif (
                                                 "status"
