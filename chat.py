@@ -556,6 +556,7 @@ def switch_model():
         model = "deepseek-r1:1.5b"
     else:
         model = "qwen2.5:0.5b"
+    setting["model"] = model
     dump_setting(setting)
     return model
 
@@ -568,6 +569,7 @@ def display_think():
         think = False
     else:
         think = False
+    setting["think_display"] = think
     dump_setting(setting)
     return think
 
