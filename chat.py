@@ -457,7 +457,7 @@ def ColdChat(group: dict) -> str:
         ],
     }
     try:
-        response = requests.post(url, json=data, headers=headers, timeout=60)
+        response = requests.post(url, json=data, headers=headers, timeout=300)
         res = response.json()
         logger.info(
             "(AI)乐可在{}({})说:{}".format(
@@ -518,7 +518,7 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
         ],
     }
     try:
-        response = requests.post(url, json=data, headers=headers)
+        response = requests.post(url, json=data, headers=headers, timeout=300)
         res = response.json()
         logger.info(
             "(AI)乐可在{}({})说:{}".format(
