@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 import random
+import re
 import sqlite3
 from venv import logger
 import requests
@@ -463,7 +464,18 @@ def ColdChat(group: dict) -> str:
                 GetGroupName(group_id), group_id, res["message"]["content"]
             )
         )
-        return res["message"]["content"]
+        if model != "deepseek-r1:1.5b":
+            re_text = res["message"]["content"]
+        else:
+            match = re.findall(
+                r"<think>([\s\S]*)</think>([\s\S]*)",
+                res["message"]["content"],
+            )
+            if load_setting()["think_display"]:
+                re_text = f"乐可的思考过程喵：{match[0][0]}经过深思熟虑喵，乐可决定回复你：{match[0][1]}"
+            else:
+                re_text = match[0][1]
+        return re_text
     except:
         logger.info("连接超时")
         return f"{nick_name},大家前面都聊的好好的,你一说话就冷群了喵。"
@@ -513,7 +525,17 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
                 GetGroupName(group_id), group_id, res["message"]["content"]
             )
         )
-        re_text = res["message"]["content"]
+        if model != "deepseek-r1:1.5b":
+            re_text = res["message"]["content"]
+        else:
+            match = re.findall(
+                r"<think>([\s\S]*)</think>([\s\S]*)",
+                res["message"]["content"],
+            )
+            if load_setting()["think_display"]:
+                re_text = f"乐可的思考过程喵：{match[0][0]}经过深思熟虑喵，乐可决定回复你：{match[0][1]}"
+            else:
+                re_text = match[0][1]
 
     except:
         logger.info("连接超时")
@@ -536,6 +558,18 @@ def switch_model():
         model = "qwen2.5:0.5b"
     dump_setting(setting)
     return model
+
+
+# 显示思考过程
+def display_think():
+    setting = load_setting()
+    think = setting["think_display"]
+    if think == True:
+        think = False
+    else:
+        think = False
+    dump_setting(setting)
+    return think
 
 
 # ollama run qwen2.5:0.5b

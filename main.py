@@ -44,6 +44,7 @@ from chat import (
     GetWhoAtMe,
     AddWhoAtMe,
     chat_thread,
+    display_think,
     robot_reply,
     run_or_shot,
     switch_model,
@@ -1544,10 +1545,21 @@ async def echo(websocket):
                                                 )
                                             elif HasKeyWords(raw_message, ["切换模型"]):
                                                 now_model = switch_model()
+                                                setting = load_setting()
                                                 await say(
                                                     websocket,
                                                     group_id,
-                                                    f"切换模型成功，当前模型为{now_model}",
+                                                    f"切换模型成功，当前模型为{now_model}喵。",
+                                                )
+                                            elif HasKeyWords(
+                                                raw_message, ["切换思考显示"]
+                                            ):
+                                                now_think_display = display_think()
+                                                setting = load_setting()
+                                                await say(
+                                                    websocket,
+                                                    group_id,
+                                                    f"切换思考显示，当前思考显示为{now_think_display}喵。",
                                                 )
 
                                             elif (
