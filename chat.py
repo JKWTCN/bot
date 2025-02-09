@@ -568,7 +568,7 @@ def display_think():
     if think == True:
         think = False
     else:
-        think = False
+        think = True
     setting["think_display"] = think
     dump_setting(setting)
     return think
