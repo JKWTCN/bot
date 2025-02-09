@@ -32,10 +32,15 @@ async def throw_drifting_bottles(websocket, user_id: int, group_id: int, text: s
         )
         conn.commit()
     conn.close()
+    # await say(
+    #     websocket,
+    #     group_id,
+    #     f"{get_user_name(user_id,group_id)},成功丢出了一个漂流瓶,标识ID为:{uid}",
+    # )
     await say(
         websocket,
         group_id,
-        f"{get_user_name(user_id,group_id)},成功丢出了一个漂流瓶,标识ID为:{uid}",
+        f"{get_user_name(user_id,group_id)},成功丢出了一个漂流瓶,等待有缘人捞起喵。",
     )
     return uid
 
@@ -67,7 +72,8 @@ async def pick_drifting_bottles_radom(websocket, user_id: int, group_id: int):
         )
         return
     else:
-        text = f"捞到了一个{get_user_name(row[1],row[2])}于{timestamp_to_date(row[5])}在{GetGroupName(row[2])}丢的漂流瓶,标识ID为:{row[0]}。\n{row[3]}"
+        # text = f"捞到了一个{get_user_name(row[1],row[2])}于{timestamp_to_date(row[5])}在{GetGroupName(row[2])}丢的漂流瓶,标识ID为:{row[0]}。\n{row[3]}"
+        text = f"捞到了一个{get_user_name(row[1],row[2])}于{timestamp_to_date(row[5])}在{GetGroupName(row[2])}丢的漂流瓶。\n{row[3]}"
         # user_id, group_id, text, time
         all_comment = load_comment(row[0])
         for comment in all_comment:
@@ -208,6 +214,12 @@ async def is_comment_write(websocket, user_id: int, group_id: int, raw_message: 
                         message_id,
                         f"评论ID为{uuid}的漂流瓶成功喵!",
                     )
+                    # await ReplySay(
+                    #     websocket,
+                    #     group_id,
+                    #     message_id,
+                    #     f"评论ID为{uuid}的漂流瓶成功喵!",
+                    # )
                     return True
                 else:
                     return False
