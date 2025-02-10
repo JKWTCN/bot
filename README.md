@@ -103,6 +103,7 @@ pip install -r requirements.txt
        "think_display": false
    }
    ```
+
 2. 初始化数据库:
 
    ```
@@ -123,33 +124,34 @@ sh start.sh
 win_start.bat
 ```
 
-## 目录结构bot/
+## 目录结构
 
-├── main.py                # 主程序入口
-├── bot_database.py        # 数据库操作
-├── chat.py               # 聊天功能模块
-├── chat_record.py        # 聊天记录
-├── drifting_bottles.py   # 漂流瓶功能
-├── e_mail.py            # 邮件功能
-├── easter_egg.py        # 彩蛋功能
-├── group_operate.py     # 群操作功能
-├── kohlrabi.py          # 大头菜交易功能
-├── level.py            # 等级系统
-├── luck_dog.py         # 抽奖功能
-├── private.py          # 私聊功能
-├── random_meme.py      # 随机表情包
-├── rankings.py         # 排行榜功能
-│
-├── Class/              # 类定义目录
-│   ├── __init__.py
-│   ├── Group_member.py # 群成员类
-│   └── Ranking.py      # 排行榜类
-│
-├── res/               # 资源目录
-├── meme/          # 表情包资源
-├── vcode/         # 验证码资源
-│
-├── log/              # 日志目录
-│
-├── setting.json      # 配置文件
-└── requirements.txt  # 项目依赖
+```
+bot/├── main.py                # 主程序入口
+    ├── bot_database.py        # 数据库操作
+    ├── chat.py               # 聊天功能模块
+    ├── chat_record.py        # 聊天记录
+    ├── drifting_bottles.py   # 漂流瓶功能
+    ├── e_mail.py            # 邮件功能
+    ├── easter_egg.py        # 彩蛋功能
+    ├── group_operate.py     # 群操作功能
+    ├── kohlrabi.py          # 大头菜交易功能
+    ├── level.py            # 等级系统
+    ├── luck_dog.py         # 抽奖功能
+    ├── private.py          # 私聊功能
+    ├── random_meme.py      # 随机表情包
+    ├── rankings.py         # 排行榜功能
+    │
+    ├── Class/              # 类定义目录
+    │   ├── __init__.py
+    │   ├── Group_member.py # 群成员类
+    │   └── Ranking.py      # 排行榜类
+    │
+    ├── res/               # 资源目录
+    ├── vcode/         # 验证码资源
+    │
+    ├── log/              # 日志目录
+    │
+    ├── setting.json      # 配置文件
+    └── requirements.txt  # 项目依赖
+```
