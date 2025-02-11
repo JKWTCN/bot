@@ -548,6 +548,49 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
     )
 
 
+# chat内容转发给大模型
+async def ReturnChatText(text: str):
+    port = "11434"
+    url = f"http://localhost:{port}/api/chat"
+    model = load_setting()["model"]
+    headers = {"Content-Type": "application/json"}
+    data = {
+        "model": model,  # 模型选择
+        "options": {
+            "temperature": 1.0  # 为0表示不让模型自由发挥，输出结果相对较固定，>0的话，输出的结果会比较放飞自我
+        },
+        "stream": False,  # 流式输出
+        "messages": [
+            {
+                "role": "system",
+                "content": "你叫乐可，现在你将模仿一只傲娇的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上“喵”",
+            },
+            {
+                "role": "User",
+                "content": text,
+            },
+        ],
+    }
+    try:
+        response = requests.post(url, json=data, headers=headers, timeout=300)
+        res = response.json()
+        if model != "deepseek-r1:1.5b":
+            re_text = res["message"]["content"]
+        else:
+            match = re.findall(
+                r"<think>([\s\S]*)</think>([\s\S]*)",
+                res["message"]["content"],
+            )
+            if load_setting()["think_display"]:
+                re_text = f"乐可的思考过程喵：{match[0][0]}经过深思熟虑喵，乐可决定回复你：{match[0][1]}"
+            else:
+                re_text = match[0][1]
+    except:
+        logger.info("连接超时")
+        re_text = "呜呜不太理解呢喵。"
+    return re_text
+
+
 # 切换模型
 def switch_model():
     setting = load_setting()

@@ -37,6 +37,7 @@ from chat import (
     GetGroupDecreaseMessageStatus,
     GiveGift,
     Joke,
+    ReturnChatText,
     SwitchColdGroupChat,
     SwitchGroupDecreaseMessage,
     UpdateColdGroup,
@@ -1792,25 +1793,51 @@ async def echo(websocket):
                                     message["raw_message"],
                                 )
                             )
-                            if message["user_id"] in setting["developers_list"]:
-                                if HasKeyWords(message["raw_message"], ["更新列表"]):
-                                    await get_group_list(websocket)
-                                    # for group in setting["group_list"]:
-                                    #     await websocket.send(json.dumps(group))
-                                    #     setting = load_setting()
-                                    #     setting["last_update_time"] = time.time()
-                                    #     dump_setting(setting)
-                                if message["raw_message"].startswith("积分"):
-                                    result = re.search(r"\d+", message["raw_message"])
-                                    # print(result.group())
-                                    await recharge_privte(
-                                        websocket,
-                                        message["user_id"],
-                                        0,
-                                        int(result.group()),
-                                    )
-                                if HasKeyWords(message["raw_message"], ["发送日志"]):
-                                    send_log_email()
+                            if (
+                                HasKeyWords(message["raw_message"], ["更新列表"])
+                                and message["user_id"] in setting["developers_list"]
+                            ):
+                                await get_group_list(websocket)
+                                await SayPrivte(
+                                    websocket, message["user_id"], "更新列表成功喵！"
+                                )
+                            elif (
+                                message["raw_message"].startswith("积分")
+                                and message["user_id"] in setting["developers_list"]
+                            ):
+                                result = re.search(r"\d+", message["raw_message"])
+                                # print(result.group())
+                                await recharge_privte(
+                                    websocket,
+                                    message["user_id"],
+                                    0,
+                                    int(result.group()),
+                                )
+                                await SayPrivte(
+                                    websocket, message["user_id"], "更新积分成功喵！"
+                                )
+                            elif (
+                                HasKeyWords(message["raw_message"], ["发送日志"])
+                                and message["user_id"] in setting["developers_list"]
+                            ):
+                                send_log_email()
+                                await SayPrivte(
+                                    websocket, message["user_id"], "发送日志成功喵！"
+                                )
+                            else:
+                                raw_message = message["raw_message"]
+                                if HasKeyWords(
+                                    raw_message,
+                                    [
+                                        "[CQ:image",
+                                    ],
+                                ):
+                                    raw_message = ""
+                                SayPrivte(
+                                    websocket,
+                                    message["user_id"],
+                                    ReturnChatText(raw_message),
+                                )
 
                 case "notice":
                     if "sub_type" in message:
