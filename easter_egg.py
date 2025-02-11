@@ -144,7 +144,7 @@ async def sex_img(websocket, user_id: int, group_id: int):
 
 # kfcv我50彩蛋
 async def kfc_v_me_50(websocket, group_id: int):
-    r = requests.get("https://api.shadiao.pro/kfc")
+    r = requests.get("https://api.shadiao.pro/kfc", timeout=60)
     data = json.loads(r.text)
     payload = {
         "action": "send_msg_async",

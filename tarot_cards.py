@@ -5,7 +5,7 @@ import json
 
 # 看世界
 async def photo_new(websocket, user_id: int, group_id: int):
-    r = requests.get("https://api.tangdouz.com/60.php")
+    r = requests.get("https://api.tangdouz.com/60.php", timeout=60)
     payload = {
         "action": "send_msg_async",
         "params": {
@@ -21,7 +21,7 @@ async def photo_new(websocket, user_id: int, group_id: int):
 
 # 日报
 async def daily_paper(websocket, user_id: int, group_id: int):
-    r = requests.get("https://api.tangdouz.com/a/60/")
+    r = requests.get("https://api.tangdouz.com/a/60/", timeout=60)
     payload = {
         "action": "send_msg_async",
         "params": {
@@ -90,14 +90,14 @@ async def SoCute(websocket, user_id: int, group_id: int):
 
 # 塔罗牌
 def get_tarot_cards():
-    r = requests.get("https://api.tangdouz.com/tarot.php")
+    r = requests.get("https://api.tangdouz.com/tarot.php", timeout=60)
     # print(r.text.split("±"))
     return r.text.split("±")
 
 
 # 涩涩
 async def get_cos(websocket, user_id: int, group_id: int):
-    r = requests.get("https://api.tangdouz.com/hlxmt.php")
+    r = requests.get("https://api.tangdouz.com/hlxmt.php", timeout=60)
     text = r.text.split("±")
     text = list(filter(None, text))
     # print(text)
@@ -122,7 +122,7 @@ async def get_cos(websocket, user_id: int, group_id: int):
     payload["params"]["message"].append(
         {"type": "text", "data": {"text": "随机手机分辨率美图\n"}},
     )
-    r = requests.get("https://api.vvhan.com/api/wallpaper/mobileGirl?type=json")
+    r = requests.get("https://api.vvhan.com/api/wallpaper/mobileGirl?type=json", timeout=60)
     json_data = json.loads(r.text)
     if "url" in json_data:
         payload["params"]["message"].append(
@@ -131,7 +131,7 @@ async def get_cos(websocket, user_id: int, group_id: int):
     payload["params"]["message"].append(
         {"type": "text", "data": {"text": "随机PC分辨率美图\n"}},
     )
-    r = requests.get("https://api.vvhan.com/api/wallpaper/pcGirl?type=json")
+    r = requests.get("https://api.vvhan.com/api/wallpaper/pcGirl?type=json", timeout=60)
     json_data = json.loads(r.text)
     if "url" in json_data:
         payload["params"]["message"].append(
@@ -156,7 +156,7 @@ async def one_word(websocket, user_id: int, group_id: int):
                 {
                     "type": "text",
                     "data": {
-                        "text": "\n{}".format(requests.get(choice(url_list)).text)
+                        "text": "\n{}".format(requests.get(choice(url_list), timeout=60).text)
                     },
                 },
             ],
@@ -167,9 +167,9 @@ async def one_word(websocket, user_id: int, group_id: int):
 
 # 随机三次元图片
 async def radom_real(websocket, user_id: int, group_id: int):
-    url1 = requests.get("https://api.tangdouz.com/mn.php")
+    url1 = requests.get("https://api.tangdouz.com/mn.php", timeout=60)
     url2 = requests.get(
-        choice(["https://api.tangdouz.com/mt.php", "https://api.tangdouz.com/mt1.php"])
+        choice(["https://api.tangdouz.com/mt.php", "https://api.tangdouz.com/mt1.php"]), timeout=60
     )
     payload = {
         "action": "send_msg_async",
@@ -187,7 +187,7 @@ async def radom_real(websocket, user_id: int, group_id: int):
 
 # 随机二次元图片
 async def radom_waifu(websocket, user_id: int, group_id: int):
-    r = requests.get("https://api.tangdouz.com/abz/dm.php")
+    r = requests.get("https://api.tangdouz.com/abz/dm.php", timeout=60)
     payload = {
         "action": "send_msg_async",
         "params": {
@@ -203,7 +203,7 @@ async def radom_waifu(websocket, user_id: int, group_id: int):
 
 # 每日一言
 async def daily_word(websocket, user_id: int, group_id: int):
-    r = requests.get("https://api.tangdouz.com/a/perday.php")
+    r = requests.get("https://api.tangdouz.com/a/perday.php", timeout=60)
     # print(r.text)
     text = r.text.split("±")
     # print(text)
@@ -260,7 +260,7 @@ async def return_trarot_cards(websocket, user_id: int, group_id: int):
 
 # 抽签
 async def AnswerBook(websocket, user_id: int, group_id: int):
-    r = requests.get("https://api.tangdouz.com/answer.php")
+    r = requests.get("https://api.tangdouz.com/answer.php", timeout=60)
     # print(r.text)
     payload = {
         "action": "send_msg_async",
@@ -281,7 +281,7 @@ async def AnswerBook(websocket, user_id: int, group_id: int):
 
 # 抽签
 async def drawing(websocket, user_id: int, group_id: int):
-    r = requests.get("https://api.tangdouz.com/a/ccscq.php")
+    r = requests.get("https://api.tangdouz.com/a/ccscq.php", timeout=60)
     # print(r.text)
     payload = {
         "action": "send_msg_async",

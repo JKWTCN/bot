@@ -60,7 +60,7 @@ def GetDogeCoin():
     import requests
 
     try:
-        r = requests.get("https://bitcompare.net/zh-cn/coins/dogecoin")
+        r = requests.get("https://bitcompare.net/zh-cn/coins/dogecoin", timeout=60)
         # with open("tmp.txt", "w", encoding="utf-8") as f:
         #     f.write(r.text)
         pattern = re.compile(
