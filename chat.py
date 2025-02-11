@@ -549,7 +549,7 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
 
 
 # chat内容转发给大模型
-async def ReturnChatText(text: str):
+def ReturnChatText(text: str):
     port = "11434"
     url = f"http://localhost:{port}/api/chat"
     model = load_setting()["model"]
