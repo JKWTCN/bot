@@ -1833,7 +1833,7 @@ async def echo(websocket):
                                     ],
                                 ):
                                     raw_message = ""
-                                SayPrivte(
+                                await SayPrivte(
                                     websocket,
                                     message["user_id"],
                                     ReturnChatText(raw_message),
