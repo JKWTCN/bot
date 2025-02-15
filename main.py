@@ -112,6 +112,7 @@ from tarot_cards import (
     AnswerBook,
 )
 from tools import (
+    GetLocalIP,
     HasChinese,
     ReplySay,
     dump_setting,
@@ -1714,6 +1715,16 @@ async def echo(websocket):
                                                 await GetSystemInfoTable(
                                                     websocket, group_id
                                                 )
+                                            elif HasKeyWords(
+                                                message["message"][0]["data"]["text"],
+                                                ["获取IP", "获取ip"],
+                                            ):
+                                                await say(
+                                                    websocket,
+                                                    group_id,
+                                                    f"本机IP:{GetLocalIP()}",
+                                                )
+
                                             elif HasKeyWords(raw_message, ["笑话"]):
                                                 await Joke(websocket, group_id)
                                             elif HasAllKeyWords(

@@ -4,6 +4,24 @@ import base64
 import json
 
 
+# 获取本机局域网IP
+def GetLocalIP():
+    from netifaces import interfaces, ifaddresses, AF_INET
+
+    ip_addrs = []
+    for ifaceName in interfaces():
+        addresses = [
+            i["addr"]
+            for i in ifaddresses(ifaceName).setdefault(
+                AF_INET, [{"addr": "No IP addr"}]
+            )
+        ]
+        if addresses != ["No IP addr"]:
+            ip_addrs.append(addresses[0])
+    # print(ip_addrs)
+    return ip_addrs
+
+
 # 时间戳转日期字符串
 def timestamp_to_date(timestamp: int):
     return datetime.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
