@@ -889,7 +889,7 @@ async def echo(websocket):
                                         if (
                                             BotIsAdmin(group_id)
                                             and group_id
-                                            in load_setting()["miaomiao_group"].keys()
+                                            in load_setting()["miao_miao_group"].keys()
                                             and user_id not in setting["other_bots"]
                                         ):
                                             if (
@@ -900,7 +900,7 @@ async def echo(websocket):
                                                 not in message["raw_message"]
                                                 and HasChinese(message["raw_message"])
                                                 and datetime.datetime.now().day
-                                                == load_setting()["miaomiao_group"][
+                                                == load_setting()["miao_miao_group"][
                                                     group_id
                                                 ]["day"]
                                             ):
@@ -918,12 +918,12 @@ async def echo(websocket):
                                                         "{},每月{}号是本群喵喵日,你因为说话不带喵被禁言了喵。".format(
                                                             sender_name,
                                                             load_setting()[
-                                                                "miaomiao_group"
+                                                                "miao_miao_group"
                                                             ][group_id]["day"],
                                                         ),
                                                     )
                                                 elif not (
-                                                    load_setting()["miaomiao_group"][
+                                                    load_setting()["miao_miao_group"][
                                                         group_id
                                                     ]["ignore_admin"]
                                                 ):
@@ -934,7 +934,7 @@ async def echo(websocket):
                                                         "{},每月{}号是本群喵喵日,你因为说话不带喵被艾特惩罚3次了喵。".format(
                                                             get_cx_str(user_id),
                                                             load_setting()[
-                                                                "miaomiao_group"
+                                                                "miao_miao_group"
                                                             ][group_id]["day"],
                                                         ),
                                                     )
