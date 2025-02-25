@@ -100,7 +100,7 @@ async def welcom_new_no_admin(websocket, user_id: int, group_id: int):
     with open("res/welcome.jpg", "rb") as image_file:
         image_data = image_file.read()
     image_base64 = base64.b64encode(image_data)
-    if group_id not in load_setting()["miao_miao_group"].keys():
+    if f"{group_id}" not in load_setting()["miao_miao_group"].keys():
         payload = {
             "action": "send_msg_async",
             "params": {

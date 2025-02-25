@@ -888,7 +888,7 @@ async def echo(websocket):
                                             )
                                         if (
                                             BotIsAdmin(group_id)
-                                            and group_id
+                                            and f"{group_id}"
                                             in load_setting()["miao_miao_group"].keys()
                                             and user_id not in setting["other_bots"]
                                         ):
