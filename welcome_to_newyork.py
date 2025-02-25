@@ -100,7 +100,7 @@ async def welcom_new_no_admin(websocket, user_id: int, group_id: int):
     with open("res/welcome.jpg", "rb") as image_file:
         image_data = image_file.read()
     image_base64 = base64.b64encode(image_data)
-    if group_id not in load_setting()["miaomiao_group"].keys():
+    if group_id not in load_setting()["miao_miao_group"].keys():
         payload = {
             "action": "send_msg_async",
             "params": {
@@ -110,7 +110,7 @@ async def welcom_new_no_admin(websocket, user_id: int, group_id: int):
                     {
                         "type": "text",
                         "data": {
-                            "text": f"\n欢迎入群喵!每月{load_setting()["miaomiao_group"][group_id]["day"]}日是本群的喵喵日，那天说话记得带喵，否则乐可会禁言你的喵。愿原力与你同在！"
+                            "text": f"\n欢迎入群喵!每月{load_setting()["miao_miao_group"][f"{group_id}"]["day"]}日是本群的喵喵日，那天说话记得带喵，否则乐可会禁言你的喵。愿原力与你同在！"
                         },
                     },
                     {

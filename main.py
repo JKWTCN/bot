@@ -901,7 +901,7 @@ async def echo(websocket):
                                                 and HasChinese(message["raw_message"])
                                                 and datetime.datetime.now().day
                                                 == load_setting()["miao_miao_group"][
-                                                    group_id
+                                                    f"{group_id}"
                                                 ]["day"]
                                             ):
                                                 if not IsAdmin(user_id, group_id):
@@ -919,12 +919,12 @@ async def echo(websocket):
                                                             sender_name,
                                                             load_setting()[
                                                                 "miao_miao_group"
-                                                            ][group_id]["day"],
+                                                            ][f"{group_id}"]["day"],
                                                         ),
                                                     )
                                                 elif not (
                                                     load_setting()["miao_miao_group"][
-                                                        group_id
+                                                        f"{group_id}"
                                                     ]["ignore_admin"]
                                                 ):
                                                     await ReplySay(
@@ -935,7 +935,7 @@ async def echo(websocket):
                                                             get_cx_str(user_id),
                                                             load_setting()[
                                                                 "miao_miao_group"
-                                                            ][group_id]["day"],
+                                                            ][f"{group_id}"]["day"],
                                                         ),
                                                     )
                                                     AddAtPunishList(
