@@ -887,9 +887,9 @@ async def echo(websocket):
                                                 0,
                                             )
                                         if (
-                                            datetime.datetime.now().day == 25
-                                            and BotIsAdmin(group_id)
-                                            and group_id == setting["admin_group_main"]
+                                            BotIsAdmin(group_id)
+                                            and group_id
+                                            in load_setting()["miaomiao_group"].keys()
                                             and user_id not in setting["other_bots"]
                                         ):
                                             if (
@@ -899,6 +899,10 @@ async def echo(websocket):
                                                 and "[CQ:reply"
                                                 not in message["raw_message"]
                                                 and HasChinese(message["raw_message"])
+                                                and datetime.datetime.now().day
+                                                == load_setting()["miaomiao_group"][
+                                                    group_id
+                                                ]["day"]
                                             ):
                                                 if not IsAdmin(user_id, group_id):
                                                     await ban_new(
@@ -911,23 +915,27 @@ async def echo(websocket):
                                                         websocket,
                                                         group_id,
                                                         message["message_id"],
-                                                        "{},每月25号是本群喵喵日,你因为说话不带喵被禁言了喵。".format(
-                                                            sender_name
+                                                        "{},每月{}号是本群喵喵日,你因为说话不带喵被禁言了喵。".format(
+                                                            sender_name,
+                                                            load_setting()[
+                                                                "miaomiao_group"
+                                                            ][group_id]["day"],
                                                         ),
                                                     )
-                                                    # await ban_new(
-                                                    #     websocket,
-                                                    #     user_id,
-                                                    #     group_id,
-                                                    #     0,
-                                                    # )
-                                                else:
+                                                elif not (
+                                                    load_setting()["miaomiao_group"][
+                                                        group_id
+                                                    ]["ignore_admin"]
+                                                ):
                                                     await ReplySay(
                                                         websocket,
                                                         group_id,
                                                         message["message_id"],
-                                                        "{},每月25号是本群喵喵日,你因为说话不带喵被艾特惩罚3次了喵。".format(
-                                                            get_cx_str(user_id)
+                                                        "{},每月{}号是本群喵喵日,你因为说话不带喵被艾特惩罚3次了喵。".format(
+                                                            get_cx_str(user_id),
+                                                            load_setting()[
+                                                                "miaomiao_group"
+                                                            ][group_id]["day"],
                                                         ),
                                                     )
                                                     AddAtPunishList(

@@ -1,6 +1,8 @@
 import base64
 import json
 
+from tools import load_setting
+
 
 async def return_function(websocket, user_id: int, group_id: int):
     with open("res/function.png", "rb") as image_file:
@@ -98,23 +100,44 @@ async def welcom_new_no_admin(websocket, user_id: int, group_id: int):
     with open("res/welcome.jpg", "rb") as image_file:
         image_data = image_file.read()
     image_base64 = base64.b64encode(image_data)
-    payload = {
-        "action": "send_msg_async",
-        "params": {
-            "group_id": group_id,
-            "message": [
-                {"type": "at", "data": {"qq": user_id}},
-                {
-                    "type": "text",
-                    "data": {"text": "\n欢迎入群喵!愿原力与你同在！"},
-                },
-                {
-                    "type": "image",
-                    "data": {"file": "base64://" + image_base64.decode("utf-8")},
-                },
-            ],
-        },
-    }
+    if group_id not in load_setting()["miaomiao_group"].keys():
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {"type": "at", "data": {"qq": user_id}},
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": f"\n欢迎入群喵!每月{load_setting()["miaomiao_group"][group_id]["day"]}日是本群的喵喵日，那天说话记得带喵，否则乐可会禁言你的喵。愿原力与你同在！"
+                        },
+                    },
+                    {
+                        "type": "image",
+                        "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                    },
+                ],
+            },
+        }
+    else:
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {"type": "at", "data": {"qq": user_id}},
+                    {
+                        "type": "text",
+                        "data": {"text": "\n欢迎入群喵!愿原力与你同在！"},
+                    },
+                    {
+                        "type": "image",
+                        "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                    },
+                ],
+            },
+        }
     await websocket.send(json.dumps(payload))
 
 
