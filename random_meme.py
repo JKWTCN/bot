@@ -123,8 +123,19 @@ async def send_meme_merge_forwarding(websocket, group_id: int, nums: int):
             image_base64 = base64.b64encode(image_data)
             payload["params"]["message"].append(
                 {
-                    "type": "image",
-                    "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                    "type": "node",
+                    "data": {
+                        "user_id": load_setting()["bot_id"],
+                        "nickname": "乐可",
+                        "content": [
+                            {
+                                "type": "image",
+                                "data": {
+                                    "file": "base64://" + image_base64.decode("utf-8")
+                                },
+                            }
+                        ],
+                    },
                 }
             )
         await websocket.send(json.dumps(payload))
