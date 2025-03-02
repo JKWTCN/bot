@@ -94,77 +94,111 @@ async def send_meme_merge_forwarding(websocket, group_id: int, nums: int):
     try:
         all_file = find_all_file(load_setting()["meme_path"])
         logging.info("读取目录完毕")
-        while nums > 20:
-            payload = {
-                "action": "send_msg_async",
-                "params": {
-                    "group_id": group_id,
-                    "message": [],
-                },
-            }
-            for i in range(20):
+        payload = {
+            "action": "send_forward_msg",
+            "params": {
+                "message_type": "group",
+                "group_id": group_id,
+                "message": [],
+            },
+        }
+        for i in range(nums):
+            dir = choice(all_file)
+            while (
+                not dir.endswith(".jpg")
+                and not dir.endswith(".png")
+                and not dir.endswith(".JPG")
+                and not dir.endswith(".JPG")
+                and not dir.endswith(".PNG")
+                and not dir.endswith(".JEPG")
+                and not dir.endswith(".jpeg")
+                and not dir.endswith(".gif")
+                and not dir.endswith(".GIF")
+            ):
                 dir = choice(all_file)
-                while (
-                    not dir.endswith(".jpg")
-                    and not dir.endswith(".png")
-                    and not dir.endswith(".JPG")
-                    and not dir.endswith(".JPG")
-                    and not dir.endswith(".PNG")
-                    and not dir.endswith(".JEPG")
-                    and not dir.endswith(".jpeg")
-                    and not dir.endswith(".gif")
-                    and not dir.endswith(".GIF")
-                ):
-                    dir = choice(all_file)
-                print(dir)
-                logging.info("剩余发送{}张，发送了图片:{}".format(nums - i - 1, dir))
-                with open(dir, "rb") as image_file:
-                    image_data = image_file.read()
-                image_base64 = base64.b64encode(image_data)
+            print(dir)
+            logging.info("剩余发送{}张，发送了图片:{}".format(nums - i - 1, dir))
+            with open(dir, "rb") as image_file:
+                image_data = image_file.read()
+            image_base64 = base64.b64encode(image_data)
+            payload["params"]["message"].append(
+                {
+                    "type": "image",
+                    "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                }
+            )
+        await websocket.send(json.dumps(payload))
+        # while nums > 20:
+        #     payload = {
+        #         "action": "send_msg_async",
+        #         "params": {
+        #             "group_id": group_id,
+        #             "message": [],
+        #         },
+        #     }
+        #     for i in range(20):
+        #         dir = choice(all_file)
+        #         while (
+        #             not dir.endswith(".jpg")
+        #             and not dir.endswith(".png")
+        #             and not dir.endswith(".JPG")
+        #             and not dir.endswith(".JPG")
+        #             and not dir.endswith(".PNG")
+        #             and not dir.endswith(".JEPG")
+        #             and not dir.endswith(".jpeg")
+        #             and not dir.endswith(".gif")
+        #             and not dir.endswith(".GIF")
+        #         ):
+        #             dir = choice(all_file)
+        #         print(dir)
+        #         logging.info("剩余发送{}张，发送了图片:{}".format(nums - i - 1, dir))
+        #         with open(dir, "rb") as image_file:
+        #             image_data = image_file.read()
+        #         image_base64 = base64.b64encode(image_data)
 
-                payload["params"]["message"].append(
-                    {
-                        "type": "image",
-                        "data": {"file": "base64://" + image_base64.decode("utf-8")},
-                    }
-                )
-            await websocket.send(json.dumps(payload))
-            # 发送完毕
-            logging.info("20张发送完毕")
-            nums = nums - 20
-        if nums > 0 and nums <= 20:
-            payload = {
-                "action": "send_msg_async",
-                "params": {
-                    "group_id": group_id,
-                    "message": [],
-                },
-            }
-            for i in range(nums):
-                dir = choice(all_file)
-                while (
-                    not dir.endswith(".jpg")
-                    and not dir.endswith(".png")
-                    and not dir.endswith(".JPG")
-                    and not dir.endswith(".JPG")
-                    and not dir.endswith(".PNG")
-                    and not dir.endswith(".JEPG")
-                    and not dir.endswith(".jpeg")
-                    and not dir.endswith(".gif")
-                    and not dir.endswith(".GIF")
-                ):
-                    dir = choice(all_file)
-                print(dir)
-                logging.info("剩余发送{}张,发送了图片:{}".format(nums - i - 1, dir))
-                with open(dir, "rb") as image_file:
-                    image_data = image_file.read()
-                image_base64 = base64.b64encode(image_data)
-                payload["params"]["message"].append(
-                    {
-                        "type": "image",
-                        "data": {"file": "base64://" + image_base64.decode("utf-8")},
-                    }
-                )
+        #         payload["params"]["message"].append(
+        #             {
+        #                 "type": "image",
+        #                 "data": {"file": "base64://" + image_base64.decode("utf-8")},
+        #             }
+        #         )
+        #     await websocket.send(json.dumps(payload))
+        #     # 发送完毕
+        #     logging.info("20张发送完毕")
+        #     nums = nums - 20
+        # if nums > 0 and nums <= 20:
+        #     payload = {
+        #         "action": "send_msg_async",
+        #         "params": {
+        #             "group_id": group_id,
+        #             "message": [],
+        #         },
+        #     }
+        #     for i in range(nums):
+        #         dir = choice(all_file)
+        #         while (
+        #             not dir.endswith(".jpg")
+        #             and not dir.endswith(".png")
+        #             and not dir.endswith(".JPG")
+        #             and not dir.endswith(".JPG")
+        #             and not dir.endswith(".PNG")
+        #             and not dir.endswith(".JEPG")
+        #             and not dir.endswith(".jpeg")
+        #             and not dir.endswith(".gif")
+        #             and not dir.endswith(".GIF")
+        #         ):
+        #             dir = choice(all_file)
+        #         print(dir)
+        #         logging.info("剩余发送{}张,发送了图片:{}".format(nums - i - 1, dir))
+        #         with open(dir, "rb") as image_file:
+        #             image_data = image_file.read()
+        #         image_base64 = base64.b64encode(image_data)
+        #         payload["params"]["message"].append(
+        #             {
+        #                 "type": "image",
+        #                 "data": {"file": "base64://" + image_base64.decode("utf-8")},
+        #             }
+        #         )
     except Exception as e:
         logging.error(e)
         await say(websocket, group_id, f"图片发送失败了喵。")
