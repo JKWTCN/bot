@@ -38,6 +38,7 @@ from chat import (
     GiveGift,
     Joke,
     ReturnChatText,
+    SayImgReply,
     SwitchColdGroupChat,
     SwitchGroupDecreaseMessage,
     UpdateColdGroup,
@@ -948,6 +949,24 @@ async def echo(websocket):
                                                 websocket,
                                                 group_id,
                                             )
+                                        # 早上好
+                                        if (
+                                            HasKeyWords(
+                                                message["message"][0]["data"]["text"],
+                                                ["早安", "早上好", "早"],
+                                            )
+                                            and datetime.datetime.now().hour < 9
+                                            and datetime.datetime.now().hour >= 6
+                                        ):
+                                            await SayImgReply(
+                                                websocket,
+                                                user_id,
+                                                group_id,
+                                                message_id,
+                                                "早上好喵！",
+                                                "res\good_morning.jpg",
+                                            )
+
                                         if message["message"][0]["data"][
                                             "text"
                                         ].startswith("乐可"):
