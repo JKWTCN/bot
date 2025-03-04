@@ -78,6 +78,7 @@ from easter_egg import (
 from rankings import ranking_point_payload
 from private import cxgl, WhoAskPants, get_cx_str
 from group_operate import (
+    KickMemberAndRejectAddRequest,
     poor_point,
     get_group_list,
     kick_member,
@@ -464,6 +465,27 @@ async def echo(websocket):
                                                     websocket,
                                                     group_id,
                                                     f"{sender_name},不要随便艾特☁️喵，引用记得删除艾特,你已经是{GetWhoAtMe(user_id)}次了，禁言你{GetWhoAtMe(user_id)}分钟了喵。",
+                                                )
+                                            elif now_num >= 75:
+                                                await ban_new(
+                                                    websocket,
+                                                    user_id,
+                                                    group_id,
+                                                    60 * GetWhoAtMe(user_id),
+                                                )
+                                                await say(
+                                                    websocket,
+                                                    group_id,
+                                                    f"{sender_name},不要随便艾特☁️喵，引用记得删除艾特,你已经是{GetWhoAtMe(user_id)}次了，禁言你{GetWhoAtMe(user_id)}分钟了喵。超过85次会被直接踢出本群并且拉黑喵。",
+                                                )
+                                            elif now_num >= 85:
+                                                await say(
+                                                    websocket,
+                                                    group_id,
+                                                    f"{sender_name},不要随便艾特☁️喵，引用记得删除艾特,你已经是{GetWhoAtMe(user_id)}次了，再也不见喵",
+                                                )
+                                                await KickMemberAndRejectAddRequest(
+                                                    websocket, user_id, group_id
                                                 )
                                             else:
                                                 await say(

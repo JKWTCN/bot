@@ -126,6 +126,20 @@ async def kick_member(websocket, user_id: int, group_id: int):
     await websocket.send(json.dumps(payload))
 
 
+# 踢人并且拉黑
+async def KickMemberAndRejectAddRequest(websocket, user_id: int, group_id: int):
+    payload = {
+        "action": "set_group_kick",
+        "params": {
+            "user_id": user_id,
+            "group_id": group_id,
+            "reject_add_request": True,
+        },
+    }
+    # print(payload)
+    await websocket.send(json.dumps(payload))
+
+
 # 发群低保
 async def poor_point(websocket, user_id: int, group_id: int):
     sender_name = get_user_name(user_id, group_id)
