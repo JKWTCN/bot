@@ -2007,7 +2007,7 @@ async def echo(websocket):
                                     "{}({})离开了群{}({})。\n{}".format(
                                         sender_name,
                                         user_id,
-                                        sender_name,
+                                        group_name,
                                         group_id,
                                         random.choice(text),
                                     ),
