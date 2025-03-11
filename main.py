@@ -6,6 +6,9 @@ import random
 import time
 import websockets
 import json
+import asyncio
+import queue
+import threading
 from Class.Group_member import (
     Group_member,
     IsDeveloper,
@@ -2292,9 +2295,9 @@ async def echo(websocket):
 # logging.Formatter.converter = beijing
 
 
-async def main():
-    async with websockets.serve(echo, "0.0.0.0", 27431):
-        await asyncio.get_running_loop().create_future()  # run forever
+# async def main():
+#     async with websockets.serve(echo, "0.0.0.0", 27431):
+#         await asyncio.get_running_loop().create_future()  # run forever
 
 
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
@@ -2312,4 +2315,61 @@ logging.basicConfig(
     datefmt=DATE_FORMAT,
     encoding="utf-8",
 )
-asyncio.run(main())
+# asyncio.run(main())
+# 全局队列，用于存储接收到的消息和对应的WebSocket连接
+message_queue = queue.Queue()
+
+
+async def handle_client(websocket, path):
+    """
+    WebSocket服务端处理函数，接收客户端消息并存入队列
+    """
+    async for message in websocket:
+        # 将消息和对应的WebSocket连接放入队列
+        message_queue.put((message, websocket))
+
+
+def command_processor(loop):
+    """
+    命令处理线程函数，从队列取出消息处理并返回结果
+    """
+    while True:
+        # 阻塞获取队列中的消息和WebSocket对象
+        message, websocket = message_queue.get()
+        
+        try:
+            # 将发送任务提交到主事件循环
+            # asyncio.run_coroutine_threadsafe(websocket.send(processed_message), loop)
+            asyncio.run_coroutine_threadsafe(echo(websocket), loop)
+        except Exception as e:
+            print(f"发送失败: {e}")
+        finally:
+            message_queue.task_done()
+
+
+async def main():
+    """
+    主协程，启动WebSocket服务器
+    """
+    async with websockets.serve(handle_client, "0.0.0.0", 27431):
+        print("WebSocket服务器已启动")
+        await asyncio.Future()
+
+
+if __name__ == "__main__":
+    # 获取主事件循环
+    main_loop = asyncio.get_event_loop()
+
+    # 启动命令处理线程
+    processor_thread = threading.Thread(
+        target=command_processor, args=(main_loop,), daemon=True
+    )
+    processor_thread.start()
+
+    try:
+        # 启动主事件循环
+        main_loop.run_until_complete(main())
+    except KeyboardInterrupt:
+        print("服务器关闭")
+    finally:
+        main_loop.close()
