@@ -121,6 +121,7 @@ from tools import (
     HasChinese,
     ReplySay,
     dump_setting,
+    getTemper,
     is_today,
     load_setting,
     nomoral_qq_avatar,
@@ -1605,7 +1606,18 @@ async def echo(websocket, message):
                                                 group_id,
                                                 "乐可不是紫薯精喵。",
                                             )
-
+                                        elif (
+                                            "环境温度"
+                                            in message["message"][0]["data"]["text"]
+                                        ):
+                                            cpu_temper, cpu_temper_max, gpu_temper = (
+                                                getTemper()
+                                            )
+                                            await say(
+                                                websocket,
+                                                group_id,
+                                                f"CPU:{cpu_temper}/{cpu_temper_max}°C,GPU:{gpu_temper}°C,环境温度:{"错误,请检查传感器"}",
+                                            )
                                         elif (
                                             "早"
                                             in message["message"][0]["data"]["text"]

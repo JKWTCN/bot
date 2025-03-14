@@ -332,6 +332,18 @@ async def GetSystemInfoTable(websocket, group_id: int):
     )
     await websocket.send(json.dumps(payload))
 
+def getTemper():
+    """
+    获取内置温度传感器温度
+    cpu温度,cpu温度墙,gpu温度
+    """
+    import re
+    import subprocess
+    command="sensors"
+    result = subprocess.check_output(command, shell=True, text=True)
+    pattern = r'\d+\.\d+'
+    matches = re.findall(pattern, str(result))
+    return float(matches[0]),float(matches[1]),float(matches[2])
 
 def get_now_week() -> int:
     return int(time.strftime("%W"))
