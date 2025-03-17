@@ -1,6 +1,6 @@
 import sqlite3
 import time
-from Class.Group_member import IsAdmin, get_user_name
+from Class.Group_member import IsAdmin, delete_user_info, get_user_name
 import bot_database
 import tools
 import json
@@ -123,6 +123,7 @@ async def kick_member(websocket, user_id: int, group_id: int):
         },
     }
     # print(payload)
+    delete_user_info(user_id, group_id)
     await websocket.send(json.dumps(payload))
 
 
@@ -136,6 +137,7 @@ async def KickMemberAndRejectAddRequest(websocket, user_id: int, group_id: int):
             "reject_add_request": True,
         },
     }
+    delete_user_info(user_id, group_id)
     # print(payload)
     await websocket.send(json.dumps(payload))
 

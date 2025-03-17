@@ -92,6 +92,20 @@ def is_in_group(user_id: int, group_id: int):
     return res
 
 
+def delete_user_info(user_id: int, group_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "DELETE FROM group_member_info where user_id=? and group_id=?",
+        (
+            user_id,
+            group_id,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
 def updata_user_info(group_member: Group_member):
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()

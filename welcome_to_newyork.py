@@ -160,6 +160,6 @@ async def leave(websocket, user_id: int, group_id: int):
 async def get_qunyou_message(websocket, user_id: int, group_id: int):
     payload = {
         "action": "get_group_member_info ",
-        "params": {"group_id": group_id, "user_id": user_id},
+        "params": {"group_id": group_id, "user_id": user_id, "no_cache": True},
     }
     await websocket.send(json.dumps(payload))
