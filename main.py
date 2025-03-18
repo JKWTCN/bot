@@ -295,6 +295,13 @@ async def echo(websocket, message):
                                         f"晋升成功,{get_user_name(at_id,group_id)}({at_id})的等级提升为{get_level(at_id, group_id)}级,积分清零喵。",
                                     )
                                     right_at = True
+                                elif HasKeyWords(raw_message, ["丢骰子"]):
+                                    await say(
+                                        websocket,
+                                        group_id,
+                                        f"你的骰子结果是{random.randint(1,6)}",
+                                    )
+
                                 elif HasKeyWords(
                                     raw_message, ["惩罚取消", "取消惩罚"]
                                 ) and (
