@@ -1894,7 +1894,8 @@ async def echo(websocket, message):
                                         logging.info(
                                             f"{get_user_name(user_id, group_id)}({user_id}),因为{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(quit_time))}退出过群现在想重新加入而被踢出。"
                                         )
-                                        await kick_member(websocket, user_id, group_id)
+                                        # await kick_member(websocket, user_id, group_id)
+                                        await KickMemberAndRejectAddRequest(websocket,user_id,group_id)
                                     else:
                                         await welcome_verify(
                                             websocket, user_id, group_id
