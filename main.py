@@ -200,6 +200,18 @@ async def echo(websocket, message):
                         )
                         AddChatRecord(user_id, group_id)
                         logging.info(log)
+
+                        for k in message["message"]:
+                            if k["type"] == "json":
+                                # qq卡片消息解析
+                                now_json = json.loads(k["data"]["data"])
+                                if "meta" in now_json:
+                                    if "qqdocurl" in now_json["meta"]:
+                                        qqdocurl = now_json["meta"]["qqdocurl"]
+                                        logging.info(f"解析结果:{qqdocurl}")
+                                        await ReplySay(
+                                            websocket, group_id, message_id, qqdocurl
+                                        )
                         if GetColdGroupStatus(group_id):
                             # 如果是更新冷群
                             UpdateColdGroup(
@@ -1895,7 +1907,9 @@ async def echo(websocket, message):
                                             f"{get_user_name(user_id, group_id)}({user_id}),因为{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(quit_time))}退出过群现在想重新加入而被踢出。"
                                         )
                                         # await kick_member(websocket, user_id, group_id)
-                                        await KickMemberAndRejectAddRequest(websocket,user_id,group_id)
+                                        await KickMemberAndRejectAddRequest(
+                                            websocket, user_id, group_id
+                                        )
                                     else:
                                         await welcome_verify(
                                             websocket, user_id, group_id
