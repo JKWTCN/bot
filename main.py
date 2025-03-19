@@ -208,7 +208,7 @@ async def echo(websocket, message):
                                 if "meta" in now_json:
                                     if "detail_1" in now_json["meta"]:
                                         if "qqdocurl" in now_json["meta"]["detail_1"]:
-                                            qqdocurl = now_json["meta"]["qqdocurl"]
+                                            qqdocurl = now_json["meta"]["detail_1"]["qqdocurl"]
                                             logging.info(f"解析结果:{qqdocurl}")
                                             await ReplySay(
                                                 websocket,
