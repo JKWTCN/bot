@@ -206,12 +206,16 @@ async def echo(websocket, message):
                                 # qq卡片消息解析
                                 now_json = json.loads(k["data"]["data"])
                                 if "meta" in now_json:
-                                    if "qqdocurl" in now_json["meta"]:
-                                        qqdocurl = now_json["meta"]["qqdocurl"]
-                                        logging.info(f"解析结果:{qqdocurl}")
-                                        await ReplySay(
-                                            websocket, group_id, message_id, qqdocurl
-                                        )
+                                    if "detail_1" in now_json["meta"]:
+                                        if "qqdocurl" in now_json["meta"]["detail_1"]:
+                                            qqdocurl = now_json["meta"]["qqdocurl"]
+                                            logging.info(f"解析结果:{qqdocurl}")
+                                            await ReplySay(
+                                                websocket,
+                                                group_id,
+                                                message_id,
+                                                qqdocurl,
+                                            )
                         if GetColdGroupStatus(group_id):
                             # 如果是更新冷群
                             UpdateColdGroup(
