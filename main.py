@@ -4,6 +4,7 @@ import logging
 import os
 import random
 import time
+import requests
 import websockets
 import json
 import asyncio
@@ -208,13 +209,19 @@ async def echo(websocket, message):
                                 if "meta" in now_json:
                                     if "detail_1" in now_json["meta"]:
                                         if "qqdocurl" in now_json["meta"]["detail_1"]:
-                                            qqdocurl = now_json["meta"]["detail_1"]["qqdocurl"]
-                                            logging.info(f"解析结果:{qqdocurl}")
+                                            qqdocurl = now_json["meta"]["detail_1"][
+                                                "qqdocurl"
+                                            ]
+                                            r = requests.get(qqdocurl)
+                                            no_get_params_url = r.url.split("?")[0]
+                                            logging.info(
+                                                f"解析结果:{no_get_params_url}"
+                                            )
                                             await ReplySay(
                                                 websocket,
                                                 group_id,
                                                 message_id,
-                                                qqdocurl,
+                                                no_get_params_url,
                                             )
                         if GetColdGroupStatus(group_id):
                             # 如果是更新冷群
