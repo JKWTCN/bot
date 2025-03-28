@@ -19,6 +19,35 @@ async def photo_new(websocket, user_id: int, group_id: int):
     await websocket.send(json.dumps(payload))
 
 
+# 随机猫猫
+async def radom_cat(websocket, group_id: int):
+    r = requests.get("https://api.thecatapi.com/v1/images/search", timeout=60)
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "image", "data": {"file": r.json()[0]["url"]}},
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+# 随机猫猫
+async def radom_cat_gif(websocket, group_id: int):
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "image", "data": {"file": "https://edgecats.net/"}},
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
 # 日报
 async def daily_paper(websocket, user_id: int, group_id: int):
     r = requests.get("https://api.tangdouz.com/a/60/", timeout=60)
@@ -122,7 +151,9 @@ async def get_cos(websocket, user_id: int, group_id: int):
     payload["params"]["message"].append(
         {"type": "text", "data": {"text": "随机手机分辨率美图\n"}},
     )
-    r = requests.get("https://api.vvhan.com/api/wallpaper/mobileGirl?type=json", timeout=60)
+    r = requests.get(
+        "https://api.vvhan.com/api/wallpaper/mobileGirl?type=json", timeout=60
+    )
     json_data = json.loads(r.text)
     if "url" in json_data:
         payload["params"]["message"].append(
@@ -156,7 +187,9 @@ async def one_word(websocket, user_id: int, group_id: int):
                 {
                     "type": "text",
                     "data": {
-                        "text": "\n{}".format(requests.get(choice(url_list), timeout=60).text)
+                        "text": "\n{}".format(
+                            requests.get(choice(url_list), timeout=60).text
+                        )
                     },
                 },
             ],
@@ -169,7 +202,8 @@ async def one_word(websocket, user_id: int, group_id: int):
 async def radom_real(websocket, user_id: int, group_id: int):
     url1 = requests.get("https://api.tangdouz.com/mn.php", timeout=60)
     url2 = requests.get(
-        choice(["https://api.tangdouz.com/mt.php", "https://api.tangdouz.com/mt1.php"]), timeout=60
+        choice(["https://api.tangdouz.com/mt.php", "https://api.tangdouz.com/mt1.php"]),
+        timeout=60,
     )
     payload = {
         "action": "send_msg_async",

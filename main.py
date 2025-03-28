@@ -103,6 +103,8 @@ from random_meme import (
 
 from russian_roulette import russian, russian_pve, russian_pve_shot
 from tarot_cards import (
+    radom_cat,
+    radom_cat_gif,
     daily_paper,
     daily_word,
     drawing,
@@ -1563,6 +1565,10 @@ async def echo(websocket, message):
                                             await daily_paper(
                                                 websocket, user_id, group_id
                                             )
+                                        elif("随机猫猫动图"  in message["message"][0]["data"]["text"]):
+                                            await radom_cat_gif(websocket,group_id)
+                                        elif("随机猫猫" in message["message"][0]["data"]["text"]):
+                                            await radom_cat(websocket,group_id)
                                         elif HasKeyWords(raw_message, ["切换模型"]):
                                             now_model = switch_model()
                                             setting = load_setting()
