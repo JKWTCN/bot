@@ -1747,18 +1747,19 @@ async def echo(websocket, message):
                                         ) and not HasKeyWords(raw_message, ["可乐"]):
                                             await cute3(websocket, group_id)
                                         else:
-                                            await chat(
-                                                websocket,
-                                                user_id,
-                                                group_id,
-                                                message_id,
-                                                message["message"][0]["data"]["text"],
-                                            )
+                                            if group_id not in load_setting()["power_group"]:
+                                                await chat(
+                                                    websocket,
+                                                    user_id,
+                                                    group_id,
+                                                    message_id,
+                                                    message["message"][0]["data"]["text"],
+                                                )
                                     elif HasAllKeyWords(
                                         raw_message, ["乐可", "可爱"]
                                     ) and not HasKeyWords(raw_message, ["可乐"]):
                                         await cute3(websocket, group_id)
-                                    elif HasKeyWords(raw_message, ["乐可"]):
+                                    elif HasKeyWords(raw_message, ["乐可"]) and group_id not in load_setting()["power_group"]:
                                         sender_name = get_user_name(user_id, group_id)
                                         await chat(
                                             websocket,
@@ -1788,7 +1789,7 @@ async def echo(websocket, message):
                                         )
                                     )
                                 case _:
-                                    if HasKeyWords(raw_message, ["乐可"]):
+                                    if HasKeyWords(raw_message, ["乐可"]) and group_id not in load_setting()["power_group"]:
                                         sender_name = get_user_name(user_id, group_id)
                                         await chat(
                                             websocket,
