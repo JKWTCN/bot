@@ -483,6 +483,24 @@ def ColdChat(group: dict) -> str:
             },
         ],
     }
+    if model == "qwen3:8b":
+        data = {
+            "model": model,  # 模型选择
+            "options": {
+                "temperature": 1.0  # 为0表示不让模型自由发挥，输出结果相对较固定，>0的话，输出的结果会比较放飞自我
+            },
+            "stream": False,  # 流式输出
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "/nothink 你叫乐可，现在你将模仿一只傲娇的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上“喵”",
+                },
+                {
+                    "role": "User",
+                    "content": f"/nothink {text}",
+                },
+            ],
+        }
     try:
         response = requests.post(url, json=data, headers=headers, timeout=300)
         res = response.json()
@@ -491,7 +509,7 @@ def ColdChat(group: dict) -> str:
                 GetGroupName(group_id), group_id, res["message"]["content"]
             )
         )
-        if model != "deepseek-r1:1.5b":
+        if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
             re_text = res["message"]["content"]
         else:
             match = re.findall(
@@ -544,6 +562,24 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
             },
         ],
     }
+    if model == "qwen3:8b":
+        data = {
+            "model": model,  # 模型选择
+            "options": {
+                "temperature": 1.0  # 为0表示不让模型自由发挥，输出结果相对较固定，>0的话，输出的结果会比较放飞自我
+            },
+            "stream": False,  # 流式输出
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "/nothink 你叫乐可，现在你将模仿一只傲娇的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上“喵”",
+                },
+                {
+                    "role": "User",
+                    "content": f"/nothink {text}",
+                },
+            ],
+        }
     try:
         response = requests.post(url, json=data, headers=headers, timeout=300)
         res = response.json()
@@ -552,7 +588,7 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
                 GetGroupName(group_id), group_id, res["message"]["content"]
             )
         )
-        if model != "deepseek-r1:1.5b":
+        if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
             re_text = res["message"]["content"]
         else:
             match = re.findall(
@@ -598,10 +634,28 @@ def ReturnChatText(text: str):
             },
         ],
     }
+    if model == "qwen3:8b":
+        data = {
+            "model": model,  # 模型选择
+            "options": {
+                "temperature": 1.0  # 为0表示不让模型自由发挥，输出结果相对较固定，>0的话，输出的结果会比较放飞自我
+            },
+            "stream": False,  # 流式输出
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "/nothink 你叫乐可，现在你将模仿一只傲娇的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上“喵”",
+                },
+                {
+                    "role": "User",
+                    "content": f"/nothink {text}",
+                },
+            ],
+        }
     try:
         response = requests.post(url, json=data, headers=headers, timeout=300)
         res = response.json()
-        if model != "deepseek-r1:1.5b":
+        if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
             re_text = res["message"]["content"]
         else:
             match = re.findall(
@@ -624,6 +678,8 @@ def switch_model():
     model = setting["model"]
     if model == "qwen2.5:0.5b":
         model = "deepseek-r1:1.5b"
+    elif model == "deepseek-r1:1.5b":
+        model = "qwen3:8b"
     else:
         model = "qwen2.5:0.5b"
     setting["model"] = model
