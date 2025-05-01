@@ -497,7 +497,7 @@ def ColdChat(group: dict) -> str:
                 },
                 {
                     "role": "User",
-                    "content": f"/nothink {text}",
+                    "content": f"/nothink 在{nick_name}说话前,群友们聊了{num}句,他说的上一句话是:{raw_message},大家前面都聊的好火热,他一说话后大家就都不说话了,他可能今天过的不太好,赶紧鼓励鼓励他。",
                 },
             ],
         }
@@ -520,6 +520,8 @@ def ColdChat(group: dict) -> str:
                 re_text = f"乐可的思考过程喵：{match[0][0]}经过深思熟虑喵，乐可决定回复你：{match[0][1]}"
             else:
                 re_text = match[0][1]
+        while "\n" in re_text:
+            re_text = re_text.replace("\n", "")
         return re_text
     except:
         logger.info("连接超时")
@@ -603,6 +605,8 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
     except:
         logger.info("连接超时")
         re_text = "呜呜不太理解呢喵。"
+    while "\n" in re_text:
+        re_text = re_text.replace("\n", "")
     await ReplySay(
         websocket,
         group_id,
@@ -669,6 +673,8 @@ def ReturnChatText(text: str):
     except:
         logger.info("连接超时")
         re_text = "呜呜不太理解呢喵。"
+    while "\n" in re_text:
+        re_text = re_text.replace("\n", "")
     return re_text
 
 
