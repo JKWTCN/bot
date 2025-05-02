@@ -34,6 +34,7 @@ from chat import (
     AddAtPunishList,
     AtPunish,
     BoringReply,
+    HuffingReplay,
     ColdReplay,
     DelAtPunish,
     FlyReply,
@@ -251,6 +252,10 @@ async def echo(websocket, message):
                         # 真的是有够无聊
                         if user_id in load_setting()["boring"]:
                             await BoringReply(websocket, user_id, group_id, message_id)
+                        if user_id in load_setting()["huffing"]:
+                            await HuffingReplay(
+                                websocket, user_id, group_id, message_id
+                            )
                         if user_id in load_setting()["fly"]:
                             await FlyReply(websocket, user_id, group_id, message_id)
                         # 如果有人欺负乐可
@@ -359,7 +364,7 @@ async def echo(websocket, message):
                                     await say(
                                         websocket,
                                         group_id,
-                                        f"{get_user_name(at_id, group_id)},你成为本群的GAY了喵。",
+                                        f"{get_user_name(at_id, group_id)},GAY追杀令喵!!!!",
                                     )
                                 elif HasKeyWords(
                                     raw_message, ["你不是GAY", "你不是gay"]
@@ -372,7 +377,33 @@ async def echo(websocket, message):
                                     await say(
                                         websocket,
                                         group_id,
-                                        f"{get_user_name(at_id, group_id)},你不再是本群的GAY了喵。",
+                                        f"{get_user_name(at_id, group_id)},GAY追杀令取消了喵。",
+                                    )
+                                elif HasKeyWords(raw_message, ["哈气"]) and IsAdmin(
+                                    user_id, group_id
+                                ):
+                                    setting = load_setting()
+                                    if at_id not in setting["huffing"]:
+                                        setting["huffing"].append(at_id)
+                                        dump_setting(setting)
+                                        setting = load_setting()
+                                    await say(
+                                        websocket,
+                                        group_id,
+                                        f"{get_user_name(at_id, group_id)},乐可要追杀你了喵！",
+                                    )
+                                elif HasKeyWords(raw_message, ["不要哈气"]) and IsAdmin(
+                                    user_id, group_id
+                                ):
+                                    setting = load_setting()
+                                    while at_id in setting["huffing"]:
+                                        setting["huffing"].remove(at_id)
+                                    dump_setting(setting)
+                                    setting = load_setting()
+                                    await say(
+                                        websocket,
+                                        group_id,
+                                        f"{get_user_name(at_id, group_id)},乐可停止追杀你了喵！",
                                     )
                                 elif HasKeyWords(
                                     raw_message,
@@ -572,7 +603,7 @@ async def echo(websocket, message):
                                     await say(
                                         websocket,
                                         group_id,
-                                        f"{get_user_name(at_id, group_id)},你成为本群的GAY了喵。",
+                                        f"{get_user_name(at_id, group_id)},GAY追杀令喵!!!!",
                                     )
                                 elif HasKeyWords(
                                     raw_message, ["你不是GAY", "你不是gay"]
@@ -585,7 +616,33 @@ async def echo(websocket, message):
                                     await say(
                                         websocket,
                                         group_id,
-                                        f"{get_user_name(at_id, group_id)},你不再是本群的GAY了喵。",
+                                        f"{get_user_name(at_id, group_id)},GAY追杀令取消了喵。",
+                                    )
+                                elif HasKeyWords(raw_message, ["哈气"]) and IsAdmin(
+                                    user_id, group_id
+                                ):
+                                    setting = load_setting()
+                                    if at_id not in setting["huffing"]:
+                                        setting["huffing"].append(at_id)
+                                        dump_setting(setting)
+                                        setting = load_setting()
+                                    await say(
+                                        websocket,
+                                        group_id,
+                                        f"{get_user_name(at_id, group_id)},乐可要追杀你了喵！",
+                                    )
+                                elif HasKeyWords(raw_message, ["不要哈气"]) and IsAdmin(
+                                    user_id, group_id
+                                ):
+                                    setting = load_setting()
+                                    while at_id in setting["huffing"]:
+                                        setting["huffing"].remove(at_id)
+                                    dump_setting(setting)
+                                    setting = load_setting()
+                                    await say(
+                                        websocket,
+                                        group_id,
+                                        f"{get_user_name(at_id, group_id)},乐可停止追杀你了喵！",
                                     )
                             # 管理艾特乐可
                             elif (
@@ -1565,10 +1622,16 @@ async def echo(websocket, message):
                                             await daily_paper(
                                                 websocket, user_id, group_id
                                             )
-                                        elif("随机猫猫动图"  in message["message"][0]["data"]["text"]):
-                                            await radom_cat_gif(websocket,group_id)
-                                        elif("随机猫猫" in message["message"][0]["data"]["text"]):
-                                            await radom_cat(websocket,group_id)
+                                        elif (
+                                            "随机猫猫动图"
+                                            in message["message"][0]["data"]["text"]
+                                        ):
+                                            await radom_cat_gif(websocket, group_id)
+                                        elif (
+                                            "随机猫猫"
+                                            in message["message"][0]["data"]["text"]
+                                        ):
+                                            await radom_cat(websocket, group_id)
                                         elif HasKeyWords(raw_message, ["切换模型"]):
                                             now_model = switch_model()
                                             setting = load_setting()
@@ -1747,19 +1810,28 @@ async def echo(websocket, message):
                                         ) and not HasKeyWords(raw_message, ["可乐"]):
                                             await cute3(websocket, group_id)
                                         else:
-                                            if group_id not in load_setting()["power_group"]:
+                                            if (
+                                                group_id
+                                                not in load_setting()["power_group"]
+                                            ):
                                                 await chat(
                                                     websocket,
                                                     user_id,
                                                     group_id,
                                                     message_id,
-                                                    message["message"][0]["data"]["text"],
+                                                    message["message"][0]["data"][
+                                                        "text"
+                                                    ],
                                                 )
                                     elif HasAllKeyWords(
                                         raw_message, ["乐可", "可爱"]
                                     ) and not HasKeyWords(raw_message, ["可乐"]):
                                         await cute3(websocket, group_id)
-                                    elif HasKeyWords(raw_message, ["乐可"]) and group_id not in load_setting()["power_group"]:
+                                    elif (
+                                        HasKeyWords(raw_message, ["乐可"])
+                                        and group_id
+                                        not in load_setting()["power_group"]
+                                    ):
                                         sender_name = get_user_name(user_id, group_id)
                                         await chat(
                                             websocket,
@@ -1789,7 +1861,11 @@ async def echo(websocket, message):
                                         )
                                     )
                                 case _:
-                                    if HasKeyWords(raw_message, ["乐可"]) and group_id not in load_setting()["power_group"]:
+                                    if (
+                                        HasKeyWords(raw_message, ["乐可"])
+                                        and group_id
+                                        not in load_setting()["power_group"]
+                                    ):
                                         sender_name = get_user_name(user_id, group_id)
                                         await chat(
                                             websocket,

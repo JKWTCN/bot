@@ -100,6 +100,28 @@ async def BoringReply(websocket, user_id: int, group_id: int, message_id: int):
     await websocket.send(json.dumps(payload))
 
 
+# 哈气的回复
+async def HuffingReplay(websocket, user_id: int, group_id: int, message_id: int):
+    path = "res/huffing.gif"
+    with open(path, "rb") as image_file:
+        image_data = image_file.read()
+    image_base64 = base64.b64encode(image_data)
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "reply", "data": {"id": message_id}},
+                {
+                    "type": "image",
+                    "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
 # 飞起来的回复
 async def FlyReply(websocket, user_id: int, group_id: int, message_id: int):
     path = "res/fly.gif"
