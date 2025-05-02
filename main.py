@@ -202,6 +202,9 @@ async def echo(websocket, message):
                             group_id,
                             message["raw_message"],
                         )
+                        # 是其他机器人就拉闸,避免无限循环。
+                        if user_id in dump_setting()["other_bots"]:
+                            return
                         AddChatRecord(user_id, group_id)
                         logging.info(log)
 
