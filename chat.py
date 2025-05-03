@@ -629,12 +629,7 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
         re_text = "呜呜不太理解呢喵。"
     while "\n" in re_text:
         re_text = re_text.replace("\n", "")
-    await ReplySay(
-        websocket,
-        group_id,
-        message_id,
-        "{},{}".format(get_user_name(user_id, group_id), re_text),
-    )
+    await ReplySay(websocket, group_id, message_id, re_text)
 
 
 # chat内容转发给大模型

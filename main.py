@@ -202,12 +202,12 @@ async def echo(websocket, message):
                             group_id,
                             message["raw_message"],
                         )
-                        # 是其他机器人就拉闸,避免无限循环。
-                        if user_id in dump_setting()["other_bots"]:
-                            return
+                        # # 是其他机器人就拉闸,避免无限循环。
+                        # if user_id in dump_setting()["other_bots"]:
+                        #     print(f"机器人ID:{user_id},其他机器人不理睬。")
+                        #     return
                         AddChatRecord(user_id, group_id)
                         logging.info(log)
-
                         for k in message["message"]:
                             if k["type"] == "json":
                                 # qq卡片消息解析
@@ -277,6 +277,16 @@ async def echo(websocket, message):
                                 },
                             }
                             await websocket.send(json.dumps(payload))
+                         # 5% 的概率回复(胡言乱语)
+                        if random.random() < 0.05:
+                            sender_name = get_user_name(user_id, group_id)
+                            await chat(
+                                            websocket,
+                                            user_id,
+                                            group_id,
+                                            message_id,
+                                            raw_message,
+                                        )
                         # 艾特事件处理
                         if "[CQ:at,qq=" in message["raw_message"]:
                             at_id = re.findall(
@@ -2342,62 +2352,43 @@ logging.basicConfig(
     datefmt=DATE_FORMAT,
     encoding="utf-8",
 )
-# asyncio.run(main())
-# 全局队列，用于存储接收到的消息和对应的WebSocket连接
-message_queue = queue.Queue()
 
-
-async def handle_client(websocket, path):
+async def handle_client(websocket):
     """
-    WebSocket服务端处理函数，接收客户端消息并存入队列
+    处理客户端连接的函数
+    注意：新版本的 websockets 库不再需要 path 参数
     """
-    async for message in websocket:
-        # 将消息和对应的WebSocket连接放入队列
-        message_queue.put((message, websocket))
-
-
-def command_processor(loop):
-    """
-    命令处理线程函数，从队列取出消息处理并返回结果
-    """
-    while True:
-        # 阻塞获取队列中的消息和WebSocket对象
-        message, websocket = message_queue.get()
-
-        try:
-            # 将发送任务提交到主事件循环
-            # asyncio.run_coroutine_threadsafe(websocket.send(processed_message), loop)
-            asyncio.run_coroutine_threadsafe(echo(websocket, message), loop)
-        except Exception as e:
-            print(f"发送失败: {e}")
-            logging.error(f"发送失败: {e}")
-        finally:
-            message_queue.task_done()
-
-
-async def main():
-    """
-    主协程，启动WebSocket服务器
-    """
-    async with websockets.serve(handle_client, "0.0.0.0", 27431):
-        print("WebSocket服务器已启动")
-        await asyncio.Future()
-
-
-if __name__ == "__main__":
-    # 获取主事件循环
-    main_loop = asyncio.get_event_loop()
-
-    # 启动命令处理线程
-    processor_thread = threading.Thread(
-        target=command_processor, args=(main_loop,), daemon=True
-    )
-    processor_thread.start()
+    client_ip = websocket.remote_address[0]
+    print(f"客户端 {client_ip} 已连接")
 
     try:
-        # 启动主事件循环
-        main_loop.run_until_complete(main())
-    except KeyboardInterrupt:
-        print("服务器关闭")
-    finally:
-        main_loop.close()
+        async for message in websocket:
+            # 使用 asyncio.create_task 来并发处理消息
+            asyncio.create_task(process_message(message, websocket))
+    except websockets.exceptions.ConnectionClosed:
+        print(f"客户端 {client_ip} 断开连接")
+    except Exception as e:
+        print(f"处理客户端 {client_ip} 时发生错误: {e}")
+
+
+async def process_message(message, websocket):
+    try:
+        await echo(websocket, message)
+    except Exception as e:
+        print(f"处理消息时出错: {e}")
+
+async def main():
+    # 启动WebSocket服务器
+    async with websockets.serve(
+        handle_client,
+        "localhost",
+        27431,
+        ping_interval=None,  # 禁用自动ping/pong以简化示例
+    ):
+        print("WebSocket 服务器已启动，监听 ws://localhost:27432")
+
+        # 保持服务器运行
+        await asyncio.Future()  # 永久运行
+
+if __name__ == "__main__":
+    asyncio.run(main())
