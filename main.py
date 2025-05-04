@@ -1865,7 +1865,6 @@ async def echo(websocket, message):
                                             rev_id,
                                         )
                                     )
-
                                     logging.info(
                                         "{}({})@ {}".format(
                                             sender_name,
@@ -1946,7 +1945,7 @@ async def echo(websocket, message):
                             await SayPrivte(
                                 websocket,
                                 message["user_id"],
-                                ReturnChatText(raw_message),
+                                ReturnChatText(raw_message,user_id,group_id),
                             )
 
             case "notice":

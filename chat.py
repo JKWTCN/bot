@@ -563,55 +563,54 @@ def chat_thread(websocket, user_id: int, group_id: int, message_id: int, text: s
         logger.info("多线程创建失败")
 
 
-# chat内容转发给大模型
 async def chat(websocket, user_id: int, group_id: int, message_id: int, text: str):
     port = "11434"
     url = f"http://localhost:{port}/api/chat"
     model = load_setting()["model"]
     headers = {"Content-Type": "application/json"}
-    data = {
-        "model": model,  # 模型选择
-        "options": {
-            "temperature": 1.0  # 为0表示不让模型自由发挥，输出结果相对较固定，>0的话，输出的结果会比较放飞自我
-        },
-        "stream": False,  # 流式输出
-        "messages": [
-            {
-                "role": "system",
-                "content": "你叫乐可，现在你将模仿一只傲娇的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上“喵”",
-            },
-            {
-                "role": "User",
-                "content": text,
-            },
-        ],
-    }
-    if model == "qwen3:8b":
-        data = {
-            "model": model,  # 模型选择
-            "options": {
-                "temperature": 1.0  # 为0表示不让模型自由发挥，输出结果相对较固定，>0的话，输出的结果会比较放飞自我
-            },
-            "stream": False,  # 流式输出
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "/nothink 你叫乐可，现在你将模仿一只傲娇的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上“喵”",
-                },
-                {
-                    "role": "User",
-                    "content": f"/nothink {text}",
-                },
-            ],
+
+    # 获取上下文消息
+    context_messages = get_chat_context(user_id, group_id)
+
+    # 构建基础消息结构
+    base_messages = [
+        {
+            "role": "system",
+            "content": "你叫乐可，现在你将模仿一只傲娇的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上'喵'",
         }
+    ]
+
+    # 添加上下文消息
+    if context_messages:
+        base_messages.extend(context_messages)
+
+    data = {
+        "model": model,
+        "options": {"temperature": 1.0},
+        "stream": False,
+        "messages": base_messages,
+    }
+
+    # 特殊模型处理
+    if model == "qwen3:8b":
+        for msg in data["messages"]:
+            if msg["role"] == "system":
+                msg["content"] = "/nothink " + msg["content"]
+            elif msg["role"] == "user":
+                msg["content"] = "/nothink " + msg["content"]
+
     try:
+        print(data)
         response = requests.post(url, json=data, headers=headers, timeout=300)
         res = response.json()
+
+        # 记录日志
         logger.info(
             "(AI)乐可在{}({})说:{}".format(
                 GetGroupName(group_id), group_id, res["message"]["content"]
             )
         )
+
         if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
             re_text = res["message"]["content"]
         else:
@@ -623,59 +622,94 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
                 re_text = f"乐可的思考过程喵：{match[0][0]}经过深思熟虑喵，乐可决定回复你：{match[0][1]}"
             else:
                 re_text = match[0][1]
-
     except:
         logger.info("连接超时")
         re_text = "呜呜不太理解呢喵。"
+
+    # 清理回复中的换行符
     while "\n" in re_text:
         re_text = re_text.replace("\n", "")
+
     await ReplySay(websocket, group_id, message_id, re_text)
 
 
-# chat内容转发给大模型
-def ReturnChatText(text: str):
+def get_chat_context(user_id: int, group_id: int, limit: int = 5) -> list:
+    """从数据库中获取最近的聊天记录作为上下文"""
+    conn = sqlite3.connect("bot.db")
+    cursor = conn.cursor()
+
+    # 获取最近的几条聊天记录（包括用户和机器人的消息）
+    cursor.execute(
+        """
+        SELECT sender_nickname, raw_message 
+        FROM group_message 
+        WHERE group_id = ? AND (user_id = ? OR user_id = ?)
+        ORDER BY time DESC 
+        LIMIT ?
+    """,
+        (group_id, user_id, load_setting().get("self_id", 0), limit),
+    )
+
+    messages = cursor.fetchall()
+    conn.close()
+
+    # 将消息转换为适合模型输入的格式
+    context_messages = []
+    for nickname, message in reversed(messages):
+        role = "assistant" if nickname == "乐可" else "user"
+        context_messages.append({"role": role, "content": message})
+
+    return context_messages
+
+
+def ReturnChatText(text: str, user_id: int, group_id: int):
     port = "11434"
     url = f"http://localhost:{port}/api/chat"
     model = load_setting()["model"]
     headers = {"Content-Type": "application/json"}
-    data = {
-        "model": model,  # 模型选择
-        "options": {
-            "temperature": 1.0  # 为0表示不让模型自由发挥，输出结果相对较固定，>0的话，输出的结果会比较放飞自我
-        },
-        "stream": False,  # 流式输出
-        "messages": [
-            {
-                "role": "system",
-                "content": "你叫乐可，现在你将模仿一只傲娇的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上“喵”",
-            },
-            {
-                "role": "User",
-                "content": text,
-            },
-        ],
-    }
-    if model == "qwen3:8b":
-        data = {
-            "model": model,  # 模型选择
-            "options": {
-                "temperature": 1.0  # 为0表示不让模型自由发挥，输出结果相对较固定，>0的话，输出的结果会比较放飞自我
-            },
-            "stream": False,  # 流式输出
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "/nothink 你叫乐可，现在你将模仿一只傲娇的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上“喵”",
-                },
-                {
-                    "role": "User",
-                    "content": f"/nothink {text}",
-                },
-            ],
+
+    # 获取上下文消息
+    context_messages = get_chat_context(user_id, group_id)
+
+    # 构建基础消息结构
+    base_messages = [
+        {
+            "role": "system",
+            "content": "你叫乐可，现在你将模仿一只傲娇的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上'喵'",
         }
+    ]
+
+    # 添加上下文消息
+    if context_messages:
+        base_messages.extend(context_messages)
+
+    # 添加当前消息
+    # base_messages.append(
+    #     {
+    #         "role": "user",
+    #         "content": text,
+    #     }
+    # )
+
+    data = {
+        "model": model,
+        "options": {"temperature": 1.0},
+        "stream": False,
+        "messages": base_messages,
+    }
+    # print(data)
+    # 特殊模型处理
+    if model == "qwen3:8b":
+        for msg in data["messages"]:
+            if msg["role"] == "system":
+                msg["content"] = "/nothink " + msg["content"]
+            elif msg["role"] == "user":
+                msg["content"] = "/nothink " + msg["content"]
+
     try:
         response = requests.post(url, json=data, headers=headers, timeout=300)
         res = response.json()
+
         if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
             re_text = res["message"]["content"]
         else:
@@ -690,8 +724,11 @@ def ReturnChatText(text: str):
     except:
         logger.info("连接超时")
         re_text = "呜呜不太理解呢喵。"
+
+    # 清理回复中的换行符
     while "\n" in re_text:
         re_text = re_text.replace("\n", "")
+
     return re_text
 
 
