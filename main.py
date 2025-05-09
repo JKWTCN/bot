@@ -277,16 +277,10 @@ async def echo(websocket, message):
                                 },
                             }
                             await websocket.send(json.dumps(payload))
-                         # 5% 的概率回复(胡言乱语)
+                        # 5% 的概率回复(胡言乱语)
                         if random.random() < 0.05:
                             sender_name = get_user_name(user_id, group_id)
-                            await chat(
-                                            websocket,
-                                            user_id,
-                                            group_id,
-                                            message_id,
-                                            raw_message,
-                                        )
+                            await chat(websocket, user_id, group_id, message_id, "")
                         # 艾特事件处理
                         if "[CQ:at,qq=" in message["raw_message"]:
                             at_id = re.findall(
@@ -671,9 +665,7 @@ async def echo(websocket, message):
                                     logging.info(
                                         f"{group_id}:{sender_name}({user_id})全体禁言"
                                     )
-                                    await websocket.send(
-                                        json.dumps(SetGroupWholeBan(group_id))
-                                    )
+                                    await SetGroupWholeBan(websocket, group_id)
                                 elif HasAllKeyWords(
                                     message["raw_message"], ["开启", "退群提醒"]
                                 ):
@@ -757,7 +749,9 @@ async def echo(websocket, message):
                                         message["raw_message"], ["[CQ:image"]
                                     ):
                                         await say(
-                                            f"{get_user_name(user_id, group_id)},暂时不支持图片喵。"
+                                            websocket,
+                                            group_id,
+                                            f"{get_user_name(user_id, group_id)},暂时不支持图片喵。",
                                         )
                                     else:
                                         match = re.search(
@@ -786,11 +780,18 @@ async def echo(websocket, message):
                                         websocket, user_id, group_id
                                     )
                                 else:
-                                    await say(
+                                    await chat(
                                         websocket,
+                                        user_id,
                                         group_id,
-                                        f"{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
+                                        message_id,
+                                        "请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
                                     )
+                                    # await say(
+                                    #     websocket,
+                                    #     group_id,
+                                    #     f"{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
+                                    # )
                             elif at_id == setting["bot_id"]:
                                 if HasKeyWords(
                                     message["raw_message"],
@@ -800,7 +801,9 @@ async def echo(websocket, message):
                                         message["raw_message"], ["[CQ:image"]
                                     ):
                                         await say(
-                                            f"{get_user_name(user_id, group_id)},暂时不支持图片喵。"
+                                            websocket,
+                                            group_id,
+                                            f"{get_user_name(user_id, group_id)},暂时不支持图片喵。",
                                         )
                                     else:
                                         match = re.search(
@@ -829,11 +832,18 @@ async def echo(websocket, message):
                                         websocket, user_id, group_id
                                     )
                                 else:
-                                    await say(
+                                    await chat(
                                         websocket,
+                                        user_id,
                                         group_id,
-                                        f"{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
+                                        message_id,
+                                        "请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
                                     )
+                                    # await say(
+                                    #     websocket,
+                                    #     group_id,
+                                    #     f"{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
+                                    # )
                         if "CQ:reply,id=" in message["raw_message"]:
                             await is_comment_write(
                                 websocket, user_id, group_id, message["raw_message"]
@@ -1043,7 +1053,7 @@ async def echo(websocket, message):
                                             message["message"][0]["data"]["text"],
                                             ["早安", "早上好", "早"],
                                         )
-                                        and datetime.datetime.now().hour < 9
+                                        and datetime.datetime.now().hour < 10
                                         and datetime.datetime.now().hour >= 6
                                     ):
                                         await SayImgReply(
@@ -1052,7 +1062,7 @@ async def echo(websocket, message):
                                             group_id,
                                             message_id,
                                             "早上好喵！",
-                                            "res\good_morning.jpg",
+                                            "res/good_morning.jpg",
                                         )
 
                                     if message["message"][0]["data"]["text"].startswith(
@@ -1496,7 +1506,7 @@ async def echo(websocket, message):
                                                     message["message_id"],
                                                     "再见,再也不见。",
                                                 )
-                                            elif BotIsAdmin() and IsAdmin(
+                                            elif BotIsAdmin(group_id) and IsAdmin(
                                                 user_id, group_id
                                             ):
                                                 await ReplySay(
@@ -1781,7 +1791,9 @@ async def echo(websocket, message):
                                                 ["[CQ:image"],
                                             ):
                                                 await say(
-                                                    f"{get_user_name(user_id, group_id)},暂时不支持图片喵。"
+                                                    websocket,
+                                                    group_id,
+                                                    f"{get_user_name(user_id, group_id)},暂时不支持图片喵。",
                                                 )
                                             else:
                                                 match = re.search(
@@ -1832,9 +1844,7 @@ async def echo(websocket, message):
                                                     user_id,
                                                     group_id,
                                                     message_id,
-                                                    message["message"][0]["data"][
-                                                        "text"
-                                                    ],
+                                                    "",
                                                 )
                                     elif HasAllKeyWords(
                                         raw_message, ["乐可", "可爱"]
@@ -1847,11 +1857,7 @@ async def echo(websocket, message):
                                     ):
                                         sender_name = get_user_name(user_id, group_id)
                                         await chat(
-                                            websocket,
-                                            user_id,
-                                            group_id,
-                                            message_id,
-                                            raw_message,
+                                            websocket, user_id, group_id, message_id, ""
                                         )
 
                                 case "at":
@@ -1880,11 +1886,7 @@ async def echo(websocket, message):
                                     ):
                                         sender_name = get_user_name(user_id, group_id)
                                         await chat(
-                                            websocket,
-                                            user_id,
-                                            group_id,
-                                            message_id,
-                                            raw_message,
+                                            websocket, user_id, group_id, message_id, ""
                                         )
                     case "private":
                         print(
@@ -1945,7 +1947,7 @@ async def echo(websocket, message):
                             await SayPrivte(
                                 websocket,
                                 message["user_id"],
-                                ReturnChatText(raw_message,user_id,group_id),
+                                ReturnChatText(raw_message, user_id, group_id),
                             )
 
             case "notice":
@@ -2199,9 +2201,12 @@ async def echo(websocket, message):
                         ):
                             if not IsAdmin(user.user_id, user.group_id):
                                 print(
-                                    "{}({}),".format(
+                                    "{}({})因{}个月未活跃被请出群聊{}({}),最后发言时间:{}".format(
                                         name,
                                         user.user_id,
+                                        timeout / 2592000,
+                                        GetGroupName(user.group_id),
+                                        user.group_id,
                                         time.strftime(
                                             "%Y-%m-%d %H:%M:%S",
                                             time.localtime(user.last_sent_time),
@@ -2352,6 +2357,7 @@ logging.basicConfig(
     encoding="utf-8",
 )
 
+
 async def handle_client(websocket):
     """
     处理客户端连接的函数
@@ -2376,6 +2382,7 @@ async def process_message(message, websocket):
     except Exception as e:
         print(f"处理消息时出错: {e}")
 
+
 async def main():
     # 启动WebSocket服务器
     async with websockets.serve(
@@ -2388,6 +2395,7 @@ async def main():
 
         # 保持服务器运行
         await asyncio.Future()  # 永久运行
+
 
 if __name__ == "__main__":
     asyncio.run(main())

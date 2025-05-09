@@ -146,6 +146,7 @@ async def KickMemberAndRejectAddRequest(websocket, user_id: int, group_id: int):
 async def poor_point(websocket, user_id: int, group_id: int):
     sender_name = get_user_name(user_id, group_id)
     now_point = bot_database.find_point(user_id)
+    payload={}
     if now_point <= 0:
         conn = sqlite3.connect("bot.db")
         cur = conn.cursor()

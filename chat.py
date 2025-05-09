@@ -497,7 +497,7 @@ def ColdChat(group: dict) -> str:
         "messages": [
             {
                 "role": "system",
-                "content": "你叫乐可，现在你将模仿一只傲娇的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上“喵”",
+                "content": "你叫乐可，现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上“喵”",
             },
             {
                 "role": "User",
@@ -515,7 +515,7 @@ def ColdChat(group: dict) -> str:
             "messages": [
                 {
                     "role": "system",
-                    "content": "/nothink 你叫乐可，现在你将模仿一只傲娇的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上“喵”",
+                    "content": "/nothink 你叫乐可，现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上“喵”",
                 },
                 {
                     "role": "User",
@@ -576,7 +576,7 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
     base_messages = [
         {
             "role": "system",
-            "content": "你叫乐可，现在你将模仿一只傲娇的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上'喵'",
+            "content": "你叫乐可，现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上'喵'",
         }
     ]
 
@@ -630,6 +630,8 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
     while "\n" in re_text:
         re_text = re_text.replace("\n", "")
 
+    if text != "":
+        re_text += "\n\n" + text
     await ReplySay(websocket, group_id, message_id, re_text)
 
 
@@ -675,7 +677,7 @@ def ReturnChatText(text: str, user_id: int, group_id: int):
     base_messages = [
         {
             "role": "system",
-            "content": "你叫乐可，现在你将模仿一只傲娇的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上'喵'",
+            "content": "你叫乐可，现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上'喵'",
         }
     ]
 
