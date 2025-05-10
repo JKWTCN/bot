@@ -195,8 +195,7 @@ def GetColdGroupTimes(user_id: int, group_id: int):
 
 # 获取群聊是否开启退群提醒
 def GetGroupDecreaseMessageStatus(group_id: int):
-    setting = load_setting()
-    if group_id in setting["group_decrease_reply_list"]:
+    if get_config("group_decrease_reminder", group_id):
         return True
     else:
         return False

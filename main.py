@@ -995,6 +995,62 @@ async def echo(websocket, message):
                                 case "text":
                                     # print(message["message"][0]["data"]["text"])
                                     if (
+                                        user_id in get_config("kotomitako", group_id)
+                                        and (
+                                            "喵" not in message["raw_message"]
+                                            or (
+                                                "我" in message["raw_message"]
+                                                and "咱" not in message["raw_message"]
+                                            )
+                                        )
+                                        and "[CQ:image" not in message["raw_message"]
+                                        and BotIsAdmin(group_id)
+                                        and HasChinese(message["raw_message"])
+                                    ):
+                                        await ban_new(
+                                            websocket,
+                                            user_id,
+                                            group_id,
+                                            60,
+                                        )
+                                        if (
+                                            "我" in message["raw_message"]
+                                            and "咱" not in message["raw_message"]
+                                            and "喵" in message["raw_message"]
+                                        ):
+                                            await say(
+                                                websocket,
+                                                group_id,
+                                                "{},你作为本群的香香软软小南梁，因为不用咱自称被禁言了喵。".format(
+                                                    sender_name
+                                                ),
+                                            )
+                                        elif (
+                                            "咱" in message["raw_message"]
+                                            and "喵" not in message["raw_message"]
+                                        ):
+                                            await say(
+                                                websocket,
+                                                group_id,
+                                                "{},你作为本群的香香软软小南梁，因为说话不带喵被禁言了喵。".format(
+                                                    sender_name
+                                                ),
+                                            )
+                                        else:
+                                            await say(
+                                                websocket,
+                                                group_id,
+                                                "{},你作为本群的香香软软小南梁，因为说话不用咱自称而且不带喵被禁言了喵。".format(
+                                                    sender_name
+                                                ),
+                                            )
+                                        await ban_new(
+                                            websocket,
+                                            user_id,
+                                            group_id,
+                                            0,
+                                        )
+                                    elif (
                                         user_id in get_config("catgirl", group_id)
                                         and "喵" not in message["raw_message"]
                                         and "[CQ:image" not in message["raw_message"]
@@ -1020,6 +1076,7 @@ async def echo(websocket, message):
                                             group_id,
                                             0,
                                         )
+
                                     if (
                                         BotIsAdmin(group_id)
                                         and get_config("cat_day_date", group_id) != -1
@@ -2057,10 +2114,8 @@ async def echo(websocket, message):
                     case "group_decrease":
                         user_id = message["user_id"]
                         group_id = message["group_id"]
-                        if (
-                            message["sub_type"] == "leave"
-                            and BotIsAdmin(group_id)
-                            and group_id == setting["admin_group_main"]
+                        if message["sub_type"] == "leave" and get_config(
+                            "group_decrease_reminder", group_id
                         ):
                             print(
                                 "{}:{}离开了群{}。\n".format(
@@ -2069,12 +2124,12 @@ async def echo(websocket, message):
                             )
                             sender_name = get_user_name(user_id, group_id)
                             group_name = GetGroupName(group_id)
-                            add_unwelcome(user_id, message["time"], group_id)
+                            # add_unwelcome(user_id, message["time"], group_id)
                             text = [
                                 "十个小兵人，外出去吃饭；\n一个被呛死，还剩九个人。\n九个小兵人，熬夜熬得深；\n一个睡过头，还剩八个人。\n八个小兵人，动身去德文；\n一个要留下，还剩七个人。\n七个小兵人，一起去砍柴；\n一个砍自己，还剩六个人。\n六个小兵人，无聊玩蜂箱；\n一个被蛰死，还剩五个人。\n五个小兵人，喜欢学法律；\n一个当法官，还剩四个人。\n四个小兵人，下海去逞能；\n一个葬鱼腹，还剩三个人。\n三个小兵人，进了动物园；\n一个遭熊袭，还剩两个人。\n两个小兵人，外出晒太阳；\n一个被晒焦，还剩一个人。\n这个小兵人，孤单又影只；\n投缳上了吊，一个也没剩。",
                                 "天要下雨，娘要嫁人，由他去吧。",
+                                "祝他成功。",
                             ]
-
                             await say(
                                 websocket,
                                 group_id,
@@ -2085,17 +2140,6 @@ async def echo(websocket, message):
                                     group_id,
                                     random.choice(text),
                                 ),
-                            )
-                            logging.info(
-                                f"{sender_name}({user_id})离开了群{group_name}({group_id})"
-                            )
-                        elif GetGroupDecreaseMessageStatus(group_id):
-                            sender_name = get_user_name(user_id, group_id)
-                            group_name = GetGroupName(group_id)
-                            await say(
-                                websocket,
-                                group_id,
-                                f"{sender_name}({user_id})离开了群{group_name}({group_id})。天要下雨，娘要嫁人，由他去吧。",
                             )
                             logging.info(
                                 f"{sender_name}({user_id})离开了群{group_name}({group_id})"
