@@ -314,8 +314,8 @@ async def echo(websocket, message):
                                 },
                             }
                             await websocket.send(json.dumps(payload))
-                        # 5% 的概率回复(胡言乱语)
-                        if random.random() < 0.05:
+                        # 1% 的概率回复(胡言乱语)
+                        if random.random() < 0.01:
                             sender_name = get_user_name(user_id, group_id)
                             await chat(websocket, user_id, group_id, message_id, "")
                         # 艾特事件处理
@@ -1018,9 +1018,10 @@ async def echo(websocket, message):
                                             and "咱" not in message["raw_message"]
                                             and "喵" in message["raw_message"]
                                         ):
-                                            await say(
+                                            await ReplySay(
                                                 websocket,
                                                 group_id,
+                                                message_id,
                                                 "{},你作为本群的香香软软小南梁，因为不用咱自称被禁言了喵。".format(
                                                     sender_name
                                                 ),
@@ -1029,17 +1030,19 @@ async def echo(websocket, message):
                                             "咱" in message["raw_message"]
                                             and "喵" not in message["raw_message"]
                                         ):
-                                            await say(
+                                            await ReplySay(
                                                 websocket,
                                                 group_id,
+                                                message_id,
                                                 "{},你作为本群的香香软软小南梁，因为说话不带喵被禁言了喵。".format(
                                                     sender_name
                                                 ),
                                             )
                                         else:
-                                            await say(
+                                            await ReplySay(
                                                 websocket,
                                                 group_id,
+                                                message_id,
                                                 "{},你作为本群的香香软软小南梁，因为说话不用咱自称而且不带喵被禁言了喵。".format(
                                                     sender_name
                                                 ),
@@ -1063,9 +1066,10 @@ async def echo(websocket, message):
                                             group_id,
                                             60,
                                         )
-                                        await say(
+                                        await ReplySay(
                                             websocket,
                                             group_id,
+                                            message_id,
                                             "{},你因为说话不带喵被禁言了喵。".format(
                                                 sender_name
                                             ),
