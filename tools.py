@@ -236,7 +236,8 @@ def ShowSystemInfoTableByBase64():
     import psutil
     import platform
 
-    plt.rcParams["font.sans-serif"] = ["Unifont"]  # 设置字体
+    plt.rcParams["font.sans-serif"] = ["AR PL UKai CN"]
+    # plt.rcParams["font.sans-serif"] = ["Unifont"]  # 设置字体
     # plt.rcParams["font.sans-serif"] = ["SimHei"]  # 设置字体
     plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
     data = {"项目": [], "值": []}
@@ -332,6 +333,7 @@ async def GetSystemInfoTable(websocket, group_id: int):
     )
     await websocket.send(json.dumps(payload))
 
+
 def getTemper():
     """
     获取内置温度传感器温度
@@ -339,11 +341,13 @@ def getTemper():
     """
     import re
     import subprocess
-    command="sensors"
+
+    command = "sensors"
     result = subprocess.check_output(command, shell=True, text=True)
-    pattern = r'\d+\.\d+'
+    pattern = r"\d+\.\d+"
     matches = re.findall(pattern, str(result))
-    return float(matches[0]),float(matches[1]),float(matches[2])
+    return float(matches[0]), float(matches[1]), float(matches[2])
+
 
 def get_now_week() -> int:
     return int(time.strftime("%W"))

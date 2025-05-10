@@ -2,18 +2,63 @@ import json
 import os
 
 
+# 默认配置
 default_configs = {
-    "catgirl": [],
-    "blacklist": [],
-    "no_reply_list": [],
-    "cold_group": False,
-    "cold_group_num_out": 5,
-    "cold_group_time_out": 300,
-    "group_decrease_reminder": True,
-    "cat_day_switch": False,
-    "cat_day_date": 25,
-    "cat_day_ignore_admin": True,
+    "catgirl": [],  # 猫娘群友
+    "kotomitako": [],  # 香香软软小南梁群友
+    "blacklist": [],  # 黑名单群友
+    "no_reply_list": [],  # 不回复的群友
+    "cold_group": False,  # 冷群回复开关
+    "cold_group_num_out": 5,  # 多少句触发冷群
+    "cold_group_time_out": 300,  # 多久触发冷群
+    "group_decrease_reminder": True,  # 退群提醒
+    "cat_day_date": -1,  # 猫猫日日期，-1表示不设置
+    "cat_day_ignore_admin": True,  # 猫猫日忽略管理员
+    "kick_time_sec": -1,  # 踢掉多久没发言的群友，-1表示不踢
 }
+
+
+def set_config(
+    config_name,
+    value,
+    group_id,
+):
+    """
+    设置配置项的值并更新JSON配置文件
+    :param config_name: 要设置的配置项名称
+    :param value: 要设置的值
+    :param group_id: 群组ID
+    """
+    config_file = f"groups/{group_id}/config.json"
+
+    # 如果配置目录不存在则创建
+    if not os.path.exists(f"groups/{group_id}"):
+        os.makedirs(f"groups/{group_id}")
+
+    # 如果配置文件不存在则创建空字典
+    if not os.path.exists(config_file):
+        with open(config_file, "w") as f:
+            json.dump({}, f)
+
+    try:
+        # 读取现有配置
+        with open(config_file, "r") as f:
+            config = json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        config = {}
+
+    # 更新配置值
+    config[config_name] = value
+
+    # 写回配置文件
+    try:
+        with open(config_file, "w") as f:
+            json.dump(config, f, indent=4)
+    except Exception as e:
+        print(f"无法更新配置文件: {e}")
+        return False
+
+    return True
 
 
 def get_config(
@@ -58,22 +103,8 @@ import json
 import os
 from typing import Any, Union
 
-# 默认配置
-default_configs = {
-    "catgirl": [],
-    "blacklist": [],
-    "no_reply_list": [],
-    "cold_group": False,
-    "cold_group_num_out": 5,
-    "cold_group_time_out": 300,
-    "group_decrease_reminder": True,
-    "cat_day_switch": False,
-    "cat_day_date": 25,
-    "cat_day_ignore_admin": True,
-}
 
-
-def manage_config(config_str: str, group_id: int) -> Any:
+def manage_config(config_str: str, group_id: int) -> bool:
     """
     管理配置文件，支持对不同类型的配置项进行不同操作
 
@@ -83,114 +114,72 @@ def manage_config(config_str: str, group_id: int) -> Any:
     """
     # 解析操作字符串
     parts = config_str.split(".")
-    if not parts or not parts[0].startswith("."):
-        raise ValueError("无效的操作格式，应以 .config_name 开头")
+    print(parts)
+    if parts[0] != "":
+        return (False, None)
+    optionType = parts[1]
+    parts = parts[2].split(" ")
+    if len(parts) == 1:
+        optionCommand = parts[0]
+        oppationArg = None
+    else:
+        optionCommand = parts[0]
+        oppationArg = parts[1]
+    print(f"设置项:{optionType} 设置命令:{optionCommand} 设置参数:{oppationArg}")
+    oldArg = get_config(optionType, group_id)
+    if oldArg == None:
+        return (False, -1)
+    # print(type(oldArg))
+    match type(oldArg):
+        case _ if isinstance(oldArg, list):
+            match optionCommand:
+                case "get":
+                    return (True, oldArg)
+                case "append":
+                    oppationArg = int(oppationArg)
+                    if oppationArg not in oldArg:
+                        oldArg.append(oppationArg)
+                        set_config(optionType, oldArg, group_id)
+                    return (True, oldArg)
+                case "remove":
+                    oppationArg = int(oppationArg)
+                    if oppationArg in oldArg:
+                        oldArg.remove(oppationArg)
+                        set_config(optionType, oldArg, group_id)
+                    return (True, oldArg)
+                case _:
+                    return (False, -2)
+        case _ if isinstance(oldArg, bool):
+            match optionCommand:
+                case "set":
+                    oppationArg = bool(int(oppationArg))
+                    oldArg = oppationArg
+                    set_config(optionType, oldArg, group_id)
+                    return (True, oldArg)
+                case "get":
+                    return (True, oldArg)
+                case _:
+                    return (False, -2)
+        case _ if isinstance(oldArg, int):
+            match optionCommand:
+                case "set":
+                    oppationArg = int(oppationArg)
+                    oldArg = oppationArg
+                    set_config(optionType, oldArg, group_id)
+                    return (True, oldArg)
+                case "get":
+                    return (True, oldArg)
+                case _:
+                    return (False, -2)
 
-    # 提取配置项名称和操作
-    config_path = parts[0][1:]  # 去掉开头的点
-    operation = parts[1] if len(parts) > 1 else "get"
-    operation_args = parts[2:] if len(parts) > 2 else []
-
-    config_file = f"groups/{group_id}/config.json"
-    # 如果配置文件不存在，则创建并写入空字典
-    if not os.path.exists(f"groups/{group_id}"):
-        os.mkdir(f"groups/{group_id}")
-    if not os.path.exists(config_file):
-        with open(config_file, "w") as f:
-            json.dump({}, f)
-
-    # 加载配置文件
-    if not os.path.exists(config_file):
-        with open(config_file, "w") as f:
-            json.dump({}, f)
-    try:
-        with open(config_file, "r") as f:
-            config = json.load(f)
-    except (json.JSONDecodeError, FileNotFoundError):
-        config = {}
-
-    # 如果配置项不存在，使用默认值
-    if config_path not in config:
-        if config_path not in default_configs:
-            raise ValueError(f"未知的配置项: {config_path}")
-        config[config_path] = default_configs[config_path]
-
-    # 获取当前值
-    current_value = config[config_path]
-
-    # 根据类型执行操作
-    if isinstance(current_value, list):
-        if operation == "get":
-            pass  # 直接返回当前值
-        elif operation == "append":
-            if not operation_args:
-                raise ValueError("append 操作需要一个参数")
-            item = operation_args[0]
-            if item not in current_value:
-                current_value.append(item)
-        elif operation == "delete":
-            if not operation_args:
-                raise ValueError("delete 操作需要一个参数")
-            item = operation_args[0]
-            if item in current_value:
-                current_value.remove(item)
-        else:
-            raise ValueError(f"列表类型不支持的操作: {operation}")
-    elif isinstance(current_value, bool):
-        if operation == "get":
-            pass  # 直接返回当前值
-        elif operation == "set":
-            if not operation_args:
-                raise ValueError("set 操作需要一个参数 (True/False)")
-            value_str = operation_args[0].lower()
-            if value_str == "true":
-                current_value = True
-            elif value_str == "false":
-                current_value = False
-            else:
-                raise ValueError("布尔值只能设置为 True 或 False")
-        else:
-            raise ValueError(f"布尔类型不支持的操作: {operation}")
-    else:  # 其他类型 (int, str, etc.)
-        if operation == "get":
-            pass  # 直接返回当前值
-        elif operation == "set":
-            if not operation_args:
-                raise ValueError("set 操作需要一个参数")
-            # 尝试转换为原始类型
-            if isinstance(default_configs[config_path], int):
-                try:
-                    current_value = int(operation_args[0])
-                except ValueError:
-                    raise ValueError(f"配置项 {config_path} 需要整数值")
-            else:
-                current_value = operation_args[0]
-        else:
-            raise ValueError(f"此类型不支持的操作: {operation}")
-
-    # 更新配置并保存
-    config[config_path] = current_value
-    with open(config_file, "w") as f:
-        json.dump(config, f, indent=4)
-
-    return current_value
+    # print(oldArg)
 
 
-# 使用示例
-if __name__ == "__main__":
-    # # 示例默认配置
-
-    # # 获取用户想查询的配置项
-    # config_name = input("请输入要查询的配置项名称: ")
-    # group_id = 123
-    # # 获取配置值（如果不存在则使用默认值）
-
-    # value = get_config(config_name, group_id)
-
-    # print(f"配置项 '{config_name}' 的值为: {value}")
-    example = ".catgirl.get"
-    try:
-        result = manage_config(example, 123)
-        print(f"操作: {example} => 结果: {result} (类型: {type(result).__name__})")
-    except ValueError as e:
-        print(f"操作: {example} => 错误: {e}")
+# # 使用示例
+# if __name__ == "__main__":
+#     example = ".kick_time_sec.get"
+#     try:
+#         result = manage_config(example, 916279260)
+#         print(f"操作: {example} => 结果: {result} (类型: {type(result).__name__})")
+#     except ValueError as e:
+#         print(f"操作: {example} => 错误: {e}")

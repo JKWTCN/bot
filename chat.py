@@ -253,10 +253,12 @@ def SwitchGroupDecreaseMessage(group_id: int):
     dump_setting(setting)
 
 
+from GroupConfig import get_config, set_config, manage_config
+
+
 # 获取群聊是否开启冷群
 def GetColdGroupStatus(group_id: int):
-    setting = load_setting()
-    if group_id in setting["need_cold_reply_list"]:
+    if get_config("cold_group", group_id):
         return True
     else:
         return False
@@ -265,10 +267,10 @@ def GetColdGroupStatus(group_id: int):
 # 切换群聊是否开启冷群回复状态
 def SwitchColdGroupChat(group_id: int):
     setting = load_setting()
-    if group_id in setting["need_cold_reply_list"]:
-        setting["need_cold_reply_list"].remove(group_id)
+    if group_id in get_config("cold_group", group_id):
+        set_config("cold_group", False, group_id)
     else:
-        setting["need_cold_reply_list"].append(group_id)
+        set_config("cold_group", True, group_id)
     dump_setting(setting)
 
 
@@ -447,8 +449,8 @@ async def ColdReplay(websocket):
         if (
             group["is_replay"] == False
             and time.time() - group["time"]
-            >= setting["cold_group_king_setting"]["time_out"]
-            and group["num"] > setting["cold_group_king_setting"]["num_out"]
+            >= get_config("cold_group_time_out", int(group["group_id"]))
+            and group["num"] > get_config("cold_group_num_out", int(group["group_id"]))
             and group["user_id"] not in setting["other_bots"]
             and GetColdGroupStatus(group["group_id"])
         ):

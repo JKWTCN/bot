@@ -158,6 +158,7 @@ from welcome_to_newyork import (
     welcom_new_no_admin,
     welcome_new,
 )
+from GroupConfig import get_config, set_config, manage_config
 from chat_rewards import SendRewards
 from chat_record import AddChatRecord, GetNowChatRecord, GetLifeChatRecord
 import re
@@ -182,6 +183,7 @@ async def echo(websocket, message):
                         message_id = message["message_id"]
                         group_name = GetGroupName(group_id)
                         raw_message = message["raw_message"]
+                        sender_id = sender["user_id"]
                         if len(sender["card"]) == 0:
                             sender_name = sender["nickname"]
                         write_message(message)
@@ -202,6 +204,41 @@ async def echo(websocket, message):
                             group_id,
                             message["raw_message"],
                         )
+
+                        if raw_message.startswith(".") and IsAdmin(sender_id, group_id):
+                            print(message["message"][0]["data"]["text"])
+                            argStatus, newArg = manage_config(
+                                message["message"][0]["data"]["text"], group_id
+                            )
+                            if argStatus:
+                                await say(
+                                    websocket,
+                                    group_id,
+                                    f"操作成功喵,当前该参数的值为:{newArg}",
+                                )
+                            else:
+                                if newArg == -1:
+                                    await ReplySay(
+                                        websocket,
+                                        group_id,
+                                        message_id,
+                                        f"设置失败喵,设置名称错误喵。",
+                                    )
+                                elif newArg == -2:
+                                    await ReplySay(
+                                        websocket,
+                                        group_id,
+                                        message_id,
+                                        f"设置失败喵,操作名称错误喵。",
+                                    )
+                                else:
+                                    await ReplySay(
+                                        websocket,
+                                        group_id,
+                                        message_id,
+                                        f"设置失败喵,请检测设置名和操作名喵。",
+                                    )
+
                         # # 是其他机器人就拉闸,避免无限循环。
                         # if user_id in dump_setting()["other_bots"]:
                         #     print(f"机器人ID:{user_id},其他机器人不理睬。")
@@ -958,14 +995,10 @@ async def echo(websocket, message):
                                 case "text":
                                     # print(message["message"][0]["data"]["text"])
                                     if (
-                                        user_id == setting["miaomiao_group_member"]
+                                        user_id in get_config("catgirl", group_id)
                                         and "喵" not in message["raw_message"]
                                         and "[CQ:image" not in message["raw_message"]
                                         and BotIsAdmin(group_id)
-                                        and not IsAdmin(
-                                            setting["miaomiao_group_member"],
-                                            group_id,
-                                        )
                                         and HasChinese(message["raw_message"])
                                     ):
                                         await ban_new(
@@ -989,8 +1022,7 @@ async def echo(websocket, message):
                                         )
                                     if (
                                         BotIsAdmin(group_id)
-                                        and f"{group_id}"
-                                        in load_setting()["miao_miao_group"].keys()
+                                        and get_config("cat_day_date", group_id) != -1
                                         and user_id not in setting["other_bots"]
                                     ):
                                         if (
@@ -1001,9 +1033,7 @@ async def echo(websocket, message):
                                             not in message["raw_message"]
                                             and HasChinese(message["raw_message"])
                                             and datetime.datetime.now().day
-                                            == load_setting()["miao_miao_group"][
-                                                f"{group_id}"
-                                            ]["day"]
+                                            == get_config("cat_day_date", group_id)
                                         ):
                                             if not IsAdmin(user_id, group_id):
                                                 await ban_new(
@@ -1018,15 +1048,13 @@ async def echo(websocket, message):
                                                     message["message_id"],
                                                     "{},每月{}号是本群喵喵日,你因为说话不带喵被禁言了喵。".format(
                                                         sender_name,
-                                                        load_setting()[
-                                                            "miao_miao_group"
-                                                        ][f"{group_id}"]["day"],
+                                                        get_config(
+                                                            "cat_day_date", group_id
+                                                        ),
                                                     ),
                                                 )
-                                            elif not (
-                                                load_setting()["miao_miao_group"][
-                                                    f"{group_id}"
-                                                ]["ignore_admin"]
+                                            elif not get_config(
+                                                "cat_day_ignore_admin", group_id
                                             ):
                                                 await ReplySay(
                                                     websocket,
@@ -1034,9 +1062,9 @@ async def echo(websocket, message):
                                                     message["message_id"],
                                                     "{},每月{}号是本群喵喵日,你因为说话不带喵被艾特惩罚3次了喵。".format(
                                                         get_cx_str(user_id),
-                                                        load_setting()[
-                                                            "miao_miao_group"
-                                                        ][f"{group_id}"]["day"],
+                                                        get_config(
+                                                            "cat_day_date", group_id
+                                                        ),
                                                     ),
                                                 )
                                                 AddAtPunishList(user_id, group_id, 3)
@@ -2192,8 +2220,8 @@ async def echo(websocket, message):
                     user.init_by_dict(group_member)
                     updata_user_info(user)
                     name = get_user_name(user.user_id, user.group_id)
-                    if str(user.group_id) in setting["kick_time"]:
-                        timeout = setting["kick_time"][str(user.group_id)]
+                    if get_config("kick_time_sec", group_id) != -1:
+                        timeout = get_config("kick_time_sec", group_id)
                         if (
                             time.time() - user.last_sent_time > timeout
                             and BotIsAdmin(user.group_id)
