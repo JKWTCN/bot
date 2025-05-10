@@ -15,6 +15,24 @@ async def return_function(websocket, user_id: int, group_id: int):
             "message": [
                 {"type": "at", "data": {"qq": user_id}},
                 {
+                    "type": "text",
+                    "data": {
+                        "text": """
+    "catgirl": [],  # 猫娘群友
+    "kotomitako": [],  # 香香软软小南梁群友
+    "blacklist": [],  # 黑名单群友
+    "no_reply_list": [],  # 不回复的群友
+    "cold_group": False,  # 冷群回复开关
+    "cold_group_num_out": 5,  # 多少句触发冷群
+    "cold_group_time_out": 300,  # 多久触发冷群
+    "group_decrease_reminder": True,  # 退群提醒
+    "cat_day_date": -1,  # 猫猫日日期，-1表示不设置
+    "cat_day_ignore_admin": True,  # 猫猫日忽略管理员
+    "kick_time_sec": -1,  # 踢掉多久没发言的群友，-1表示不踢
+"""
+                    },
+                },
+                {
                     "type": "image",
                     "data": {"file": "base64://" + image_base64.decode("utf-8")},
                 },
