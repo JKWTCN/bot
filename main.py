@@ -164,6 +164,28 @@ from chat_record import AddChatRecord, GetNowChatRecord, GetLifeChatRecord
 import re
 
 
+class SenderInfo:
+    user_id: int
+    nickname: str
+    card: str
+    role: str
+    displayName: str
+
+
+class MessageInfo:
+    user_id: int
+    time: int
+    message_id: int
+    raw_message: str
+    group_id: int
+    self_id: int
+    has_at = False
+    at_ids = []
+    has_image = False
+    image_id: str
+    text_message = ""
+
+
 async def echo(websocket, message):
     right_at = False
     message = json.loads(message)
@@ -186,7 +208,44 @@ async def echo(websocket, message):
                         sender_id = sender["user_id"]
                         if len(sender["card"]) == 0:
                             sender_name = sender["nickname"]
-                        write_message(message)
+                        senderInfo = SenderInfo()
+                        senderInfo.user_id = int(message["sender"]["user_id"])
+                        senderInfo.nickname = message["sender"]["nickname"]
+                        senderInfo.card = message["sender"]["card"]
+                        senderInfo.role = message["sender"]["role"]
+                        if len(senderInfo.card) == 0:
+                            senderInfo.displayName = senderInfo.nickname
+                        else:
+                            senderInfo.displayName = senderInfo.card
+
+                        messageInfo = MessageInfo()
+                        messageInfo.user_id = int(message["user_id"])
+                        messageInfo.time = int(message["time"])
+                        messageInfo.message_id = int(message["message_id"])
+                        messageInfo.raw_message = message["raw_message"]
+                        messageInfo.group_id = int(message["group_id"])
+                        messageInfo.self_id = int(message["self_id"])
+
+                        at_ids = []
+                        has_at = False
+                        text_message = ""
+                        for i in message["message"]:
+                            match i["type"]:
+                                case "at":
+                                    messageInfo.has_at = True
+                                    messageInfo.at_ids.append(int(i["data"]["qq"]))
+                                    text_message += f"{senderInfo.displayName}@{get_user_name(int(i['data']['qq']), group_id)}"
+                                case "reply":
+                                    messageInfo.has_reply = True
+                                    messageInfo.reply_id = int(i["data"]["id"])
+                                case "image":
+                                    messageInfo.has_image = True
+                                    text_message += "[图片]"
+                                case "text":
+                                    text_message += i["data"]["text"]
+                                    pass
+                        if not messageInfo.has_image:
+                            write_message(message, text_message)
                         print(
                             "{}:{}({})在{}({})群里说:{}".format(
                                 message["time"],

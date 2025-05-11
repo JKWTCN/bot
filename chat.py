@@ -65,7 +65,7 @@ async def robot_reply(websocket, user_id: int, group_id: int, message_id: int):
                 {
                     "type": "text",
                     "data": {
-                        "text": f"{get_user_name(user_id, group_id)},不要欺负机器人喵！"
+                        "text": f"{get_user_name(user_id, group_id)},不要欺负机器人喵!"
                     },
                 },
                 {
@@ -234,7 +234,7 @@ async def run_or_shot(websocket, user_id, group_id):
         await say(
             websocket,
             group_id,
-            f"{get_user_name(user_id, group_id)},梭哈成功,积分和大头菜翻10倍喵。",
+            f"{get_user_name(user_id, group_id)},梭哈成功,积分和大头菜翻10倍喵.",
         )
         bot_database.change_point(
             user_id, group_id, bot_database.find_point(user_id) * 10
@@ -316,7 +316,7 @@ async def GiveGift(
                 await say(
                     websocket,
                     group_id,
-                    f"{get_user_name(sender_id, group_id)},你的积分不足喵!当前积分为{sender_point}喵。",
+                    f"{get_user_name(sender_id, group_id)},你的积分不足喵!当前积分为{sender_point}喵.",
                 )
             else:
                 receiver_point = bot_database.find_point(receiver_id)
@@ -333,7 +333,7 @@ async def GiveGift(
                         websocket,
                         receiver_id,
                         group_id,
-                        f"爆分了！！！积分归零，积分等级:{now_level}->{now_level+1}。",
+                        f"爆分了!!!积分归零,积分等级:{now_level}->{now_level+1}.",
                     )
                 await say(
                     websocket,
@@ -397,7 +397,7 @@ async def AtPunish(websocket):
                 websocket,
                 admin["user_id"],
                 admin["group_id"],
-                f"艾特惩罚,剩余:{admin["num"]-1}次喵。",
+                f"艾特惩罚,剩余:{admin["num"]-1}次喵.",
             )
             admin["num"] -= 1
             i += 1
@@ -476,62 +476,58 @@ def ColdChat(group: dict) -> str:
     user_id = group["user_id"]
     group_id = group["group_id"]
     num = group["num"]
-    raw_message = group["raw_message"]
-    if HasKeyWords(
-        raw_message,
-        [
-            "[CQ:image",
-        ],
-    ):
-        raw_message = ""
+
     nick_name = get_user_name(user_id, group_id)
     port = "11434"
     url = f"http://localhost:{port}/api/chat"
     model = load_setting()["model"]
     headers = {"Content-Type": "application/json"}
-    data = {
-        "model": model,  # 模型选择
-        "options": {
-            "temperature": 1.0  # 为0表示不让模型自由发挥，输出结果相对较固定，>0的话，输出的结果会比较放飞自我
+
+    # 获取上下文消息
+    context_messages = get_chat_context(user_id, group_id)
+
+    # 构建基础消息结构
+    base_messages = [
+        {
+            "role": "system",
+            "content": "你叫乐可,现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物,其行为似猫但类人.),与我对话每一句话后面都要加上'喵'",
         },
-        "stream": False,  # 流式输出
-        "messages": [
-            {
-                "role": "system",
-                "content": "你叫乐可，现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上“喵”",
-            },
-            {
-                "role": "User",
-                "content": f"在{nick_name}说话前,群友们聊了{num}句,他说的上一句话是:{raw_message},大家前面都聊的好火热,他一说话后大家就都不说话了,他可能今天过的不太好,赶紧鼓励鼓励他。",
-            },
-        ],
+        {
+            "role": "user",
+            "content": f"在{nick_name}说话前,群友们聊了{num}句,大家前面都聊的好火热,他一说话后大家就都不说话了,他可能今天过的不太好,赶紧鼓励鼓励他.",
+        },
+    ]
+
+    # 添加上下文消息
+    if context_messages:
+        base_messages[1:1] = context_messages  # 在系统消息和用户消息之间插入上下文
+
+    data = {
+        "model": model,
+        "options": {"temperature": 1.0},
+        "stream": False,
+        "messages": base_messages,
     }
+
+    # 特殊模型处理
     if model == "qwen3:8b":
-        data = {
-            "model": model,  # 模型选择
-            "options": {
-                "temperature": 1.0  # 为0表示不让模型自由发挥，输出结果相对较固定，>0的话，输出的结果会比较放飞自我
-            },
-            "stream": False,  # 流式输出
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "/nothink 你叫乐可，现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上“喵”",
-                },
-                {
-                    "role": "User",
-                    "content": f"/nothink 在{nick_name}说话前,群友们聊了{num}句,他说的上一句话是:{raw_message},大家前面都聊的好火热,他一说话后大家就都不说话了,他可能今天过的不太好,赶紧鼓励鼓励他。",
-                },
-            ],
-        }
+        for msg in data["messages"]:
+            if msg["role"] == "system":
+                msg["content"] = "/nothink " + msg["content"]
+            elif msg["role"] == "user":
+                msg["content"] = "/nothink " + msg["content"]
+
     try:
         response = requests.post(url, json=data, headers=headers, timeout=300)
         res = response.json()
+
+        # 记录日志
         logger.info(
             "(AI)乐可在{}({})说:{}".format(
                 GetGroupName(group_id), group_id, res["message"]["content"]
             )
         )
+
         if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
             re_text = res["message"]["content"]
         else:
@@ -540,15 +536,18 @@ def ColdChat(group: dict) -> str:
                 res["message"]["content"],
             )
             if load_setting()["think_display"]:
-                re_text = f"乐可的思考过程喵：{match[0][0]}经过深思熟虑喵，乐可决定回复你：{match[0][1]}"
+                re_text = f"乐可的思考过程喵:{match[0][0]}经过深思熟虑喵,乐可决定回复你:{match[0][1]}"
             else:
                 re_text = match[0][1]
+
+        # 清理回复中的换行符
         while "\n" in re_text:
             re_text = re_text.replace("\n", "")
+
         return re_text
     except:
         logger.info("连接超时")
-        return f"{nick_name},大家前面都聊的好好的,你一说话就冷群了喵。"
+        return f"{nick_name},大家前面都聊的好好的,你一说话就冷群了喵."
 
 
 # 多线程chat内容转发给大模型
@@ -577,7 +576,7 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
     base_messages = [
         {
             "role": "system",
-            "content": "你叫乐可，现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上'喵'",
+            "content": "你叫乐可,现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物,其行为似猫但类人.),与我对话每一句话后面都要加上'喵'",
         }
     ]
 
@@ -620,12 +619,12 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
                 res["message"]["content"],
             )
             if load_setting()["think_display"]:
-                re_text = f"乐可的思考过程喵：{match[0][0]}经过深思熟虑喵，乐可决定回复你：{match[0][1]}"
+                re_text = f"乐可的思考过程喵:{match[0][0]}经过深思熟虑喵,乐可决定回复你:{match[0][1]}"
             else:
                 re_text = match[0][1]
     except:
         logger.info("连接超时")
-        re_text = "呜呜不太理解呢喵。"
+        re_text = "呜呜不太理解呢喵."
 
     # 清理回复中的换行符
     while "\n" in re_text:
@@ -641,7 +640,7 @@ def get_chat_context(user_id: int, group_id: int, limit: int = 5) -> list:
     conn = sqlite3.connect("bot.db")
     cursor = conn.cursor()
 
-    # 获取最近的几条聊天记录（包括用户和机器人的消息）
+    # 获取最近的几条聊天记录(包括用户和机器人的消息)
     cursor.execute(
         """
         SELECT sender_nickname, raw_message 
@@ -678,7 +677,7 @@ def ReturnChatText(text: str, user_id: int, group_id: int):
     base_messages = [
         {
             "role": "system",
-            "content": "你叫乐可，现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物，其行为似猫但类人。)，与我对话每一句话后面都要加上'喵'",
+            "content": "你叫乐可,现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物,其行为似猫但类人.),与我对话每一句话后面都要加上'喵'",
         }
     ]
 
@@ -721,12 +720,12 @@ def ReturnChatText(text: str, user_id: int, group_id: int):
                 res["message"]["content"],
             )
             if load_setting()["think_display"]:
-                re_text = f"乐可的思考过程喵：{match[0][0]}经过深思熟虑喵，乐可决定回复你：{match[0][1]}"
+                re_text = f"乐可的思考过程喵:{match[0][0]}经过深思熟虑喵,乐可决定回复你:{match[0][1]}"
             else:
                 re_text = match[0][1]
     except:
         logger.info("连接超时")
-        re_text = "呜呜不太理解呢喵。"
+        re_text = "呜呜不太理解呢喵."
 
     # 清理回复中的换行符
     while "\n" in re_text:
