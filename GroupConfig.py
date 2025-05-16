@@ -1,5 +1,18 @@
 import json
 import os
+from enum import Enum
+
+
+class DataType(Enum):
+    DATA_UNKNOW = 0
+    DATA_INT = 1
+    DATA_STRING = 2
+
+
+class GroupConfigError(Enum):
+    NO_OPPATION_Type = 0
+    UNKNOW_DATA_TYPE = 1
+    UNKNOW_OPPATION_ARG = 2
 
 
 # 默认配置
@@ -15,7 +28,20 @@ default_configs = {
     "cat_day_date": -1,  # 猫猫日日期，-1表示不设置
     "cat_day_ignore_admin": True,  # 猫猫日忽略管理员
     "kick_time_sec": -1,  # 踢掉多久没发言的群友，-1表示不踢
+    "sensitive_words": [],
 }
+
+intOptionType = ["catgirl", "kotomitako", "blacklist", "no_reply_list"]
+stringOptionType = ["sensitive_words"]
+
+
+def getArgType(optionType: str):
+    if optionType in intOptionType:
+        return DataType.DATA_INT
+    elif optionType in stringOptionType:
+        return DataType.DATA_STRING
+    else:
+        return DataType.DATA_UNKNOW
 
 
 def set_config(
@@ -116,7 +142,7 @@ def manage_config(config_str: str, group_id: int) -> bool:
     parts = config_str.split(".")
     print(parts)
     if parts[0] != "":
-        return (False, None)
+        return (False, GroupConfigError.NO_OPPATION_Type)
     optionType = parts[1]
     parts = parts[2].split(" ")
     if len(parts) == 1:
@@ -128,7 +154,7 @@ def manage_config(config_str: str, group_id: int) -> bool:
     print(f"设置项:{optionType} 设置命令:{optionCommand} 设置参数:{oppationArg}")
     oldArg = get_config(optionType, group_id)
     if oldArg == None:
-        return (False, -1)
+        return (False, GroupConfigError.NO_OPPATION_Type)
     # print(type(oldArg))
     match type(oldArg):
         case _ if isinstance(oldArg, list):
@@ -136,41 +162,66 @@ def manage_config(config_str: str, group_id: int) -> bool:
                 case "get":
                     return (True, oldArg)
                 case "append":
-                    oppationArg = int(oppationArg)
+                    match getArgType(optionType):
+                        case DataType.DATA_INT:
+                            oppationArg = int(oppationArg)
+                        case DataType.DATA_STRING:
+                            oppationArg = str(oppationArg)
+                        case DataType.DATA_UNKNOW:
+                            return (False, GroupConfigError.UNKNOW_DATA_TYPE)
+
                     if oppationArg not in oldArg:
                         oldArg.append(oppationArg)
                         set_config(optionType, oldArg, group_id)
                     return (True, oldArg)
                 case "remove":
-                    oppationArg = int(oppationArg)
+                    match getArgType(optionType):
+                        case DataType.DATA_INT:
+                            oppationArg = int(oppationArg)
+                        case DataType.DATA_STRING:
+                            oppationArg = str(oppationArg)
+                        case DataType.DATA_UNKNOW:
+                            return (False, GroupConfigError.UNKNOW_DATA_TYPE)
                     if oppationArg in oldArg:
                         oldArg.remove(oppationArg)
                         set_config(optionType, oldArg, group_id)
                     return (True, oldArg)
                 case _:
-                    return (False, -2)
+                    return (False, GroupConfigError.UNKNOW_OPPATION_ARG)
         case _ if isinstance(oldArg, bool):
             match optionCommand:
                 case "set":
-                    oppationArg = bool(int(oppationArg))
+                    match getArgType(optionType):
+                        case DataType.DATA_INT:
+                            oppationArg = int(oppationArg)
+                        case DataType.DATA_STRING:
+                            oppationArg = str(oppationArg)
+                        case DataType.DATA_UNKNOW:
+                            return (False, GroupConfigError.UNKNOW_DATA_TYPE)
                     oldArg = oppationArg
                     set_config(optionType, oldArg, group_id)
                     return (True, oldArg)
                 case "get":
                     return (True, oldArg)
                 case _:
-                    return (False, -2)
+                    return (False, GroupConfigError.UNKNOW_OPPATION_ARG)
         case _ if isinstance(oldArg, int):
             match optionCommand:
                 case "set":
-                    oppationArg = int(oppationArg)
+                    match getArgType(optionType):
+                        case DataType.DATA_INT:
+                            oppationArg = int(oppationArg)
+                        case DataType.DATA_STRING:
+                            oppationArg = str(oppationArg)
+                        case DataType.DATA_UNKNOW:
+                            return (False, GroupConfigError.UNKNOW_DATA_TYPE)
                     oldArg = oppationArg
                     set_config(optionType, oldArg, group_id)
                     return (True, oldArg)
                 case "get":
                     return (True, oldArg)
                 case _:
-                    return (False, -2)
+                    return (False, GroupConfigError.UNKNOW_OPPATION_ARG)
 
     # print(oldArg)
 

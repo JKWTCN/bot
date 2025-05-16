@@ -94,7 +94,7 @@ async def GetNowChatRecord(websocket, group_id: int):
             "message": [],
         },
     }
-    table_list = {"排名": [], "昵称": [], "QQ": [], "生涯次数": []}
+    table_list = {"排名": [], "昵称": [], "QQ": [], "今日次数": []}
     for i in range(num):
         from Class.Group_member import get_user_name
 
@@ -102,7 +102,7 @@ async def GetNowChatRecord(websocket, group_id: int):
         table_list["排名"].append(i + 1)
         table_list["QQ"].append(data[i][0])
         table_list["昵称"].append(name)
-        table_list["生涯次数"].append(data[i][1])
+        table_list["今日次数"].append(data[i][1])
     payload["params"]["message"].append(
         {
             "type": "image",
