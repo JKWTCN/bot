@@ -56,6 +56,8 @@ from chat import (
     robot_reply,
     run_or_shot,
     switch_model,
+    replyImageMessage,
+    getImageInfo,
 )
 from drifting_bottles import (
     is_comment_write,
@@ -185,6 +187,8 @@ class MessageInfo:
     has_image = False
     image_id: str
     text_message = ""
+    has_reply = False
+    reply_id: int
 
 
 async def echo(websocket, message):
@@ -263,6 +267,24 @@ async def echo(websocket, message):
                                     message["raw_message"],
                                 )
                             )
+                            if messageInfo.has_reply:
+                                if "#image#" in text_message:
+                                    now_text = text_message.replace("#image#", "")
+                                    await replyImageMessage(
+                                        websocket,
+                                        group_id,
+                                        messageInfo.reply_id,
+                                        message_id,
+                                        now_text,
+                                    )
+                                elif "#info#" in text_message:
+                                    await getImageInfo(
+                                        websocket,
+                                        group_id,
+                                        messageInfo.reply_id,
+                                        message_id,
+                                    )
+
                             log = "{}({})在{}({})群里说:{}".format(
                                 sender_name,
                                 user_id,

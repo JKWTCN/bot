@@ -1,4 +1,5 @@
 import base64
+import enum
 import json
 import logging
 import random
@@ -21,6 +22,125 @@ from tools import (
 )
 from Class.Group_member import get_user_name
 import time
+
+
+# class REPLY_IMAGE_MESSAGE_ERROR(enum):
+#     SUCCESS = 0
+#     UNREAD_IMAGE = 1
+
+
+# 获取图片内容
+async def getImageInfo(
+    websocket, group_id: int, message_id: int, need_replay_message_id: int
+):
+    try:
+        # 连接数据库
+        conn = sqlite3.connect("bot.db")
+        cursor = conn.cursor()
+        # 执行查询
+        cursor.execute(
+            """
+            SELECT raw_message 
+            FROM group_message 
+            WHERE message_id = ?
+        """,
+            (message_id,),
+        )
+
+        # 获取结果
+        result = cursor.fetchone()
+
+        if result:
+            imageInfo = result[0]
+            if imageInfo == "[图片]":
+                await ReplySay(
+                    websocket,
+                    group_id,
+                    need_replay_message_id,
+                    "图片好像丢了喵,才不是乐可的疏忽喵,最好重新发送图片喵。",
+                )
+            else:
+                await ReplySay(
+                    websocket,
+                    group_id,
+                    need_replay_message_id,
+                    imageInfo,
+                )
+        else:
+            await ReplySay(
+                websocket,
+                group_id,
+                need_replay_message_id,
+                "此消息还在识别喵,请稍后再回复喵。",
+            )
+
+    except sqlite3.Error as e:
+        print(f"数据库错误: {e}")
+        return None
+
+    finally:
+        # 确保连接被关闭
+        if conn:
+            conn.close()
+
+
+# 强制回复图片消息
+async def replyImageMessage(
+    websocket, group_id: int, message_id: int, need_replay_message_id: int, text: str
+):
+    imageInfo = ""
+    try:
+        # 连接数据库
+        conn = sqlite3.connect("bot.db")
+        cursor = conn.cursor()
+        # 执行查询
+        cursor.execute(
+            """
+            SELECT raw_message 
+            FROM group_message 
+            WHERE message_id = ?
+        """,
+            (message_id,),
+        )
+
+        # 获取结果
+        result = cursor.fetchone()
+
+        if result:
+            texts = []
+            imageInfo = result[0]
+            if imageInfo == "[图片]":
+                await ReplySay(
+                    websocket,
+                    group_id,
+                    need_replay_message_id,
+                    "图片好像丢了喵,才不是乐可的疏忽喵,最好重新发送图片喵。",
+                )
+            else:
+                texts.append(imageInfo)
+                texts.append(text)
+                await ReplySay(
+                    websocket,
+                    group_id,
+                    need_replay_message_id,
+                    chatNoContext(texts),
+                )
+        else:
+            await ReplySay(
+                websocket,
+                group_id,
+                need_replay_message_id,
+                "此消息还在识别喵,请稍后再回复喵。",
+            )
+
+    except sqlite3.Error as e:
+        print(f"数据库错误: {e}")
+        return None
+
+    finally:
+        # 确保连接被关闭
+        if conn:
+            conn.close()
 
 
 # 图片回复
@@ -561,6 +681,71 @@ def chat_thread(websocket, user_id: int, group_id: int, message_id: int, text: s
         t.start()
     except:
         logger.info("多线程创建失败")
+
+
+# 只处理单句
+def chatNoContext(texts):
+    port = "11434"
+    url = f"http://localhost:{port}/api/chat"
+    model = load_setting()["model"]
+    headers = {"Content-Type": "application/json"}
+
+    # 构建基础消息结构
+    base_messages = [
+        {
+            "role": "system",
+            "content": "你叫乐可,现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物,其行为似猫但类人.),与我对话每一句话后面都要加上'喵'",
+        }
+    ]
+    for text in texts:
+        base_messages.append(
+            {
+                "role": "user",
+                "content": text,
+            }
+        )
+
+    data = {
+        "model": model,
+        "options": {"temperature": 1.0},
+        "stream": False,
+        "messages": base_messages,
+    }
+
+    # 特殊模型处理
+    if model == "qwen3:8b":
+        for msg in data["messages"]:
+            if msg["role"] == "system":
+                msg["content"] = "/nothink " + msg["content"]
+            elif msg["role"] == "user":
+                msg["content"] = "/nothink " + msg["content"]
+
+    try:
+        print(data)
+        response = requests.post(url, json=data, headers=headers, timeout=300)
+        res = response.json()
+
+        if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
+            re_text = res["message"]["content"]
+        else:
+            match = re.findall(
+                r"<think>([\s\S]*)</think>([\s\S]*)",
+                res["message"]["content"],
+            )
+            if load_setting()["think_display"]:
+                re_text = f"乐可的思考过程喵:{match[0][0]}经过深思熟虑喵,乐可决定回复你:{match[0][1]}"
+            else:
+                re_text = match[0][1]
+    except:
+        logger.info("连接超时")
+        re_text = "呜呜不太理解呢喵."
+
+    # 清理回复中的换行符
+    while "\n" in re_text:
+        re_text = re_text.replace("\n", "")
+
+    logger.info("(AI)乐可思考图片结果:{}".format(re_text))
+    return re_text
 
 
 async def chat(websocket, user_id: int, group_id: int, message_id: int, text: str):
