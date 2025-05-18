@@ -58,6 +58,7 @@ from chat import (
     switch_model,
     replyImageMessage,
     getImageInfo,
+    chatNoContext,
 )
 from drifting_bottles import (
     is_comment_write,
@@ -2223,18 +2224,20 @@ async def echo(websocket, message):
                                     websocket, message["user_id"], "发送日志成功喵！"
                                 )
                             else:
-                                raw_message = message["raw_message"]
-                                if HasKeyWords(
-                                    raw_message,
-                                    [
-                                        "[CQ:image",
-                                    ],
-                                ):
-                                    raw_message = ""
+                                text_message = ""
+                                for i in message["message"]:
+                                    match i["type"]:
+                                        case "image":
+                                            text_message += "[图片]"
+                                        case "text":
+                                            text_message += i["data"]["text"]
+                                            pass
+                                texts = []
+                                texts.append(text_message)
                                 await SayPrivte(
                                     websocket,
                                     message["user_id"],
-                                    ReturnChatText(raw_message, user_id, group_id),
+                                    chatNoContext(texts),
                                 )
 
                 case "notice":
@@ -2477,7 +2480,7 @@ async def echo(websocket, message):
                         user.init_by_dict(group_member)
                         updata_user_info(user)
                         name = get_user_name(user.user_id, user.group_id)
-                        if get_config("kick_time_sec", group_id) != -1:
+                        if get_config("kick_time_sec", user.group_id) != -1:
                             timeout = get_config("kick_time_sec", group_id)
                             if (
                                 time.time() - user.last_sent_time > timeout
