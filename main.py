@@ -202,6 +202,7 @@ async def echo(websocket, message):
                     match message["message_type"]:
                         # 群聊消息
                         case "group":
+
                             # 以下是艾特惩罚 痛苦虽小折磨永存
                             await AtPunish(websocket)
                             sender = message["sender"]
@@ -223,7 +224,6 @@ async def echo(websocket, message):
                                 senderInfo.displayName = senderInfo.nickname
                             else:
                                 senderInfo.displayName = senderInfo.card
-
                             messageInfo = MessageInfo()
                             messageInfo.user_id = int(message["user_id"])
                             messageInfo.time = int(message["time"])
@@ -231,7 +231,8 @@ async def echo(websocket, message):
                             messageInfo.raw_message = message["raw_message"]
                             messageInfo.group_id = int(message["group_id"])
                             messageInfo.self_id = int(message["self_id"])
-
+                            # 增加水群次数
+                            AddChatRecord(user_id, group_id)
                             at_ids = []
                             has_at = False
                             text_message = ""
@@ -335,35 +336,45 @@ async def echo(websocket, message):
                                     websocket,
                                     group_id,
                                     message_id,
-                                    "触发本群违禁词规则喵，禁言一分钟喵！",
+                                    f"触发本群违禁词规则喵，禁言{get_config("sensitive_ban_sec", group_id)}秒喵！",
                                 )
-                                await ban_new(websocket, user_id, group_id, 60)
-                            AddChatRecord(user_id, group_id)
+                                await ban_new(
+                                    websocket,
+                                    user_id,
+                                    group_id,
+                                    get_config("sensitive_ban_sec", group_id),
+                                )
+                                if get_config("sensitive_withdrawn", group_id):
+                                    await delete_msg(websocket, message_id)
                             logging.info(log)
-                            for k in message["message"]:
-                                if k["type"] == "json":
-                                    # qq卡片消息解析
-                                    now_json = json.loads(k["data"]["data"])
-                                    if "meta" in now_json:
-                                        if "detail_1" in now_json["meta"]:
-                                            if (
-                                                "qqdocurl"
-                                                in now_json["meta"]["detail_1"]
-                                            ):
-                                                qqdocurl = now_json["meta"]["detail_1"][
+                            # 解析b站链接
+                            if get_config("bilibili_parsing", group_id):
+                                for k in message["message"]:
+                                    if k["type"] == "json":
+                                        # qq卡片消息解析
+                                        now_json = json.loads(k["data"]["data"])
+                                        if "meta" in now_json:
+                                            if "detail_1" in now_json["meta"]:
+                                                if (
                                                     "qqdocurl"
-                                                ]
-                                                r = requests.get(qqdocurl)
-                                                no_get_params_url = r.url.split("?")[0]
-                                                logging.info(
-                                                    f"解析结果:{no_get_params_url}"
-                                                )
-                                                await ReplySay(
-                                                    websocket,
-                                                    group_id,
-                                                    message_id,
-                                                    no_get_params_url,
-                                                )
+                                                    in now_json["meta"]["detail_1"]
+                                                ):
+                                                    qqdocurl = now_json["meta"][
+                                                        "detail_1"
+                                                    ]["qqdocurl"]
+                                                    r = requests.get(qqdocurl)
+                                                    no_get_params_url = r.url.split(
+                                                        "?"
+                                                    )[0]
+                                                    logging.info(
+                                                        f"解析结果:{no_get_params_url}"
+                                                    )
+                                                    await ReplySay(
+                                                        websocket,
+                                                        group_id,
+                                                        message_id,
+                                                        no_get_params_url,
+                                                    )
                             if GetColdGroupStatus(group_id):
                                 # 如果是更新冷群
                                 UpdateColdGroup(
@@ -2479,9 +2490,10 @@ async def echo(websocket, message):
                         user = Group_member()
                         user.init_by_dict(group_member)
                         updata_user_info(user)
+                        group_id = user.group_id
                         name = get_user_name(user.user_id, user.group_id)
                         if get_config("kick_time_sec", user.group_id) != -1:
-                            timeout = get_config("kick_time_sec", group_id)
+                            timeout = get_config("kick_time_sec", user.group_id)
                             if (
                                 time.time() - user.last_sent_time > timeout
                                 and BotIsAdmin(user.group_id)

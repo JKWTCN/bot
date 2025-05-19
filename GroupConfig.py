@@ -7,6 +7,7 @@ class DataType(Enum):
     DATA_UNKNOW = 0
     DATA_INT = 1
     DATA_STRING = 2
+    DATA_BOOL = 3
 
 
 class GroupConfigError(Enum):
@@ -28,11 +29,31 @@ default_configs = {
     "cat_day_date": -1,  # 猫猫日日期，-1表示不设置
     "cat_day_ignore_admin": True,  # 猫猫日忽略管理员
     "kick_time_sec": -1,  # 踢掉多久没发言的群友，-1表示不踢
-    "sensitive_words": [],
+    "sensitive_words": [],  # 敏感词，发出会禁言
+    "sensitive_ban_sec": 60,  # 敏感词禁言秒数
+    "sensitive_withdrawn": False,  # 敏感词是否撤回
+    "bilibili_parsing": True,  # 是否解析b站小程序
 }
 
-intOptionType = ["catgirl", "kotomitako", "blacklist", "no_reply_list"]
+intOptionType = [
+    "catgirl",
+    "kotomitako",
+    "blacklist",
+    "no_reply_list",
+    "cold_group_num_out",
+    "cold_group_time_out",
+    "cat_day_date",
+    "kick_time_sec",
+    "sensitive_ban_sec",
+]
 stringOptionType = ["sensitive_words"]
+boolOptionType = [
+    "cold_group",
+    "group_decrease_reminder",
+    "cat_day_ignore_admin",
+    "sensitive_withdrawn",
+    "bilibili_parsing",
+]
 
 
 def getArgType(optionType: str):
@@ -40,6 +61,8 @@ def getArgType(optionType: str):
         return DataType.DATA_INT
     elif optionType in stringOptionType:
         return DataType.DATA_STRING
+    elif optionType in boolOptionType:
+        return DataType.DATA_BOOL
     else:
         return DataType.DATA_UNKNOW
 
@@ -167,6 +190,8 @@ def manage_config(config_str: str, group_id: int) -> bool:
                             oppationArg = int(oppationArg)
                         case DataType.DATA_STRING:
                             oppationArg = str(oppationArg)
+                        case DataType.DATA_BOOL:
+                            oppationArg = bool(int(oppationArg))
                         case DataType.DATA_UNKNOW:
                             return (False, GroupConfigError.UNKNOW_DATA_TYPE)
 
@@ -180,6 +205,8 @@ def manage_config(config_str: str, group_id: int) -> bool:
                             oppationArg = int(oppationArg)
                         case DataType.DATA_STRING:
                             oppationArg = str(oppationArg)
+                        case DataType.DATA_BOOL:
+                            oppationArg = bool(int(oppationArg))
                         case DataType.DATA_UNKNOW:
                             return (False, GroupConfigError.UNKNOW_DATA_TYPE)
                     if oppationArg in oldArg:
@@ -189,6 +216,7 @@ def manage_config(config_str: str, group_id: int) -> bool:
                 case _:
                     return (False, GroupConfigError.UNKNOW_OPPATION_ARG)
         case _ if isinstance(oldArg, bool):
+            # print(f"{optionCommand},{optionType},{getArgType(optionType)}")
             match optionCommand:
                 case "set":
                     match getArgType(optionType):
@@ -196,6 +224,8 @@ def manage_config(config_str: str, group_id: int) -> bool:
                             oppationArg = int(oppationArg)
                         case DataType.DATA_STRING:
                             oppationArg = str(oppationArg)
+                        case DataType.DATA_BOOL:
+                            oppationArg = bool(int(oppationArg))
                         case DataType.DATA_UNKNOW:
                             return (False, GroupConfigError.UNKNOW_DATA_TYPE)
                     oldArg = oppationArg
@@ -213,6 +243,8 @@ def manage_config(config_str: str, group_id: int) -> bool:
                             oppationArg = int(oppationArg)
                         case DataType.DATA_STRING:
                             oppationArg = str(oppationArg)
+                        case DataType.DATA_BOOL:
+                            oppationArg = bool(int(oppationArg))
                         case DataType.DATA_UNKNOW:
                             return (False, GroupConfigError.UNKNOW_DATA_TYPE)
                     oldArg = oppationArg
