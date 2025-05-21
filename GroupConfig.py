@@ -33,6 +33,7 @@ default_configs = {
     "sensitive_ban_sec": 60,  # 敏感词禁言秒数
     "sensitive_withdrawn": False,  # 敏感词是否撤回
     "bilibili_parsing": True,  # 是否解析b站小程序
+    "image_parsing": False,  # 是否解析图片
 }
 
 intOptionType = [
@@ -53,6 +54,7 @@ boolOptionType = [
     "cat_day_ignore_admin",
     "sensitive_withdrawn",
     "bilibili_parsing",
+    "image_parsing",
 ]
 
 
