@@ -34,6 +34,7 @@ default_configs = {
     "sensitive_withdrawn": False,  # 敏感词是否撤回
     "bilibili_parsing": True,  # 是否解析b站小程序
     "image_parsing": False,  # 是否解析图片
+    "dont_at_me": False,  # @我是否要惩罚
 }
 
 intOptionType = [
@@ -55,6 +56,7 @@ boolOptionType = [
     "sensitive_withdrawn",
     "bilibili_parsing",
     "image_parsing",
+    "dont_at_me"
 ]
 
 

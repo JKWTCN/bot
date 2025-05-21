@@ -655,14 +655,14 @@ async def echo(websocket, message):
                                     elif (
                                         at_id in setting["developers_list"]
                                         # and "reply" not in message["raw_message"]
-                                        and user_id not in setting["other_bots"]
+                                        and user_id
+                                        not in get_config("no_reply_list", group_id)
                                     ):
                                         if (
-                                            user_id not in setting["developers_list"]
-                                            and not IsAdmin(user_id, group_id)
+                                            not IsAdmin(user_id, group_id)
                                             and BotIsAdmin(group_id)
-                                            and group_id == setting["admin_group_main"]
                                             and not IsDeveloper(user_id)
+                                            and get_config("dont_at_me", group_id)
                                         ):
                                             AddWhoAtMe(user_id)
                                             now_num = GetWhoAtMe(user_id)
@@ -710,13 +710,13 @@ async def echo(websocket, message):
                                             user_id not in setting["developers_list"]
                                             and IsAdmin(user_id, group_id)
                                             and BotIsAdmin(group_id)
-                                            and group_id == setting["admin_group_main"]
+                                            and get_config("dont_at_me", group_id)
                                         ):
                                             AddWhoAtMe(user_id)
-                                            now_num = GetWhoAtMe(user_id)
-                                            sender_name = get_user_name(
-                                                user_id, group_id
-                                            )
+                                            # now_num = GetWhoAtMe(user_id)
+                                            # sender_name = get_user_name(
+                                            #     user_id, group_id
+                                            # )
                                             # if now_num >= 3:
                                             #     await SayAndAt(
                                             #         websocket,
