@@ -53,12 +53,20 @@ async def getImageInfo(
         if result:
             imageInfo = result[0]
             if imageInfo == "[图片]":
-                await ReplySay(
-                    websocket,
-                    group_id,
-                    need_replay_message_id,
-                    "图片好像丢了喵,才不是乐可的疏忽喵,最好重新发送图片喵。",
-                )
+                if get_config("image_parsing", group_id):
+                    await ReplySay(
+                        websocket,
+                        group_id,
+                        need_replay_message_id,
+                        "图片好像丢了喵,才不是乐可的疏忽喵,最好重新发送图片喵。",
+                    )
+                else:
+                    await ReplySay(
+                        websocket,
+                        group_id,
+                        need_replay_message_id,
+                        "本群未开启图片解析功能喵。",
+                    )
             else:
                 await ReplySay(
                     websocket,
@@ -110,12 +118,20 @@ async def replyImageMessage(
             texts = []
             imageInfo = result[0]
             if imageInfo == "[图片]":
-                await ReplySay(
-                    websocket,
-                    group_id,
-                    need_replay_message_id,
-                    "图片好像丢了喵,才不是乐可的疏忽喵,最好重新发送图片喵。",
-                )
+                if get_config("image_parsing", group_id):
+                    await ReplySay(
+                        websocket,
+                        group_id,
+                        need_replay_message_id,
+                        "图片好像丢了喵,才不是乐可的疏忽喵,最好重新发送图片喵。",
+                    )
+                else:
+                    await ReplySay(
+                        websocket,
+                        group_id,
+                        need_replay_message_id,
+                        "本群未开启图片解析功能喵。",
+                    )
             else:
                 texts.append(imageInfo)
                 texts.append(text)

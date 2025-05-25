@@ -236,6 +236,9 @@ async def echo(websocket, message):
                             at_ids = []
                             has_at = False
                             text_message = ""
+                            # ai回复过标志
+                            chatFlag = False
+
                             for i in message["message"]:
                                 match i["type"]:
                                     case "at":
@@ -429,6 +432,7 @@ async def echo(websocket, message):
                                 await websocket.send(json.dumps(payload))
                             # 1% 的概率回复(胡言乱语)
                             if random.random() < 0.01:
+                                chatFlag = True
                                 sender_name = get_user_name(user_id, group_id)
                                 await chat(websocket, user_id, group_id, message_id, "")
                             # 艾特事件处理
@@ -945,13 +949,14 @@ async def echo(websocket, message):
                                             websocket, user_id, group_id
                                         )
                                     else:
-                                        await chat(
-                                            websocket,
-                                            user_id,
-                                            group_id,
-                                            message_id,
-                                            "请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
-                                        )
+                                        if not chatFlag:
+                                            await chat(
+                                                websocket,
+                                                user_id,
+                                                group_id,
+                                                message_id,
+                                                "请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
+                                            )
                                         # await say(
                                         #     websocket,
                                         #     group_id,
@@ -997,13 +1002,14 @@ async def echo(websocket, message):
                                             websocket, user_id, group_id
                                         )
                                     else:
-                                        await chat(
-                                            websocket,
-                                            user_id,
-                                            group_id,
-                                            message_id,
-                                            "请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
-                                        )
+                                        if not chatFlag:
+                                            await chat(
+                                                websocket,
+                                                user_id,
+                                                group_id,
+                                                message_id,
+                                                "请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
+                                            )
                                         # await say(
                                         #     websocket,
                                         #     group_id,
@@ -2122,10 +2128,7 @@ async def echo(websocket, message):
                                             ) and not HasKeyWords(raw_message, ["可乐"]):
                                                 await cute3(websocket, group_id)
                                             else:
-                                                if (
-                                                    group_id
-                                                    not in load_setting()["power_group"]
-                                                ):
+                                                if not chatFlag:
                                                     await chat(
                                                         websocket,
                                                         user_id,
@@ -2139,8 +2142,7 @@ async def echo(websocket, message):
                                             await cute3(websocket, group_id)
                                         elif (
                                             HasKeyWords(raw_message, ["乐可"])
-                                            and group_id
-                                            not in load_setting()["power_group"]
+                                            and not chatFlag
                                         ):
                                             sender_name = get_user_name(
                                                 user_id, group_id
@@ -2174,8 +2176,7 @@ async def echo(websocket, message):
                                     case _:
                                         if (
                                             HasKeyWords(raw_message, ["乐可"])
-                                            and group_id
-                                            not in load_setting()["power_group"]
+                                            and not chatFlag
                                         ):
                                             sender_name = get_user_name(
                                                 user_id, group_id
