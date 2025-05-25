@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+from enum import Enum
 import logging
 import os
 import random
@@ -43,7 +44,6 @@ from chat import (
     GetGroupDecreaseMessageStatus,
     GiveGift,
     Joke,
-    ReturnChatText,
     SayImgReply,
     SwitchColdGroupChat,
     SwitchGroupDecreaseMessage,
@@ -51,7 +51,6 @@ from chat import (
     chat,
     GetWhoAtMe,
     AddWhoAtMe,
-    chat_thread,
     display_think,
     robot_reply,
     run_or_shot,
@@ -192,6 +191,83 @@ class MessageInfo:
     reply_id: int
 
 
+from enum import Enum
+
+
+class ConsumingTimeType(Enum):
+    """高耗时任务类型"""
+
+    CHAT = 1
+    COLDREPLAY = 2
+    REPLYIMAGEMESSAGE = 3
+    SAYPRIVTECHATNOCONTEXT = 4
+
+
+async def process_queue():
+    """处理队列中的任务"""
+    print("处理线程开始启动")
+    while True:
+        try:
+            task = consuming_time_process_queue.get()
+            if task is None:  # 用于停止线程的信号
+                continue
+            websocket, param1, param2, param3, text, taskType = task
+            print(f"开始启动耗时任务类型{taskType}")
+            match taskType:
+                case ConsumingTimeType.CHAT:
+                    user_id = param1
+                    group_id = param2
+                    message_id = param3
+                    await chat(websocket, user_id, group_id, message_id, text)
+                case ConsumingTimeType.COLDREPLAY:
+                    await ColdReplay(websocket)
+                case ConsumingTimeType.REPLYIMAGEMESSAGE:
+                    group_id = param1
+                    reply_id = param2
+                    message_id = param3
+                    await replyImageMessage(
+                        websocket,
+                        group_id,
+                        reply_id,
+                        message_id,
+                        text,
+                    )
+                case ConsumingTimeType.SAYPRIVTECHATNOCONTEXT:
+                    user_id = param1
+                    group_id = param2
+                    message_id = param3
+                    await SayPrivte(
+                        websocket,
+                        user_id,
+                        chatNoContext(text),
+                    )
+
+            processing_thread.task_done()
+        except Exception as e:
+            logging.error(f"处理队列任务时出错: {e}")
+
+
+# 创建耗时任务队列和处理线程
+consuming_time_process_queue = queue.Queue()
+
+
+# 启动处理线程
+def start_processing_loop(loop):
+    asyncio.set_event_loop(loop)
+    loop.run_forever()
+
+
+# 创建新的事件循环
+processing_loop = asyncio.new_event_loop()
+processing_thread = threading.Thread(
+    target=start_processing_loop, args=(processing_loop,), daemon=True
+)
+processing_thread.start()
+
+# 启动处理协程
+asyncio.run_coroutine_threadsafe(process_queue(), processing_loop)
+
+
 async def echo(websocket, message):
     try:
         message = json.loads(message)
@@ -275,12 +351,15 @@ async def echo(websocket, message):
                             if messageInfo.has_reply:
                                 if "#image#" in text_message:
                                     now_text = text_message.replace("#image#", "")
-                                    await replyImageMessage(
-                                        websocket,
-                                        group_id,
-                                        messageInfo.reply_id,
-                                        message_id,
-                                        now_text,
+                                    consuming_time_process_queue.put(
+                                        (
+                                            websocket,
+                                            group_id,
+                                            messageInfo.reply_id,
+                                            message_id,
+                                            now_text,
+                                            ConsumingTimeType.REPLYIMAGEMESSAGE,
+                                        )
                                     )
                                 elif "#info#" in text_message:
                                     await getImageInfo(
@@ -434,7 +513,17 @@ async def echo(websocket, message):
                             if random.random() < 0.01:
                                 chatFlag = True
                                 sender_name = get_user_name(user_id, group_id)
-                                await chat(websocket, user_id, group_id, message_id, "")
+                                consuming_time_process_queue.put(
+                                    (
+                                        websocket,
+                                        user_id,
+                                        group_id,
+                                        message_id,
+                                        "",
+                                        ConsumingTimeType.CHAT,
+                                    )
+                                )
+
                             # 艾特事件处理
                             if "[CQ:at,qq=" in message["raw_message"]:
                                 at_id = re.findall(
@@ -950,12 +1039,15 @@ async def echo(websocket, message):
                                         )
                                     else:
                                         if not chatFlag:
-                                            await chat(
-                                                websocket,
-                                                user_id,
-                                                group_id,
-                                                message_id,
-                                                "请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
+                                            consuming_time_process_queue.put(
+                                                (
+                                                    websocket,
+                                                    user_id,
+                                                    group_id,
+                                                    message_id,
+                                                    "请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
+                                                    ConsumingTimeType.CHAT,
+                                                )
                                             )
                                         # await say(
                                         #     websocket,
@@ -1003,13 +1095,17 @@ async def echo(websocket, message):
                                         )
                                     else:
                                         if not chatFlag:
-                                            await chat(
-                                                websocket,
-                                                user_id,
-                                                group_id,
-                                                message_id,
-                                                "请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
+                                            consuming_time_process_queue.put(
+                                                (
+                                                    websocket,
+                                                    user_id,
+                                                    group_id,
+                                                    message_id,
+                                                    "请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
+                                                    ConsumingTimeType.CHAT,
+                                                )
                                             )
+
                                         # await say(
                                         #     websocket,
                                         #     group_id,
@@ -2129,12 +2225,15 @@ async def echo(websocket, message):
                                                 await cute3(websocket, group_id)
                                             else:
                                                 if not chatFlag:
-                                                    await chat(
-                                                        websocket,
-                                                        user_id,
-                                                        group_id,
-                                                        message_id,
-                                                        "",
+                                                    consuming_time_process_queue.put(
+                                                        (
+                                                            websocket,
+                                                            user_id,
+                                                            group_id,
+                                                            message_id,
+                                                            "",
+                                                            ConsumingTimeType.CHAT,
+                                                        )
                                                     )
                                         elif HasAllKeyWords(
                                             raw_message, ["乐可", "可爱"]
@@ -2147,14 +2246,16 @@ async def echo(websocket, message):
                                             sender_name = get_user_name(
                                                 user_id, group_id
                                             )
-                                            await chat(
-                                                websocket,
-                                                user_id,
-                                                group_id,
-                                                message_id,
-                                                "",
+                                            consuming_time_process_queue.put(
+                                                (
+                                                    websocket,
+                                                    user_id,
+                                                    group_id,
+                                                    message_id,
+                                                    "",
+                                                    ConsumingTimeType.CHAT,
+                                                )
                                             )
-
                                     case "at":
                                         rev_id = message["message"][0]["data"]["qq"]
                                         group_id = message["group_id"]
@@ -2181,12 +2282,15 @@ async def echo(websocket, message):
                                             sender_name = get_user_name(
                                                 user_id, group_id
                                             )
-                                            await chat(
-                                                websocket,
-                                                user_id,
-                                                group_id,
-                                                message_id,
-                                                "",
+                                            consuming_time_process_queue.put(
+                                                (
+                                                    websocket,
+                                                    user_id,
+                                                    group_id,
+                                                    message_id,
+                                                    "",
+                                                    ConsumingTimeType.CHAT,
+                                                )
                                             )
                         case "private":
                             print(
@@ -2246,10 +2350,15 @@ async def echo(websocket, message):
                                             pass
                                 texts = []
                                 texts.append(text_message)
-                                await SayPrivte(
-                                    websocket,
-                                    message["user_id"],
-                                    chatNoContext(texts),
+                                consuming_time_process_queue.put(
+                                    (
+                                        websocket,
+                                        user_id,
+                                        group_id,
+                                        message_id,
+                                        texts,
+                                        ConsumingTimeType.SAYPRIVTECHATNOCONTEXT,
+                                    )
                                 )
 
                 case "notice":
@@ -2380,7 +2489,16 @@ async def echo(websocket, message):
                                         pass
                             case "heartbeat":
                                 # 冷群了回复
-                                await ColdReplay(websocket)
+                                consuming_time_process_queue.put(
+                                    (
+                                        websocket,
+                                        0,
+                                        0,
+                                        0,
+                                        "",
+                                        ConsumingTimeType.COLDREPLAY,
+                                    )
+                                )
                                 setting = load_setting()
                                 if (
                                     time.time() - setting["thanos_time"] > 300
