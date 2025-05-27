@@ -376,7 +376,74 @@ async def echo(websocket, message):
                                 group_id,
                                 message["raw_message"],
                             )
+                            if text_message.startswith("#carrotbuy#"):
+                                from stockMarket import buyStock, BuyError
 
+                                tmpMessage = text_message.replace("#carrotbuy#", "")
+                                match buyStock(
+                                    user_id,
+                                    group_id,
+                                    tmpMessage.split(" ")[0],
+                                    float(tmpMessage.split(" ")[1]),
+                                ):
+                                    case BuyError.STOCK_NOT_FOUND:
+                                        await ReplySay(
+                                            websocket,
+                                            group_id,
+                                            message_id,
+                                            "胡萝卜代码未找到喵,比如600519.SH喵。",
+                                        )
+                                    case BuyError.NOT_ENOUGH_POINT:
+                                        await ReplySay(
+                                            websocket,
+                                            group_id,
+                                            message_id,
+                                            "积分不足喵。",
+                                        )
+                                    case BuyError.BUY_SUCCESS:
+                                        await ReplySay(
+                                            websocket,
+                                            group_id,
+                                            message_id,
+                                            "购买成功喵。",
+                                        )
+                            elif text_message.startswith("#carrotsell#"):
+                                from stockMarket import sellStock, SellError
+
+                                tmpMessage = text_message.replace("#carrotsell#", "")
+                                match sellStock(
+                                    user_id,
+                                    group_id,
+                                    tmpMessage.split(" ")[0],
+                                    float(tmpMessage.split(" ")[1]),
+                                ):
+                                    case SellError.STOCK_NOT_FOUND:
+                                        await ReplySay(
+                                            websocket,
+                                            group_id,
+                                            message_id,
+                                            "胡萝卜代码未找到喵,比如600519.SH喵。",
+                                        )
+                                    case SellError.NOT_ENOUGH_STOCK:
+                                        await ReplySay(
+                                            websocket,
+                                            group_id,
+                                            message_id,
+                                            "积分不足喵。",
+                                        )
+                                    case SellError.SELL_SUCCESS:
+                                        await ReplySay(
+                                            websocket,
+                                            group_id,
+                                            message_id,
+                                            "出售成功喵。",
+                                        )
+                            elif text_message.startswith("#carrotme#"):
+                                from stockMarket import showStockInfoMe
+
+                                await showStockInfoMe(
+                                    websocket, user_id, group_id, message_id
+                                )
                             if raw_message.startswith(".") and IsAdmin(
                                 sender_id, group_id
                             ):
