@@ -42,6 +42,20 @@ async def return_function(websocket, user_id: int, group_id: int):
     await websocket.send(json.dumps(payload))
 
 
+async def banNormal(websocket, user_id: int, group_id: int, duration: int):
+    """禁言群友(对管理无效,也不会提示)"""
+    from Class.Group_member import IsAdmin
+
+    if IsAdmin(user_id, group_id):
+        pass
+    else:
+        payload = {
+            "action": "set_group_ban",
+            "params": {"group_id": group_id, "user_id": user_id, "duration": duration},
+        }
+        await websocket.send(json.dumps(payload))
+
+
 async def ban_new(websocket, user_id: int, group_id: int, duration: int):
     from Class.Group_member import IsAdmin
 

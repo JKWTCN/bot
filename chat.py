@@ -409,6 +409,40 @@ def SwitchColdGroupChat(group_id: int):
     dump_setting(setting)
 
 
+def incWhoAtMe(user_id: int, ated_id: int):
+    """增加艾特信息"""
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    now_num = GetWhoAtMe(user_id)
+    cur.execute(
+        "UPDATE who_at_me SET nums = ? WHERE user_id = ? and ated_id=?;",
+        (now_num + 1, user_id, ated_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def getWhoAtMe(user_id: int, ated_id: int):
+    """查找艾特次数"""
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT nums FROM who_at_me where user_id=? and ated_id=? ;", (user_id, ated_id)
+    )
+    data = cur.fetchall()
+    if len(data) == 0:
+        cur.execute(
+            "INSERT INTO who_at_me (user_id,nums,ated_id) VALUES (?,?,?);",
+            (user_id, 0, ated_id),
+        )
+        conn.commit()
+        conn.close()
+        return 0
+    else:
+        conn.close()
+        return data[0][0]
+
+
 # 查找艾特开发者的次数
 def GetWhoAtMe(user_id: int):
     conn = sqlite3.connect("bot.db")

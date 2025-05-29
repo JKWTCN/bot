@@ -35,6 +35,7 @@ default_configs = {
     "bilibili_parsing": True,  # 是否解析b站小程序
     "image_parsing": False,  # 是否解析图片
     "dont_at_me": False,  # @我是否要惩罚
+    "hate_at_list": [],  # 不想被艾特的群友
 }
 
 intOptionType = [
@@ -47,6 +48,7 @@ intOptionType = [
     "cat_day_date",
     "kick_time_sec",
     "sensitive_ban_sec",
+    "hate_at_list",
 ]
 stringOptionType = ["sensitive_words"]
 boolOptionType = [
@@ -56,7 +58,7 @@ boolOptionType = [
     "sensitive_withdrawn",
     "bilibili_parsing",
     "image_parsing",
-    "dont_at_me"
+    "dont_at_me",
 ]
 
 
