@@ -413,7 +413,7 @@ def incWhoAtMe(user_id: int, ated_id: int):
     """增加艾特信息"""
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
-    now_num = GetWhoAtMe(user_id)
+    now_num = getWhoAtMe(user_id, ated_id)
     cur.execute(
         "UPDATE who_at_me SET nums = ? WHERE user_id = ? and ated_id=?;",
         (now_num + 1, user_id, ated_id),

@@ -27,8 +27,9 @@ def timestamp_to_date(timestamp: int):
     return datetime.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
 
 
-# 引用回复
+
 async def ReplySay(websocket, group_id: int, message_id: int, text: str):
+    """引用回复"""
     payload = {
         "action": "send_group_msg",
         "params": {

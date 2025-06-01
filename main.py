@@ -166,6 +166,7 @@ from GroupConfig import get_config, set_config, manage_config, GroupConfigError
 from chat_rewards import SendRewards
 from chat_record import AddChatRecord, GetNowChatRecord, GetLifeChatRecord
 import re
+from replyYou import incReplyYouTimes, addWhoReplyYou, getReplyYouTimes
 
 
 class SenderInfo:
@@ -325,6 +326,11 @@ async def echo(websocket, message):
                                     case "reply":
                                         messageInfo.has_reply = True
                                         messageInfo.reply_id = int(i["data"]["id"])
+                                        # reply统计
+                                        incReplyYouTimes(user_id, group_id)
+                                        addWhoReplyYou(
+                                            user_id, int(i["data"]["id"]), group_id
+                                        )
                                     case "image":
                                         messageInfo.has_image = True
                                         text_message += "[图片]"
@@ -1948,22 +1954,28 @@ async def echo(websocket, message):
                                                 message["message"][0]["data"]["text"],
                                                 ["打我"],
                                             ):
-                                                AddAtPunishList(
-                                                    user_id,
-                                                    group_id,
-                                                    setting["defense_times"],
-                                                )
-                                                await ban_new(
-                                                    websocket,
-                                                    user_id,
-                                                    group_id,
-                                                    60 * 30,
-                                                )
-                                                await say(
+                                                await ReplySay(
                                                     websocket,
                                                     group_id,
-                                                    "口球塞上~乐可要开始打你了喵。",
+                                                    message_id,
+                                                    "此功能进入了维护模式喵！暂时无法调用喵！",
                                                 )
+                                                # AddAtPunishList(
+                                                #     user_id,
+                                                #     group_id,
+                                                #     setting["defense_times"],
+                                                # )
+                                                # await ban_new(
+                                                #     websocket,
+                                                #     user_id,
+                                                #     group_id,
+                                                #     60 * 30,
+                                                # )
+                                                # await say(
+                                                #     websocket,
+                                                #     group_id,
+                                                #     "口球塞上~乐可要开始打你了喵。",
+                                                # )
                                             elif HasKeyWords(
                                                 message["message"][0]["data"]["text"],
                                                 ["再也不见", "重开"],
