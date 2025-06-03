@@ -270,17 +270,17 @@ processing_thread.start()
 asyncio.run_coroutine_threadsafe(process_queue(), processing_loop)
 
 
+
+
 async def echo(websocket, message):
     try:
         message = json.loads(message)
-        setting = load_setting()
         if "post_type" in message:
             match message["post_type"]:
                 case "message":
                     match message["message_type"]:
                         # 群聊消息
                         case "group":
-
                             # 以下是艾特惩罚 痛苦虽小折磨永存
                             await AtPunish(websocket)
                             sender = message["sender"]
@@ -576,7 +576,7 @@ async def echo(websocket, message):
                                     message["message_id"],
                                     message["raw_message"],
                                 )
-                            if IsAdmin(setting["bot_id"], group_id):
+                            if IsAdmin(load_setting()["bot_id"], group_id):
                                 # 2%的概率派发50积分
                                 if random.random() < 0.02:
                                     now_point = find_point(user_id)
@@ -649,8 +649,8 @@ async def echo(websocket, message):
                                     at_id = int(at_id[0])
                                 # (乐可是管理) 艾特其他人
                                 if (
-                                    IsAdmin(setting["bot_id"], group_id)
-                                ) and at_id != setting["bot_id"]:
+                                    IsAdmin(load_setting()["bot_id"], group_id)
+                                ) and at_id != load_setting()["bot_id"]:
                                     rev_name = get_user_name(at_id, group_id)
                                     if "解除禁言" in message["raw_message"]:
                                         logging.info(
@@ -698,7 +698,6 @@ async def echo(websocket, message):
                                         or IsDeveloper(user_id)
                                     ):
                                         DelAtPunish(at_id, group_id)
-                                        setting = load_setting()
                                         logging.info(
                                             f"{group_id}:{sender_name}({user_id})取消了{rev_name}({at_id})的惩罚"
                                         )
@@ -724,11 +723,10 @@ async def echo(websocket, message):
                                     elif HasKeyWords(
                                         raw_message, ["你是GAY", "你是gay"]
                                     ) and IsAdmin(user_id, group_id):
-                                        setting = load_setting()
-                                        if at_id not in setting["boring"]:
-                                            setting["boring"].append(at_id)
-                                            dump_setting(setting)
-                                            setting = load_setting()
+                                        if at_id not in load_setting["boring"]:
+                                            _setting = load_setting()
+                                            _setting["boring"].append(at_id)
+                                            dump_setting(_setting)
                                         await say(
                                             websocket,
                                             group_id,
@@ -737,11 +735,10 @@ async def echo(websocket, message):
                                     elif HasKeyWords(
                                         raw_message, ["你不是GAY", "你不是gay"]
                                     ) and IsAdmin(user_id, group_id):
-                                        setting = load_setting()
-                                        while at_id in setting["boring"]:
-                                            setting["boring"].remove(at_id)
-                                        dump_setting(setting)
-                                        setting = load_setting()
+                                        _setting = load_setting()
+                                        while at_id in load_setting()["boring"]:
+                                            _setting["boring"].remove(at_id)
+                                        dump_setting(_setting)
                                         await say(
                                             websocket,
                                             group_id,
@@ -750,11 +747,10 @@ async def echo(websocket, message):
                                     elif HasKeyWords(
                                         raw_message, ["不要哈气"]
                                     ) and IsAdmin(user_id, group_id):
-                                        setting = load_setting()
-                                        while at_id in setting["huffing"]:
-                                            setting["huffing"].remove(at_id)
-                                        dump_setting(setting)
-                                        setting = load_setting()
+                                        _setting = load_setting()
+                                        while at_id in load_setting()["huffing"]:
+                                            _setting["huffing"].remove(at_id)
+                                        dump_setting(_setting)
                                         await say(
                                             websocket,
                                             group_id,
@@ -763,11 +759,10 @@ async def echo(websocket, message):
                                     elif HasKeyWords(raw_message, ["哈气"]) and IsAdmin(
                                         user_id, group_id
                                     ):
-                                        setting = load_setting()
-                                        if at_id not in setting["huffing"]:
-                                            setting["huffing"].append(at_id)
-                                            dump_setting(setting)
-                                            setting = load_setting()
+                                        _setting = load_setting()
+                                        if at_id not in load_setting()["huffing"]:
+                                            _setting["huffing"].append(at_id)
+                                            dump_setting(_setting)
                                         await say(
                                             websocket,
                                             group_id,
@@ -779,11 +774,10 @@ async def echo(websocket, message):
                                             "不要装",
                                         ],
                                     ) and IsAdmin(user_id, group_id):
-                                        setting = load_setting()
-                                        if at_id not in setting["fly"]:
-                                            setting["fly"].append(at_id)
-                                            dump_setting(setting)
-                                            setting = load_setting()
+                                        _setting = load_setting()
+                                        if at_id not in load_setting()["fly"]:
+                                            _setting["fly"].append(at_id)
+                                            dump_setting(_setting)
                                         await say(
                                             websocket,
                                             group_id,
@@ -795,11 +789,9 @@ async def echo(websocket, message):
                                             "可以装",
                                         ],
                                     ) and IsAdmin(user_id, group_id):
-                                        setting = load_setting()
-                                        while at_id in setting["fly"]:
-                                            setting["fly"].remove(at_id)
-                                        dump_setting(setting)
-                                        setting = load_setting()
+                                        while at_id in load_setting()["fly"]:
+                                            _setting["fly"].remove(at_id)
+                                        dump_setting(_setting)
                                         await say(
                                             websocket,
                                             group_id,
@@ -813,7 +805,7 @@ async def echo(websocket, message):
                                         and IsAdmin(user_id, group_id)
                                     ):
                                         AddAtPunishList(
-                                            at_id, group_id, setting["defense_times"]
+                                            at_id, group_id, load_setting()["defense_times"]
                                         )
                                         await say(
                                             websocket,
@@ -837,7 +829,7 @@ async def echo(websocket, message):
                                                 if BotIsAdmin(group_id):
                                                     if (
                                                         group_id
-                                                        == setting["admin_group_main"]
+                                                        == load_setting()["admin_group_main"]
                                                     ):
                                                         await ban_new(
                                                             websocket,
@@ -857,7 +849,7 @@ async def echo(websocket, message):
                                                         websocket, at_id, group_id
                                                     )
                                     # elif (
-                                    #     at_id in setting["developers_list"]
+                                    #     at_id in load_setting()["developers_list"]
                                     #     # and "reply" not in message["raw_message"]
                                     #     and user_id
                                     #     not in get_config("no_reply_list", group_id)
@@ -911,7 +903,7 @@ async def echo(websocket, message):
                                     #             )
 
                                     #     elif (
-                                    #         user_id not in setting["developers_list"]
+                                    #         user_id not in load_setting()["developers_list"]
                                     #         and IsAdmin(user_id, group_id)
                                     #         and BotIsAdmin(group_id)
                                     #         and get_config("dont_at_me", group_id)
@@ -926,21 +918,21 @@ async def echo(websocket, message):
                                     #         #         websocket,
                                     #         #         user_id,
                                     #         #         group_id,
-                                    #         #         f"{sender_name},不要随便艾特☁️喵,引用记得删除艾特,管理员惩罚{setting["defense_times"]*now_num}次喵。",
+                                    #         #         f"{sender_name},不要随便艾特☁️喵,引用记得删除艾特,管理员惩罚{load_setting()["defense_times"]*now_num}次喵。",
                                     #         #     )
                                     #         #     # if now_num <= 20:
                                     #         #     # SayAndAt(
                                     #         #     #     websocket,
                                     #         #     #     user_id,
                                     #         #     #     group_id,
-                                    #         #     #     f"{sender_name},不要随便艾特☁️喵,引用记得删除艾特,管理员惩罚{setting["defense_times"]*now_num}次喵。",
+                                    #         #     #     f"{sender_name},不要随便艾特☁️喵,引用记得删除艾特,管理员惩罚{load_setting()["defense_times"]*now_num}次喵。",
                                     #         #     # )
                                     #         #     # else:
                                     #         #     #     SayAndAt(
                                     #         #     #         websocket,
                                     #         #     #         user_id,
                                     #         #     #         group_id,
-                                    #         #     #         f"{sender_name},你是个巨婴嘛?引用记得删除艾特,现在已经是第{now_num}次了！！！管理员惩罚{setting["defense_times"]}次。",
+                                    #         #     #         f"{sender_name},你是个巨婴嘛?引用记得删除艾特,现在已经是第{now_num}次了！！！管理员惩罚{load_setting()["defense_times"]}次。",
                                     #         #     #     )
                                     #         #     AddAtPunishList(
                                     #         #         user_id, group_id, 100 * now_num
@@ -949,11 +941,11 @@ async def echo(websocket, message):
                                     #         #     await say(
                                     #         #         websocket,
                                     #         #         group_id,
-                                    #         #         f"{sender_name},不要随便艾特☁️喵，引用记得删除艾特,你被警告了喵,事不过三,你现在是第{now_num}次,超过后会施加{setting["defense_times"]}*总艾特次数的艾特惩罚。",
+                                    #         #         f"{sender_name},不要随便艾特☁️喵，引用记得删除艾特,你被警告了喵,事不过三,你现在是第{now_num}次,超过后会施加{load_setting()["defense_times"]}*总艾特次数的艾特惩罚。",
                                     #         #     )
                                     #         pass
                                 # 乐可不需要是管理的时候，艾特其他成员
-                                elif at_id != setting["bot_id"]:
+                                elif at_id != load_setting()["bot_id"]:
                                     if HasKeyWords(raw_message, ["送你", "V你", "v你"]):
                                         num = re.findall(r"\d+", raw_message)
                                         if len(num) >= 2:
@@ -967,11 +959,10 @@ async def echo(websocket, message):
                                     elif HasKeyWords(
                                         raw_message, ["你是GAY", "你是gay"]
                                     ) and IsAdmin(user_id, group_id):
-                                        setting = load_setting()
-                                        if at_id not in setting["boring"]:
-                                            setting["boring"].append(at_id)
-                                            dump_setting(setting)
-                                            setting = load_setting()
+                                        _setting = load_setting()
+                                        if at_id not in load_setting()["boring"]:
+                                            _setting["boring"].append(at_id)
+                                            dump_setting(_setting)
                                         await say(
                                             websocket,
                                             group_id,
@@ -980,11 +971,10 @@ async def echo(websocket, message):
                                     elif HasKeyWords(
                                         raw_message, ["你不是GAY", "你不是gay"]
                                     ) and IsAdmin(user_id, group_id):
-                                        setting = load_setting()
-                                        while at_id in setting["boring"]:
-                                            setting["boring"].remove(at_id)
-                                        dump_setting(setting)
-                                        setting = load_setting()
+                                        _setting = load_setting()
+                                        while at_id in load_setting()["boring"]:
+                                            _setting["boring"].remove(at_id)
+                                        dump_setting(_setting)
                                         await say(
                                             websocket,
                                             group_id,
@@ -993,11 +983,10 @@ async def echo(websocket, message):
                                     elif HasKeyWords(
                                         raw_message, ["不要哈气"]
                                     ) and IsAdmin(user_id, group_id):
-                                        setting = load_setting()
-                                        while at_id in setting["huffing"]:
-                                            setting["huffing"].remove(at_id)
-                                        dump_setting(setting)
-                                        setting = load_setting()
+                                        _setting = load_setting()
+                                        while at_id in load_setting()["huffing"]:
+                                            _setting["huffing"].remove(at_id)
+                                        dump_setting(_setting)
                                         await say(
                                             websocket,
                                             group_id,
@@ -1006,11 +995,10 @@ async def echo(websocket, message):
                                     elif HasKeyWords(raw_message, ["哈气"]) and IsAdmin(
                                         user_id, group_id
                                     ):
-                                        setting = load_setting()
-                                        if at_id not in setting["huffing"]:
-                                            setting["huffing"].append(at_id)
-                                            dump_setting(setting)
-                                            setting = load_setting()
+                                        _setting = load_setting()
+                                        if at_id not in load_setting()["huffing"]:
+                                            _setting["huffing"].append(at_id)
+                                            dump_setting(_setting)
                                         await say(
                                             websocket,
                                             group_id,
@@ -1019,7 +1007,7 @@ async def echo(websocket, message):
                                 # 管理艾特乐可
                                 elif (
                                     IsAdmin(user_id, group_id) or IsDeveloper(user_id)
-                                ) and at_id == setting["bot_id"]:
+                                ) and at_id == load_setting()["bot_id"]:
                                     # 管理员功能 at乐可
                                     if "解除全体禁言" in message["raw_message"]:
                                         logging.info(
@@ -1095,14 +1083,14 @@ async def echo(websocket, message):
                                         )
                                         i = 0
                                         delete_list = []
-                                        for group in setting["cold_group_king"]:
+                                        _setting= load_setting()
+                                        for group in _setting["cold_group_king"]:
                                             if group["group_id"] == group_id:
                                                 delete_list.append(i)
                                             i += 1
                                         for _ in delete_list:
-                                            del setting["cold_group_king"][_]
-                                        dump_setting(setting)
-                                        setting = load_setting()
+                                            del _setting["cold_group_king"][_]
+                                        dump_setting(_setting)
                                         if now_status:
                                             SwitchColdGroupChat(group_id)
                                         await say(
@@ -1165,7 +1153,7 @@ async def echo(websocket, message):
                                         #     group_id,
                                         #     f"{sender_name},请不要艾特乐可喵,请以乐可开头说提示语喵，比如“乐可，功能。”。",
                                         # )
-                                elif at_id == setting["bot_id"]:
+                                elif at_id == load_setting()["bot_id"]:
                                     if HasKeyWords(
                                         message["raw_message"],
                                         ["throw"],
@@ -1235,7 +1223,7 @@ async def echo(websocket, message):
                             #     or "O/" in message["raw_message"]
                             #     or "👍🏻" in message["raw_message"]
                             # ) and ".com" not in message["raw_message"]:
-                            #     if user_id in setting["cxqy"]:
+                            #     if user_id in load_setting()["cxqy"]:
                             #         await websocket.send(
                             #             json.dumps(
                             #                 say(
@@ -1260,7 +1248,7 @@ async def echo(websocket, message):
                                 re.search(
                                     r"CQ:reply,id=\d+]好好好", message["raw_message"]
                                 )
-                                and user_id in setting["developers_list"]
+                                and user_id in load_setting()["developers_list"]
                             ):
                                 message_id = re.findall(
                                     r"CQ:reply,id=(\d+)", message["raw_message"]
@@ -1310,7 +1298,7 @@ async def echo(websocket, message):
                                     )
                                     if mod:
                                         # 通过验证
-                                        if group_id == setting["admin_group_main"]:
+                                        if group_id == load_setting()["admin_group_main"]:
                                             await ban_new(
                                                 websocket,
                                                 user_id,
@@ -1440,7 +1428,7 @@ async def echo(websocket, message):
                                             BotIsAdmin(group_id)
                                             and get_config("cat_day_date", group_id)
                                             != -1
-                                            and user_id not in setting["other_bots"]
+                                            and user_id not in load_setting()["other_bots"]
                                         ):
                                             if (
                                                 "喵" not in message["raw_message"]
@@ -1542,14 +1530,14 @@ async def echo(websocket, message):
                                                     ],
                                                 ).group()
                                                 if user_id in list(
-                                                    setting["blacklist"].keys()
+                                                    load_setting()["blacklist"].keys()
                                                 ):
                                                     await say(
                                                         websocket,
                                                         group_id,
                                                         "{}在黑名单中，原因:{}。".format(
                                                             user_id,
-                                                            setting["blacklist"][
+                                                            load_setting()["blacklist"][
                                                                 user_id
                                                             ],
                                                         ),
@@ -1864,7 +1852,7 @@ async def echo(websocket, message):
                                             ):
                                                 if (
                                                     user_id
-                                                    in setting["developers_list"]
+                                                    in load_setting()["developers_list"]
                                                 ):
                                                     result = re.search(
                                                         r"\d+",
@@ -1876,12 +1864,12 @@ async def echo(websocket, message):
                                                             websocket,
                                                             qq,
                                                             group_id,
-                                                            f"惩罚性艾特{setting["defense_times"]}次。",
+                                                            f"惩罚性艾特{load_setting()["defense_times"]}次。",
                                                         )
                                                         AddAtPunishList(
                                                             qq,
                                                             group_id,
-                                                            setting["defense_times"],
+                                                            load_setting()["defense_times"],
                                                         )
                                             elif (
                                                 "随机梗图"
@@ -1963,7 +1951,7 @@ async def echo(websocket, message):
                                                 # AddAtPunishList(
                                                 #     user_id,
                                                 #     group_id,
-                                                #     setting["defense_times"],
+                                                #     load_setting()["defense_times"],
                                                 # )
                                                 # await ban_new(
                                                 #     websocket,
@@ -2147,7 +2135,6 @@ async def echo(websocket, message):
                                                 await radom_cat(websocket, group_id)
                                             elif HasKeyWords(raw_message, ["切换模型"]):
                                                 now_model = switch_model()
-                                                setting = load_setting()
                                                 await say(
                                                     websocket,
                                                     group_id,
@@ -2157,7 +2144,6 @@ async def echo(websocket, message):
                                                 raw_message, ["切换思考显示"]
                                             ):
                                                 now_think_display = display_think()
-                                                setting = load_setting()
                                                 await say(
                                                     websocket,
                                                     group_id,
@@ -2194,28 +2180,27 @@ async def echo(websocket, message):
                                                 )
 
                                                 await red_qq_avatar(websocket)
-
-                                                setting["thanos_time"] = time.time()
-                                                setting["is_thanos"] = True
-                                                dump_setting(setting)
-                                                setting = load_setting()
+                                                _setting = load_setting()
+                                                _setting["thanos_time"] = time.time()
+                                                _setting["is_thanos"] = True
+                                                dump_setting(_setting)
                                             elif (
                                                 "清楚明白"
                                                 in message["message"][0]["data"]["text"]
                                                 and IsAdmin(user_id, group_id)
-                                                and setting["is_thanos"]
+                                                and load_setting()["is_thanos"]
                                             ):
                                                 await cxgl(websocket, user_id, group_id)
                                             elif (
                                                 "取消"
                                                 in message["message"][0]["data"]["text"]
                                                 and IsAdmin(user_id, group_id)
-                                                and setting["is_thanos"]
+                                                and load_setting()["is_thanos"]
                                             ):
                                                 await nomoral_qq_avatar(websocket)
-                                                setting["is_thanos"] = False
-                                                dump_setting(setting)
-                                                setting = load_setting()
+                                                _setting = load_setting()
+                                                _setting["is_thanos"] = False
+                                                dump_setting(_setting)
                                                 await say(
                                                     websocket,
                                                     group_id,
@@ -2427,7 +2412,7 @@ async def echo(websocket, message):
                             )
                             if (
                                 HasKeyWords(message["raw_message"], ["更新列表"])
-                                and message["user_id"] in setting["developers_list"]
+                                and message["user_id"] in load_setting()["developers_list"]
                             ):
                                 await get_group_list(websocket)
                                 await SayPrivte(
@@ -2435,7 +2420,7 @@ async def echo(websocket, message):
                                 )
                             elif (
                                 message["raw_message"].startswith("积分")
-                                and message["user_id"] in setting["developers_list"]
+                                and message["user_id"] in load_setting()["developers_list"]
                             ):
                                 result = re.search(r"\d+", message["raw_message"])
                                 # print(result.group())
@@ -2450,7 +2435,7 @@ async def echo(websocket, message):
                                 )
                             elif (
                                 HasKeyWords(message["raw_message"], ["发送日志"])
-                                and message["user_id"] in setting["developers_list"]
+                                and message["user_id"] in load_setting()["developers_list"]
                             ):
                                 send_log_email()
                                 await SayPrivte(
@@ -2486,7 +2471,7 @@ async def echo(websocket, message):
                                 user_id = message["user_id"]
                                 # 拍谁
                                 target_id = message["target_id"]
-                                if target_id == setting["bot_id"]:
+                                if target_id == load_setting()["bot_id"]:
                                     # logging.info(message)
                                     await cute3(websocket, message["group_id"])
                     match message["notice_type"]:
@@ -2500,11 +2485,11 @@ async def echo(websocket, message):
                                 )
                             )
                             logging.info("{}加入入群{}".format(user_id, group_id))
-                            if user_id != setting["bot_id"]:
+                            if user_id != load_setting()["bot_id"]:
                                 if BotIsAdmin(group_id):
                                     if (
-                                        str(user_id) in setting["blacklist"].keys()
-                                        and group_id == setting["admin_group_main"]
+                                        str(user_id) in load_setting()["blacklist"].keys()
+                                        and group_id == load_setting()["admin_group_main"]
                                     ):
                                         if not IsAdmin(user_id, group_id):
                                             await SayAndAt(
@@ -2512,7 +2497,7 @@ async def echo(websocket, message):
                                                 user_id,
                                                 group_id,
                                                 "你已因{},被本群拉黑，无法加入本群".format(
-                                                    setting["blacklist"][str(user_id)],
+                                                    load_setting()["blacklist"][str(user_id)],
                                                 ),
                                             )
                                             await kick_member(
@@ -2525,7 +2510,7 @@ async def echo(websocket, message):
                                         )
                                         if (
                                             is_in_unwelcome
-                                            and group_id == setting["admin_group_main"]
+                                            and group_id == load_setting()["admin_group_main"]
                                         ):
                                             await ban_new(
                                                 websocket,
@@ -2616,27 +2601,26 @@ async def echo(websocket, message):
                                         ConsumingTimeType.COLDREPLAY,
                                     )
                                 )
-                                setting = load_setting()
+                                _setting = load_setting()
                                 if (
-                                    time.time() - setting["thanos_time"] > 300
-                                    and setting["is_thanos"]
+                                    time.time() - load_setting()["thanos_time"] > 300
+                                    and load_setting()["is_thanos"]
                                 ):
                                     await nomoral_qq_avatar(websocket)
-                                    setting["is_thanos"] = False
-                                    setting["thanos_time"] = time.time()
-                                    dump_setting(setting)
-                                    setting = load_setting()
+                                    _setting["is_thanos"] = False
+                                    _setting["thanos_time"] = time.time()
+                                    dump_setting(_setting)
                                     await say(websocket, group_id, "乐可不是紫薯精喵。")
                                 # 定期更新群友列表
-                                if time.time() - setting["last_update_time"] > 300:
+                                if time.time() - load_setting()["last_update_time"] > 300:
                                     await get_group_list(websocket)
-                                    # for group in setting["group_list"]:
+                                    # for group in load_setting()["group_list"]:
                                     #     await get_group_member_list(websocket, group)
-                                for delete_message in setting["delete_message_list"]:
+                                for delete_message in load_setting()["delete_message_list"]:
                                     await delete_msg(websocket, delete_message)
-                                setting["delete_message_list"] = []
-                                dump_setting(setting)
-                                setting = load_setting()
+                                _setting=load_setting()
+                                _setting["delete_message_list"] = []
+                                dump_setting(_setting)
                                 # 定期检测新入群友验证码
                                 for i in os.listdir("./vcode"):
                                     user_id = i.split(".")[0].split("_")[0]
@@ -2667,7 +2651,7 @@ async def echo(websocket, message):
                                     await cute(websocket, group_id)
                                 # 定期清理过期的大头菜
                                 ClearKohlrabi()
-                                for index, user in enumerate(setting["alarm_member"]):
+                                for index, user in enumerate(load_setting()["alarm_member"]):
                                     if (
                                         (
                                             datetime.datetime.now().hour
@@ -2693,11 +2677,11 @@ async def echo(websocket, message):
                                                 user["group_id"],
                                                 user["text"],
                                             )
-                                        setting["alarm_member"][index][
+                                        _setting=load_setting()
+                                        _setting["alarm_member"][index][
                                             "time"
                                         ] = time.time()
-                                        dump_setting(setting)
-                                        setting = load_setting()
+                                        dump_setting(_setting)
                             case _:
                                 print(message)
                     else:
@@ -2780,9 +2764,9 @@ async def echo(websocket, message):
                                         websocket, user.user_id, user.group_id
                                     )
                 case "delete_message_list":
-                    setting["delete_message_list"].append(message["data"]["message_id"])
-                    dump_setting(setting)
-                    setting = load_setting()
+                    _setting=load_setting()
+                    _setting["delete_message_list"].append(message["data"]["message_id"])
+                    dump_setting(_setting)
                 case "defense":
                     # print(message)
                     await delete_msg(websocket, message["data"]["message_id"])
@@ -2800,14 +2784,14 @@ async def echo(websocket, message):
                             group["member_count"],
                             group["max_member_count"],
                         )
-                        if group["group_id"] not in setting["group_list"]:
-                            setting["group_list"].append(group["group_id"])
-                            dump_setting(setting)
-                            setting = load_setting()
+                        if group["group_id"] not in load_setting()["group_list"]:
+                            _setting=load_setting()
+                            _setting["group_list"].append(group["group_id"])
+                            dump_setting(_setting)
                         await update_group_member_list(websocket, group["group_id"])
-                    setting["last_update_time"] = time.time()
-                    dump_setting(setting)
-                    setting = load_setting()
+                    _setting=load_setting()
+                    _setting["last_update_time"] = time.time()
+                    dump_setting(_setting)
                     print("更新全部群列表完毕")
                     logging.info("更新全部群列表完毕")
                 case "so_cute":

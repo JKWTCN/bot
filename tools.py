@@ -1,4 +1,5 @@
 import datetime
+import logging
 import time
 import base64
 import json
@@ -25,7 +26,6 @@ def GetLocalIP():
 # 时间戳转日期字符串
 def timestamp_to_date(timestamp: int):
     return datetime.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
-
 
 
 async def ReplySay(websocket, group_id: int, message_id: int, text: str):
@@ -371,9 +371,13 @@ def get_timestamp_week(timestamp) -> int:
 
 
 def load_setting():
-    with open("setting.json", "r", encoding="utf-8") as file:
-        setting = json.load(file)
-    return setting
+    try:
+        with open("setting.json", "r", encoding="utf-8") as file:
+            setting = json.load(file)
+        return setting
+    except Exception as e:
+        logging.error(f"读取配置文件出错: {e}")
+        return {}
 
 
 def dump_setting(setting: dict):
