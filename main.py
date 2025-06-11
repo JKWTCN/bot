@@ -203,7 +203,7 @@ class ConsumingTimeType(Enum):
     COLDREPLAY = 2
     REPLYIMAGEMESSAGE = 3
     SAYPRIVTECHATNOCONTEXT = 4
-    MIAOMIAOTRANSLATION=5
+    MIAOMIAOTRANSLATION = 5
 
 
 async def process_queue():
@@ -249,6 +249,7 @@ async def process_queue():
                     group_id = param2
                     message_id = param3
                     from chat import miaomiaoTranslation
+
                     await miaomiaoTranslation(websocket, user_id, group_id, message_id)
 
             # processing_thread.task_done()
@@ -321,13 +322,16 @@ async def echo(websocket, message):
                             text_message = ""
                             # ai回复过标志
                             chatFlag = False
-                            plainTextMessage=""
+                            plainTextMessage = ""
+                            is_plainTextMessage = True
+                            hasTextMessage = False
                             for i in message["message"]:
                                 match i["type"]:
                                     case "at":
                                         messageInfo.has_at = True
                                         messageInfo.at_ids.append(int(i["data"]["qq"]))
                                         text_message += f"{senderInfo.displayName}@{get_user_name(int(i['data']['qq']), group_id)}"
+                                        is_plainTextMessage = False
                                     case "reply":
                                         messageInfo.has_reply = True
                                         messageInfo.reply_id = int(i["data"]["id"])
@@ -336,12 +340,15 @@ async def echo(websocket, message):
                                         addWhoReplyYou(
                                             user_id, int(i["data"]["id"]), group_id
                                         )
+                                        is_plainTextMessage = False
                                     case "image":
                                         messageInfo.has_image = True
                                         text_message += "[图片]"
+                                        is_plainTextMessage = False
                                     case "text":
-                                        plainTextMessage+=i["data"]["text"]
+                                        plainTextMessage += i["data"]["text"]
                                         text_message += i["data"]["text"]
+                                        hasTextMessage = True
                                         pass
                             if not messageInfo.has_image:
                                 write_message(message, text_message)
@@ -362,7 +369,12 @@ async def echo(websocket, message):
                                 )
                             )
                             from tools import check_all_miao
-                            if (check_all_miao(plainTextMessage)):
+
+                            if (
+                                check_all_miao(plainTextMessage)
+                                and is_plainTextMessage
+                                and hasTextMessage
+                            ):
                                 consuming_time_process_queue.put(
                                     (
                                         websocket,

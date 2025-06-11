@@ -1,5 +1,6 @@
 import datetime
 import logging
+import string
 import time
 import base64
 import json
@@ -382,14 +383,17 @@ def load_setting():
 
 def check_all_miao(text):
     """
-    检查给定文本中的中文字符是否都是"喵"
+    检查给定文本中的字符除标点符号外的字符是否都是"喵"
     """
     # 遍历文本中的每个字符
+    # 获取所有标点符号
+    punctuations = string.punctuation + "。，、；：「」『』（）【】《》？！…—"
+
     for char in text:
-        # 检查是否是中文字符（Unicode范围：4E00-9FFF）
-        if "\u4e00" <= char <= "\u9fff":
-            if char != "喵":
-                return False
+        # 如果字符不是标点符号且不是"喵"，返回False
+        if char not in punctuations and char != "喵":
+            return False
+    # 所有非标点符号字符都是"喵"
     return True
 
 

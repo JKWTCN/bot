@@ -822,7 +822,7 @@ async def miaomiaoTranslation(websocket, user_id: int, group_id: int, message_id
     base_messages.append(
         {
             "role": "user",
-            "content": "这是你的同类,但是它有点笨,它只会说喵,帮它翻译一下子最后一又喵喵组成的话,谢谢。",
+            "content": "这是你的同类,但是它有点笨,它只会说喵,帮它翻译一下子它说的最后一句喵喵组成的话,谢谢。",
         }
     )
 
