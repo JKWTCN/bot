@@ -203,6 +203,7 @@ class ConsumingTimeType(Enum):
     COLDREPLAY = 2
     REPLYIMAGEMESSAGE = 3
     SAYPRIVTECHATNOCONTEXT = 4
+    MIAOMIAOTRANSLATION=5
 
 
 async def process_queue():
@@ -243,8 +244,14 @@ async def process_queue():
                         user_id,
                         chatNoContext(text),
                     )
+                case ConsumingTimeType.MIAOMIAOTRANSLATION:
+                    user_id = param1
+                    group_id = param2
+                    message_id = param3
+                    from chat import miaomiaoTranslation
+                    await miaomiaoTranslation(websocket, user_id, group_id, message_id)
 
-            processing_thread.task_done()
+            # processing_thread.task_done()
         except Exception as e:
             logging.error(f"处理队列任务时出错: {e}")
 
@@ -268,8 +275,6 @@ processing_thread.start()
 
 # 启动处理协程
 asyncio.run_coroutine_threadsafe(process_queue(), processing_loop)
-
-
 
 
 async def echo(websocket, message):
@@ -316,7 +321,7 @@ async def echo(websocket, message):
                             text_message = ""
                             # ai回复过标志
                             chatFlag = False
-
+                            plainTextMessage=""
                             for i in message["message"]:
                                 match i["type"]:
                                     case "at":
@@ -335,6 +340,7 @@ async def echo(websocket, message):
                                         messageInfo.has_image = True
                                         text_message += "[图片]"
                                     case "text":
+                                        plainTextMessage+=i["data"]["text"]
                                         text_message += i["data"]["text"]
                                         pass
                             if not messageInfo.has_image:
@@ -355,6 +361,19 @@ async def echo(websocket, message):
                                     message["raw_message"],
                                 )
                             )
+                            from tools import check_all_miao
+                            if (check_all_miao(plainTextMessage)):
+                                consuming_time_process_queue.put(
+                                    (
+                                        websocket,
+                                        user_id,
+                                        group_id,
+                                        message_id,
+                                        "",
+                                        ConsumingTimeType.MIAOMIAOTRANSLATION,
+                                    )
+                                )
+
                             if set(messageInfo.at_ids) & set(
                                 get_config("hate_at_list", group_id)
                             ):
@@ -723,15 +742,17 @@ async def echo(websocket, message):
                                     elif HasKeyWords(
                                         raw_message, ["你是GAY", "你是gay"]
                                     ) and IsAdmin(user_id, group_id):
-                                        if at_id not in load_setting["boring"]:
-                                            _setting = load_setting()
-                                            _setting["boring"].append(at_id)
-                                            dump_setting(_setting)
-                                        await say(
-                                            websocket,
-                                            group_id,
-                                            f"{get_user_name(at_id, group_id)},GAY追杀令喵!!!!",
-                                        )
+                                        # todo 修复bug
+                                        # if at_id not in load_setting["boring"]:
+                                        #     _setting = load_setting()
+                                        #     _setting["boring"].append(at_id)
+                                        #     dump_setting(_setting)
+                                        # await say(
+                                        #     websocket,
+                                        #     group_id,
+                                        #     f"{get_user_name(at_id, group_id)},GAY追杀令喵!!!!",
+                                        # )
+                                        pass
                                     elif HasKeyWords(
                                         raw_message, ["你不是GAY", "你不是gay"]
                                     ) and IsAdmin(user_id, group_id):
@@ -805,7 +826,9 @@ async def echo(websocket, message):
                                         and IsAdmin(user_id, group_id)
                                     ):
                                         AddAtPunishList(
-                                            at_id, group_id, load_setting()["defense_times"]
+                                            at_id,
+                                            group_id,
+                                            load_setting()["defense_times"],
                                         )
                                         await say(
                                             websocket,
@@ -829,7 +852,9 @@ async def echo(websocket, message):
                                                 if BotIsAdmin(group_id):
                                                     if (
                                                         group_id
-                                                        == load_setting()["admin_group_main"]
+                                                        == load_setting()[
+                                                            "admin_group_main"
+                                                        ]
                                                     ):
                                                         await ban_new(
                                                             websocket,
@@ -959,15 +984,17 @@ async def echo(websocket, message):
                                     elif HasKeyWords(
                                         raw_message, ["你是GAY", "你是gay"]
                                     ) and IsAdmin(user_id, group_id):
-                                        _setting = load_setting()
-                                        if at_id not in load_setting()["boring"]:
-                                            _setting["boring"].append(at_id)
-                                            dump_setting(_setting)
-                                        await say(
-                                            websocket,
-                                            group_id,
-                                            f"{get_user_name(at_id, group_id)},GAY追杀令喵!!!!",
-                                        )
+                                        # todo 修复bug
+                                        # _setting = load_setting()
+                                        # if at_id not in load_setting()["boring"]:
+                                        #     _setting["boring"].append(at_id)
+                                        #     dump_setting(_setting)
+                                        # await say(
+                                        #     websocket,
+                                        #     group_id,
+                                        #     f"{get_user_name(at_id, group_id)},GAY追杀令喵!!!!",
+                                        # )
+                                        pass
                                     elif HasKeyWords(
                                         raw_message, ["你不是GAY", "你不是gay"]
                                     ) and IsAdmin(user_id, group_id):
@@ -1083,7 +1110,7 @@ async def echo(websocket, message):
                                         )
                                         i = 0
                                         delete_list = []
-                                        _setting= load_setting()
+                                        _setting = load_setting()
                                         for group in _setting["cold_group_king"]:
                                             if group["group_id"] == group_id:
                                                 delete_list.append(i)
@@ -1298,7 +1325,10 @@ async def echo(websocket, message):
                                     )
                                     if mod:
                                         # 通过验证
-                                        if group_id == load_setting()["admin_group_main"]:
+                                        if (
+                                            group_id
+                                            == load_setting()["admin_group_main"]
+                                        ):
                                             await ban_new(
                                                 websocket,
                                                 user_id,
@@ -1428,7 +1458,8 @@ async def echo(websocket, message):
                                             BotIsAdmin(group_id)
                                             and get_config("cat_day_date", group_id)
                                             != -1
-                                            and user_id not in load_setting()["other_bots"]
+                                            and user_id
+                                            not in load_setting()["other_bots"]
                                         ):
                                             if (
                                                 "喵" not in message["raw_message"]
@@ -1869,7 +1900,9 @@ async def echo(websocket, message):
                                                         AddAtPunishList(
                                                             qq,
                                                             group_id,
-                                                            load_setting()["defense_times"],
+                                                            load_setting()[
+                                                                "defense_times"
+                                                            ],
                                                         )
                                             elif (
                                                 "随机梗图"
@@ -2412,7 +2445,8 @@ async def echo(websocket, message):
                             )
                             if (
                                 HasKeyWords(message["raw_message"], ["更新列表"])
-                                and message["user_id"] in load_setting()["developers_list"]
+                                and message["user_id"]
+                                in load_setting()["developers_list"]
                             ):
                                 await get_group_list(websocket)
                                 await SayPrivte(
@@ -2420,7 +2454,8 @@ async def echo(websocket, message):
                                 )
                             elif (
                                 message["raw_message"].startswith("积分")
-                                and message["user_id"] in load_setting()["developers_list"]
+                                and message["user_id"]
+                                in load_setting()["developers_list"]
                             ):
                                 result = re.search(r"\d+", message["raw_message"])
                                 # print(result.group())
@@ -2435,7 +2470,8 @@ async def echo(websocket, message):
                                 )
                             elif (
                                 HasKeyWords(message["raw_message"], ["发送日志"])
-                                and message["user_id"] in load_setting()["developers_list"]
+                                and message["user_id"]
+                                in load_setting()["developers_list"]
                             ):
                                 send_log_email()
                                 await SayPrivte(
@@ -2488,8 +2524,10 @@ async def echo(websocket, message):
                             if user_id != load_setting()["bot_id"]:
                                 if BotIsAdmin(group_id):
                                     if (
-                                        str(user_id) in load_setting()["blacklist"].keys()
-                                        and group_id == load_setting()["admin_group_main"]
+                                        str(user_id)
+                                        in load_setting()["blacklist"].keys()
+                                        and group_id
+                                        == load_setting()["admin_group_main"]
                                     ):
                                         if not IsAdmin(user_id, group_id):
                                             await SayAndAt(
@@ -2497,7 +2535,9 @@ async def echo(websocket, message):
                                                 user_id,
                                                 group_id,
                                                 "你已因{},被本群拉黑，无法加入本群".format(
-                                                    load_setting()["blacklist"][str(user_id)],
+                                                    load_setting()["blacklist"][
+                                                        str(user_id)
+                                                    ],
                                                 ),
                                             )
                                             await kick_member(
@@ -2510,7 +2550,8 @@ async def echo(websocket, message):
                                         )
                                         if (
                                             is_in_unwelcome
-                                            and group_id == load_setting()["admin_group_main"]
+                                            and group_id
+                                            == load_setting()["admin_group_main"]
                                         ):
                                             await ban_new(
                                                 websocket,
@@ -2590,17 +2631,17 @@ async def echo(websocket, message):
                                     case _:
                                         pass
                             case "heartbeat":
-                                # 冷群了回复
-                                consuming_time_process_queue.put(
-                                    (
-                                        websocket,
-                                        0,
-                                        0,
-                                        0,
-                                        "",
-                                        ConsumingTimeType.COLDREPLAY,
-                                    )
-                                )
+                                # todo 冷群了回复
+                                # consuming_time_process_queue.put(
+                                #     (
+                                #         websocket,
+                                #         0,
+                                #         0,
+                                #         0,
+                                #         "",
+                                #         ConsumingTimeType.COLDREPLAY,
+                                #     )
+                                # )
                                 _setting = load_setting()
                                 if (
                                     time.time() - load_setting()["thanos_time"] > 300
@@ -2612,13 +2653,18 @@ async def echo(websocket, message):
                                     dump_setting(_setting)
                                     await say(websocket, group_id, "乐可不是紫薯精喵。")
                                 # 定期更新群友列表
-                                if time.time() - load_setting()["last_update_time"] > 300:
+                                if (
+                                    time.time() - load_setting()["last_update_time"]
+                                    > 300
+                                ):
                                     await get_group_list(websocket)
                                     # for group in load_setting()["group_list"]:
                                     #     await get_group_member_list(websocket, group)
-                                for delete_message in load_setting()["delete_message_list"]:
+                                for delete_message in load_setting()[
+                                    "delete_message_list"
+                                ]:
                                     await delete_msg(websocket, delete_message)
-                                _setting=load_setting()
+                                _setting = load_setting()
                                 _setting["delete_message_list"] = []
                                 dump_setting(_setting)
                                 # 定期检测新入群友验证码
@@ -2651,7 +2697,9 @@ async def echo(websocket, message):
                                     await cute(websocket, group_id)
                                 # 定期清理过期的大头菜
                                 ClearKohlrabi()
-                                for index, user in enumerate(load_setting()["alarm_member"]):
+                                for index, user in enumerate(
+                                    load_setting()["alarm_member"]
+                                ):
                                     if (
                                         (
                                             datetime.datetime.now().hour
@@ -2677,7 +2725,7 @@ async def echo(websocket, message):
                                                 user["group_id"],
                                                 user["text"],
                                             )
-                                        _setting=load_setting()
+                                        _setting = load_setting()
                                         _setting["alarm_member"][index][
                                             "time"
                                         ] = time.time()
@@ -2764,8 +2812,10 @@ async def echo(websocket, message):
                                         websocket, user.user_id, user.group_id
                                     )
                 case "delete_message_list":
-                    _setting=load_setting()
-                    _setting["delete_message_list"].append(message["data"]["message_id"])
+                    _setting = load_setting()
+                    _setting["delete_message_list"].append(
+                        message["data"]["message_id"]
+                    )
                     dump_setting(_setting)
                 case "defense":
                     # print(message)
@@ -2785,11 +2835,11 @@ async def echo(websocket, message):
                             group["max_member_count"],
                         )
                         if group["group_id"] not in load_setting()["group_list"]:
-                            _setting=load_setting()
+                            _setting = load_setting()
                             _setting["group_list"].append(group["group_id"])
                             dump_setting(_setting)
                         await update_group_member_list(websocket, group["group_id"])
-                    _setting=load_setting()
+                    _setting = load_setting()
                     _setting["last_update_time"] = time.time()
                     dump_setting(_setting)
                     print("更新全部群列表完毕")

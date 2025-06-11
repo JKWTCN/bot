@@ -380,6 +380,19 @@ def load_setting():
         return {}
 
 
+def check_all_miao(text):
+    """
+    检查给定文本中的中文字符是否都是"喵"
+    """
+    # 遍历文本中的每个字符
+    for char in text:
+        # 检查是否是中文字符（Unicode范围：4E00-9FFF）
+        if "\u4e00" <= char <= "\u9fff":
+            if char != "喵":
+                return False
+    return True
+
+
 def dump_setting(setting: dict):
     with open("setting.json", "w", encoding="utf-8") as f:
         json.dump(setting, f, ensure_ascii=False, indent=4)

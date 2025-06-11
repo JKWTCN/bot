@@ -585,6 +585,7 @@ async def Joke(websocket, group_id):
 
 # 更新冷群状态
 def UpdateColdGroup(user_id: int, group_id: int, message_id: int, raw_message: str):
+    # todo 把此功能迁移到群聊功能
     setting = load_setting()
     for index, group in enumerate(setting["cold_group_king"]):
         if group["group_id"] == group_id:
@@ -594,7 +595,7 @@ def UpdateColdGroup(user_id: int, group_id: int, message_id: int, raw_message: s
             setting["cold_group_king"][index]["is_replay"] = False
             setting["cold_group_king"][index]["num"] += 1
             setting["cold_group_king"][index]["raw_message"] = raw_message
-            dump_setting(setting)
+            # dump_setting(setting)
             return
     setting["cold_group_king"].append(
         {
@@ -607,7 +608,7 @@ def UpdateColdGroup(user_id: int, group_id: int, message_id: int, raw_message: s
             "raw_message": raw_message,
         }
     )
-    dump_setting(setting)
+    # dump_setting(setting)
 
 
 # 检测是否冷群并回复
@@ -796,6 +797,86 @@ def chatNoContext(texts):
 
     logger.info("(AI)乐可思考图片结果:{}".format(re_text))
     return re_text
+
+
+async def miaomiaoTranslation(websocket, user_id: int, group_id: int, message_id: int):
+    port = "11434"
+    url = f"http://localhost:{port}/api/chat"
+    model = load_setting()["model"]
+    headers = {"Content-Type": "application/json"}
+
+    # 获取上下文消息
+    context_messages = get_chat_context(user_id, group_id)
+
+    # 构建基础消息结构
+    base_messages = [
+        {
+            "role": "system",
+            "content": "你叫乐可,现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物,其行为似猫但类人.),与我对话每一句话后面都要加上'喵'",
+        }
+    ]
+
+    # 添加上下文消息
+    if context_messages:
+        base_messages.extend(context_messages)
+    base_messages.append(
+        {
+            "role": "user",
+            "content": "这是你的同类,但是它有点笨,它只会说喵,帮它翻译一下子最后一又喵喵组成的话,谢谢。",
+        }
+    )
+
+    data = {
+        "model": model,
+        "options": {"temperature": 1.0},
+        "stream": False,
+        "messages": base_messages,
+    }
+
+    # 特殊模型处理
+    if model == "qwen3:8b":
+        for msg in data["messages"]:
+            if msg["role"] == "system":
+                msg["content"] = "/nothink " + msg["content"]
+            elif msg["role"] == "user":
+                msg["content"] = "/nothink " + msg["content"]
+
+    try:
+        print(data)
+        response = requests.post(url, json=data, headers=headers, timeout=300)
+        res = response.json()
+
+        # 记录日志
+        logger.info(
+            "(AI)乐可在{}({})说:{}".format(
+                GetGroupName(group_id), group_id, res["message"]["content"]
+            )
+        )
+
+        if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
+            re_text = res["message"]["content"]
+        else:
+            match = re.findall(
+                r"<think>([\s\S]*)</think>([\s\S]*)",
+                res["message"]["content"],
+            )
+            if load_setting()["think_display"]:
+                re_text = f"乐可的思考过程喵:{match[0][0]}经过深思熟虑喵,乐可决定回复你:{match[0][1]}"
+            else:
+                re_text = match[0][1]
+    except:
+        logger.info("连接超时")
+        re_text = "呜呜不太理解呢喵."
+
+    # 清理回复中的换行符
+    while "\n" in re_text:
+        re_text = re_text.replace("\n", "")
+
+    re_text += (
+        "\n\n"
+        + "这是乐可的猫娘同类喵,它有点傻傻的,只会说喵,这是乐可帮它翻译的喵,请不要欺负它喵。"
+    )
+    await ReplySay(websocket, group_id, message_id, re_text)
 
 
 async def chat(websocket, user_id: int, group_id: int, message_id: int, text: str):
