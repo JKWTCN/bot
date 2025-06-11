@@ -374,6 +374,7 @@ async def echo(websocket, message):
                                 check_all_miao(plainTextMessage)
                                 and is_plainTextMessage
                                 and hasTextMessage
+                                and "喵" in plainTextMessage
                             ):
                                 consuming_time_process_queue.put(
                                     (
