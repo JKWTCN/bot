@@ -13,6 +13,7 @@ import asyncio
 import queue
 import threading
 
+
 class SenderInfo:
     user_id: int
     nickname: str
@@ -125,12 +126,15 @@ asyncio.run_coroutine_threadsafe(process_queue(), processing_loop)
 async def echo(websocket, message):
     try:
         message = json.loads(message)
+        # 解析消息数据结构
         if "post_type" in message:
             match message["post_type"]:
                 case "message":
                     match message["message_type"]:
                         # 群聊消息
                         case "group":
+                            # TODO 群聊消息已经注册艾特检索
+                            # TODO 群聊消息已经注册关键词检索
                             pass
                         # 私聊消息
                         case "private":
@@ -139,6 +143,7 @@ async def echo(websocket, message):
                 case "notice":
                     if "sub_type" in message:
                         match message["sub_type"]:
+                            # TODO 已经注册通知消息轮询
                             case "poke":
                                 # 谁拍的
                                 user_id = message["user_id"]
@@ -175,7 +180,7 @@ async def echo(websocket, message):
                 case "request":
                     # 请求事件
                     print(message)
-        
+
         else:
             if "status" in message:
                 match message["status"]:
@@ -187,6 +192,7 @@ async def echo(websocket, message):
                 print(message)
     except Exception as e:
         print(f"处理消息时出错: {e},line:{traceback.extract_tb(e.__traceback__)[0][1]}")
+
 
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"

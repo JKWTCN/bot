@@ -1,0 +1,2 @@
+def PrivateMessage(Message):
+    pass
