@@ -1,41 +1,12 @@
 import asyncio
-import datetime
 from enum import Enum
 import logging
-import os
-import random
-import time
 import traceback
-import requests
-import websockets
 import json
 import asyncio
 import queue
 import threading
-
-
-class SenderInfo:
-    user_id: int
-    nickname: str
-    card: str
-    role: str
-    displayName: str
-
-
-class MessageInfo:
-    user_id: int
-    time: int
-    message_id: int
-    raw_message: str
-    group_id: int
-    self_id: int
-    has_at = False
-    at_ids = []
-    has_image = False
-    image_id: str
-    text_message = ""
-    has_reply = False
-    reply_id: int
+from data.message.group_message_info import GroupMesssageInfo
 
 
 from enum import Enum
@@ -61,43 +32,6 @@ async def process_queue():
                 continue
             websocket, param1, param2, param3, text, taskType = task
             print(f"开始启动耗时任务类型{taskType}")
-            match taskType:
-                case ConsumingTimeType.CHAT:
-                    user_id = param1
-                    group_id = param2
-                    message_id = param3
-                    await chat(websocket, user_id, group_id, message_id, text)
-                case ConsumingTimeType.COLDREPLAY:
-                    await ColdReplay(websocket)
-                case ConsumingTimeType.REPLYIMAGEMESSAGE:
-                    group_id = param1
-                    reply_id = param2
-                    message_id = param3
-                    await replyImageMessage(
-                        websocket,
-                        group_id,
-                        reply_id,
-                        message_id,
-                        text,
-                    )
-                case ConsumingTimeType.SAYPRIVTECHATNOCONTEXT:
-                    user_id = param1
-                    group_id = param2
-                    message_id = param3
-                    await SayPrivte(
-                        websocket,
-                        user_id,
-                        chatNoContext(text),
-                    )
-                case ConsumingTimeType.MIAOMIAOTRANSLATION:
-                    user_id = param1
-                    group_id = param2
-                    message_id = param3
-                    from chat import miaomiaoTranslation
-
-                    await miaomiaoTranslation(websocket, user_id, group_id, message_id)
-
-            # processing_thread.task_done()
         except Exception as e:
             logging.error(f"处理队列任务时出错: {e}")
 
@@ -123,6 +57,10 @@ processing_thread.start()
 asyncio.run_coroutine_threadsafe(process_queue(), processing_loop)
 
 
+from schedule.schedule import Schedule
+from data.message.private_message import PrivateMesssageInfo
+
+
 async def echo(websocket, message):
     try:
         message = json.loads(message)
@@ -133,25 +71,19 @@ async def echo(websocket, message):
                     match message["message_type"]:
                         # 群聊消息
                         case "group":
-                            # TODO 群聊消息已经注册艾特检索
-                            # TODO 群聊消息已经注册关键词检索
-                            pass
+                            groupMessageInfo = GroupMesssageInfo(websocket, message)
+                            schedule.processMessage(groupMessageInfo)
                         # 私聊消息
                         case "private":
-                            pass
+                            privateMessageInfo = PrivateMesssageInfo(message)
+                            schedule.processMessage(privateMessageInfo)
 
                 case "notice":
                     if "sub_type" in message:
                         match message["sub_type"]:
                             # TODO 已经注册通知消息轮询
                             case "poke":
-                                # 谁拍的
-                                user_id = message["user_id"]
-                                # 拍谁
-                                target_id = message["target_id"]
-                                if target_id == load_setting()["bot_id"]:
-                                    # logging.info(message)
-                                    await cute3(websocket, message["group_id"])
+                                pass
                     match message["notice_type"]:
                         # 有新人入群
                         case "group_increase":
@@ -194,63 +126,28 @@ async def echo(websocket, message):
         print(f"处理消息时出错: {e},line:{traceback.extract_tb(e.__traceback__)[0][1]}")
 
 
-LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
-DATE_FORMAT = "%m/%d/%Y %H:%M:%S %p"
-now = GetLogTime()
-today = datetime.datetime.today()
-if not os.path.exists(f"log/{today.year}"):
-    os.makedirs(f"log/{today.year}")
-if not os.path.exists(f"log/{today.year}/{today.month}"):
-    os.makedirs(f"log/{today.year}/{today.month}")
-logging.basicConfig(
-    filename=f"log/{today.year}/{today.month}/{now}.log",
-    level=logging.INFO,
-    format=LOG_FORMAT,
-    datefmt=DATE_FORMAT,
-    encoding="utf-8",
-)
+import asyncio
+from websockets.asyncio.server import serve
 
 
-async def handle_client(websocket):
-    """
-    处理客户端连接的函数
-    注意：新版本的 websockets 库不再需要 path 参数
-    """
-    client_ip = websocket.remote_address[0]
-    print(f"客户端 {client_ip} 已连接")
-
-    try:
-        async for message in websocket:
-            # 使用 asyncio.create_task 来并发处理消息
-            asyncio.create_task(process_message(message, websocket))
-    except websockets.exceptions.ConnectionClosed:
-        print(f"客户端 {client_ip} 断开连接")
-    except Exception as e:
-        print(
-            f"处理客户端 {client_ip} 时发生错误: {e} line:{traceback.extract_tb(e.__traceback__)[0][1]}"
-        )
-
-
-async def process_message(message, websocket):
-    try:
+async def pro(websocket):
+    async for message in websocket:
+        print(message)
         await echo(websocket, message)
-    except Exception as e:
-        print(f"处理消息时出错: {e},line:{traceback.extract_tb(e.__traceback__)[0][1]}")
+
+
+schedule = Schedule()
+
+
+def schedule_init():
+
+    pass
 
 
 async def main():
-    # 启动WebSocket服务器
-    async with websockets.serve(
-        handle_client,
-        "localhost",
-        27431,
-        ping_interval=None,  # 禁用自动ping/pong以简化示例
-    ):
-        print("WebSocket 服务器已启动，监听 ws://localhost:27431")
-
-        # 保持服务器运行
-        await asyncio.Future()  # 永久运行
+    schedule_init()
+    async with serve(pro, "localhost", 27434) as server:
+        await server.serve_forever()
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
+asyncio.run(main())

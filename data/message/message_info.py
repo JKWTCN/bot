@@ -3,7 +3,8 @@ class MessageInfo:
     botId: int
     rawMessage: dict
 
-    def __init__(self, rawMessage: dict):
+    def __init__(self, websocket, rawMessage: dict):
         self.rawMessage = rawMessage
         self.time = rawMessage["time"]
-        self.botId = rawMessage["botId"]
+        self.botId = rawMessage["self_id"]
+        self.websocket = websocket
