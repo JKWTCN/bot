@@ -20,13 +20,22 @@ class Application(ABC):
     """是否还能继续触发后面的应用"""
 
     @abstractmethod
+    def judge(self, message: MessageInfo) -> bool:
+        """判断是否触发应用
+
+        Args:
+            message (MessageInfo): 要判断的消息
+        """
+        # pass
+
+    @abstractmethod
     def process(self, message: MessageInfo):
         """处理消息
 
         Args:
             message (Messsage): 要处理的消息
         """
-        pass
+        # pass
 
     def __init__(
         self, applicationInfo: ApplicationInfo, priority: float, isNotEnd=False

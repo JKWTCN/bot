@@ -5,8 +5,8 @@ from data.application.application_type import ApplicationType
 from abc import ABC, abstractmethod
 
 
-class GroupKeyAtApplication(Application):
-    """群at事件应用"""
+class OtherApplication(Application):
+    """其他事件应用"""
 
     def __init__(self, applicationInfo, priority: float, isNotEnd=False):
         """群at事件应用类的构造函数
@@ -19,11 +19,11 @@ class GroupKeyAtApplication(Application):
         super().__init__(applicationInfo, priority, isNotEnd)
         self.applicationType = ApplicationType.GROUP_AT
 
-    # @abstractmethod
-    # def process(self, message: GroupMesssageInfo):
-    #     """处理消息
+    @abstractmethod
+    def process(self, message: GroupMesssageInfo):
+        """处理消息
 
-    #     Args:
-    #         message (GroupMesssageInfo): 要处理的消息
-    #     """
-    #     pass
+        Args:
+            message (GroupMesssageInfo): 要处理的消息
+        """
+        pass
