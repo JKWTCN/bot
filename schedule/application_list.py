@@ -11,3 +11,11 @@ class ApplicationList:
         for i, item in enumerate(self.applicationList):
             if application.priority > item.priority:
                 self.applicationList.insert(i, application)
+
+
+applicationList: ApplicationList
+groupMessageApplicationList: ApplicationList
+privateMessageApplicationList: ApplicationList
+noticeApplicationList: ApplicationList
+requestApplicationList: ApplicationList
+metaApplicationList: ApplicationList

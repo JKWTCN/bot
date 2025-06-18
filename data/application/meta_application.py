@@ -1,15 +1,15 @@
 from data.application.application import Application
-from data.message.group_message_info import GroupMesssageInfo
-from data.application.application_type import ApplicationType
+from data.message.meta_message_info import MetaMessageInfo
+from data.enumerates import ApplicationType
 
 from abc import ABC, abstractmethod
 
 
-class GroupKeyReplyApplication(Application):
-    """群引用事件应用"""
+class MetaMessageApplication(Application):
+    """通知消息应用类"""
 
     def __init__(self, applicationInfo, priority: float, isNotEnd=False):
-        """群引用回复事件应用类的构造函数
+        """群消息事件类的构造函数
 
         Args:
             applicationInfo (ApplicationInfo): 应用信息
@@ -17,10 +17,10 @@ class GroupKeyReplyApplication(Application):
             isNotEnd (bool, optional): 是否还能继续触发后面的应用 Defaults to False.
         """
         super().__init__(applicationInfo, priority, isNotEnd)
-        self.applicationType = ApplicationType.GROUP_AT
+        self.applicationType = ApplicationType.META
 
     @abstractmethod
-    def process(self, message: GroupMesssageInfo):
+    def process(self, message: MetaMessageInfo):
         """处理消息
 
         Args:

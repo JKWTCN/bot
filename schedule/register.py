@@ -1,19 +1,20 @@
-from data.register.register_event_type import RegisterEventType
 from data.application.application import Application
-from data.application.application_type import ApplicationType
+from schedule.application_list import ApplicationList
+from data.enumerates import ApplicationType
+import application_list
 
 
-groupKeyWordList: list[Application] = []
-
-
-def RegisterEvent(
-    application: Application,
-    registerEventType: RegisterEventType,
-    priority: float = 0.0,
-):
+def RegisterApplication(application: Application):
     match application.applicationType:
-        case ApplicationType.GROUP_KEY_WORD:
-            groupKeyWordList.append(application)
-            pass
-        
-    pass
+        case ApplicationType.GROUP_MESSAGE:
+            application_list.groupMessageApplicationList.add(application)
+        case ApplicationType.PRIVATE_MESSSAGE:
+            application_list.privateMessageApplicationList.add(application)
+        case ApplicationType.NOTICE:
+            application_list.noticeApplicationList.add(application)
+        case ApplicationType.REQUEST:
+            application_list.requestApplicationList.add(application)
+        case ApplicationType.META:
+            application_list.metaApplicationList.add(application)
+        case _:
+            application_list.applicationList.add(application)

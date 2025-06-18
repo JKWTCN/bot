@@ -1,5 +1,5 @@
 from abc import ABC
-from message_type import MessageType
+from data.enumerates import MessageType
 from message_info import MessageInfo
 
 

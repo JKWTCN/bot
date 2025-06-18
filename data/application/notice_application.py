@@ -1,15 +1,15 @@
 from data.application.application import Application
-from data.message.group_message_info import GroupMesssageInfo
+from data.message.notice_message_info import NoticeMessageInfo
 from data.enumerates import ApplicationType
 
 from abc import ABC, abstractmethod
 
 
-class OtherApplication(Application):
-    """其他事件应用"""
+class NoticeMessageApplication(Application):
+    """通知消息应用类"""
 
     def __init__(self, applicationInfo, priority: float, isNotEnd=False):
-        """群at事件应用类的构造函数
+        """群消息事件类的构造函数
 
         Args:
             applicationInfo (ApplicationInfo): 应用信息
@@ -17,10 +17,10 @@ class OtherApplication(Application):
             isNotEnd (bool, optional): 是否还能继续触发后面的应用 Defaults to False.
         """
         super().__init__(applicationInfo, priority, isNotEnd)
-        self.applicationType = ApplicationType.OTHER
+        self.applicationType = ApplicationType.NOTICE
 
     @abstractmethod
-    def process(self, message: GroupMesssageInfo):
+    def process(self, message: NoticeMessageInfo):
         """处理消息
 
         Args:

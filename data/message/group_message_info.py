@@ -1,10 +1,9 @@
 import traceback
 from data.message.message_info import MessageInfo
-from data.message.message_post_type import MessagePostType, string2MessagePostType
+from data.enumerates import MessageType
 
 
 class GroupMesssageInfo(MessageInfo):
-    messagePostType: MessagePostType
     senderId: int
     groupId: int
     messageId: int
@@ -18,7 +17,7 @@ class GroupMesssageInfo(MessageInfo):
     def __init__(self, websocket, rawMessage: dict):
         try:
             super().__init__(websocket, rawMessage)
-            self.messagePostType = string2MessagePostType(self.rawMessage["post_type"])
+            self.messageType = MessageType.GROUP_MESSAGE
             self.groupId = self.rawMessage["group_id"]
             self.senderId = self.rawMessage["user_id"]
             self.messageId = self.rawMessage["message_id"]

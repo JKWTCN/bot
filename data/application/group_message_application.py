@@ -1,11 +1,11 @@
 from data.application.application import Application
 from data.message.group_message_info import GroupMesssageInfo
-from data.application.application_type import ApplicationType
+from data.enumerates import ApplicationType
 
 from abc import ABC, abstractmethod
 
 
-class GroupKeyWordApplication(Application):
+class GroupMessageApplication(Application):
     """群关键字应用类
     该类用于处理群消息中的关键字匹配功能.
     该类继承自Application基类,并实现了处理群消息的抽象方法.
@@ -34,7 +34,7 @@ class GroupKeyWordApplication(Application):
             isNotEnd (bool, optional): 是否还能继续触发后面的应用 Defaults to False.
         """
         super().__init__(applicationInfo, priority, isNotEnd)
-        self.applicationType = ApplicationType.GROUP_KEY_WORD
+        self.applicationType = ApplicationType.GROUP_MESSAGE
 
     @abstractmethod
     def process(self, message: GroupMesssageInfo):

@@ -1,7 +1,7 @@
-from application_info import ApplicationInfo
+from data.application.application_info import ApplicationInfo
 from data.message.message_info import MessageInfo
 from abc import ABC, abstractmethod
-from data.application.application_type import ApplicationType
+from data.enumerates import ApplicationType
 
 
 class Application(ABC):
