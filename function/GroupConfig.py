@@ -159,7 +159,7 @@ import os
 from typing import Any, Union
 
 
-def manage_config(config_str: str, group_id: int) -> bool:
+def manage_config(config_str: str, group_id: int):
     """
     管理配置文件，支持对不同类型的配置项进行不同操作
 

@@ -68,3 +68,16 @@ class RequestEventType(Enum):
     GROUP_ADD = 2
 
     UNKNOW = 3
+
+
+class ApplicationCostType(Enum):
+    """应用处理时间类型枚举"""
+
+    HIGH_TIME_HIGH_PERFORMANCE = 0
+    """高耗时高性能,采用队列处理,比如AI"""
+
+    HIGH_TIME_LOW_PERFORMANCE = 1
+    """高耗时低性能,采用并发处理,比如HTTP请求"""
+
+    NORMAL = 2
+    """普通应用,主线程处理"""

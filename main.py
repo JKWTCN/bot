@@ -8,6 +8,7 @@ from data.message.private_message_info import PrivateMesssageInfo
 from data.message.meta_message_info import MetaMessageInfo
 from data.message.notice_message_info import NoticeMessageInfo
 from data.message.request_message_info import RequestMessageInfo
+import application.sample_group_message_application
 
 
 async def echo(websocket, message):
@@ -21,20 +22,20 @@ async def echo(websocket, message):
                         # 群聊消息
                         case "group":
                             groupMessageInfo = GroupMesssageInfo(websocket, message)
-                            schedule.processMessage(groupMessageInfo)
+                            await schedule.processMessage(groupMessageInfo)
                         # 私聊消息
                         case "private":
                             privateMessageInfo = PrivateMesssageInfo(websocket, message)
-                            schedule.processMessage(privateMessageInfo)
+                            await schedule.processMessage(privateMessageInfo)
                 case "notice":
                     noticeMessageInfo = NoticeMessageInfo(websocket, message)
-                    schedule.processMessage(noticeMessageInfo)
+                    await schedule.processMessage(noticeMessageInfo)
                 case "meta_event":
                     metaMessageInfo = MetaMessageInfo(websocket, message)
-                    schedule.processMessage(metaMessageInfo)
+                    await schedule.processMessage(metaMessageInfo)
                 case "request":
                     requestMessageInfo = RequestMessageInfo(websocket, message)
-                    schedule.processMessage(requestMessageInfo)
+                    await schedule.processMessage(requestMessageInfo)
     except Exception as e:
         print(f"处理消息时出错: {e},line:{traceback.extract_tb(e.__traceback__)[0][1]}")
 

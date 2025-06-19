@@ -5,14 +5,14 @@ import logging
 import asyncio
 
 
-class ConsumingTimeType(Enum):
-    """高耗时任务类型"""
+# class ConsumingTimeType(Enum):
+#     """高耗时任务类型"""
 
-    CHAT = 1
-    COLDREPLAY = 2
-    REPLYIMAGEMESSAGE = 3
-    SAYPRIVTECHATNOCONTEXT = 4
-    MIAOMIAOTRANSLATION = 5
+#     CHAT = 1
+#     COLDREPLAY = 2
+#     REPLYIMAGEMESSAGE = 3
+#     SAYPRIVTECHATNOCONTEXT = 4
+#     MIAOMIAOTRANSLATION = 5
 
 
 async def process_queue():
@@ -23,8 +23,9 @@ async def process_queue():
             task = consuming_time_process_queue.get()
             if task is None:  # 用于停止线程的信号
                 continue
-            websocket, param1, param2, param3, text, taskType = task
-            print(f"开始启动耗时任务类型{taskType}")
+            # websocket, param1, param2, param3, text, taskType = task
+            task()
+            # print(f"开始启动耗时任务类型{taskType}")
         except Exception as e:
             logging.error(f"处理队列任务时出错: {e}")
 

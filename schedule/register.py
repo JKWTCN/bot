@@ -1,7 +1,7 @@
 from data.application.application import Application
 from schedule.application_list import ApplicationList
 from data.enumerates import ApplicationType
-import application_list
+import schedule.application_list as application_list
 
 
 def RegisterApplication(application: Application):
@@ -17,4 +17,4 @@ def RegisterApplication(application: Application):
         case ApplicationType.META:
             application_list.metaApplicationList.add(application)
         case _:
-            application_list.applicationList.add(application)
+            application_list.otherApplicationList.add(application)

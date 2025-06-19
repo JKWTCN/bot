@@ -1,10 +1,10 @@
 from data.application.application_info import ApplicationInfo
 from data.message.message_info import MessageInfo
 from abc import ABC, abstractmethod
-from data.enumerates import ApplicationType
+from data.enumerates import ApplicationType, ApplicationCostType
 
 
-class Application(ABC):
+class Application:
     """
     应用基类
     """
@@ -19,6 +19,9 @@ class Application(ABC):
     isNotEnd: bool
     """是否还能继续触发后面的应用"""
 
+    applicationCostType: ApplicationCostType
+    """应用的开销处理"""
+
     @abstractmethod
     def judge(self, message: MessageInfo) -> bool:
         """判断是否触发应用
@@ -29,7 +32,7 @@ class Application(ABC):
         # pass
 
     @abstractmethod
-    def process(self, message: MessageInfo):
+    async def process(self, message: MessageInfo):
         """处理消息
 
         Args:
@@ -38,7 +41,11 @@ class Application(ABC):
         # pass
 
     def __init__(
-        self, applicationInfo: ApplicationInfo, priority: float, isNotEnd=False
+        self,
+        applicationInfo: ApplicationInfo,
+        priority: float,
+        isNotEnd=False,
+        applicationCostType=ApplicationCostType.NORMAL,
     ):
         """应用类的构造函数
 
@@ -49,3 +56,5 @@ class Application(ABC):
         """
         self.applicationInfo = applicationInfo
         self.priority = priority
+        self.isNotEnd = isNotEnd
+        self.applicationCostType = applicationCostType

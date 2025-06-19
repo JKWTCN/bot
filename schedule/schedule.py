@@ -1,13 +1,15 @@
+import asyncio
 from data.message.message_info import MessageInfo
 import schedule.application_list as application_list
-from data.enumerates import MessageType
+from data.enumerates import MessageType, ApplicationCostType
+from schedule.consuming_high_time_queue import consuming_time_process_queue
 
 
 class Schedule:
     def __init__(self) -> None:
         pass
 
-    def processMessage(self, messageInfo: MessageInfo):
+    async def processMessage(self, messageInfo: MessageInfo):
         applicationList: application_list.ApplicationList
         match messageInfo.messageType:
             case MessageType.GROUP_MESSAGE:
@@ -21,9 +23,15 @@ class Schedule:
             case MessageType.REQUEST:
                 applicationList = application_list.requestApplicationList
             case MessageType.OTHER:
-                applicationList = application_list.applicationList
+                applicationList = application_list.otherApplicationList
         for i in applicationList.get():
             if i.judge(messageInfo):
-                i.process(messageInfo)
+                match i.applicationCostType:
+                    case ApplicationCostType.NORMAL:
+                        await i.process(messageInfo)
+                    case ApplicationCostType.HIGH_TIME_HIGH_PERFORMANCE:
+                        consuming_time_process_queue.put(await i.process(messageInfo))
+                    case ApplicationCostType.HIGH_TIME_LOW_PERFORMANCE:
+                        asyncio.create_task(i.process(messageInfo))
                 if not i.isNotEnd:
                     return
