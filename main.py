@@ -8,7 +8,9 @@ from data.message.private_message_info import PrivateMesssageInfo
 from data.message.meta_message_info import MetaMessageInfo
 from data.message.notice_message_info import NoticeMessageInfo
 from data.message.request_message_info import RequestMessageInfo
-import application.sample_group_message_application
+
+# 不要删除下面的这一句没有引用的包，此为初始化应用引入函数
+import registered_application_list
 
 
 async def echo(websocket, message):

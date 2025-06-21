@@ -2,9 +2,9 @@ from data.message.group_message_info import GroupMesssageInfo
 from data.application.application_info import ApplicationInfo
 from data.application.group_message_application import GroupMessageApplication
 from schedule.register import RegisterApplication
-from function.say import say
 from data.enumerates import ApplicationCostType
 
+from function.say import say
 
 class SampleGroupMessageApplication(GroupMessageApplication):
     """
@@ -43,4 +43,3 @@ class SampleGroupMessageApplication(GroupMessageApplication):
 
 
 RegisterApplication(SampleGroupMessageApplication())
-print("SampleGroupMessageApplication已注册")
