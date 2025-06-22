@@ -6,7 +6,7 @@ from function.say import SayRaw
 import random
 
 
-class ReReadApplicaiton(GroupMessageApplication):
+class ReReadApplication(GroupMessageApplication):
     def __init__(
         self,
     ):

@@ -91,7 +91,7 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
     await ReplySay(websocket, group_id, message_id, re_text)
 
 
-class GroupChatApplicaiton(GroupMessageApplication):
+class GroupChatApplication(GroupMessageApplication):
     def __init__(
         self,
     ):

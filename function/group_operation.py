@@ -1,4 +1,76 @@
 import json
+import sqlite3
+
+from function.GroupConfig import get_config
+from function.say import ReplySay
+from function.say import chatNoContext
+
+
+async def replyImageMessage(
+    websocket, group_id: int, message_id: int, need_replay_message_id: int, text: str
+):
+    """强制回复图片消息"""
+    imageInfo = ""
+    try:
+        # 连接数据库
+        conn = sqlite3.connect("bot.db")
+        cursor = conn.cursor()
+        # 执行查询
+        cursor.execute(
+            """
+            SELECT raw_message 
+            FROM group_message 
+            WHERE message_id = ?
+        """,
+            (message_id,),
+        )
+
+        # 获取结果
+        result = cursor.fetchone()
+
+        if result:
+            texts = []
+            imageInfo = result[0]
+            if imageInfo == "[图片]":
+                if get_config("image_parsing", group_id):
+                    await ReplySay(
+                        websocket,
+                        group_id,
+                        need_replay_message_id,
+                        "图片好像丢了喵,才不是乐可的疏忽喵,最好重新发送图片喵。",
+                    )
+                else:
+                    await ReplySay(
+                        websocket,
+                        group_id,
+                        need_replay_message_id,
+                        "本群未开启图片解析功能喵。",
+                    )
+            else:
+                texts.append(imageInfo)
+                texts.append(text)
+                await ReplySay(
+                    websocket,
+                    group_id,
+                    need_replay_message_id,
+                    chatNoContext(texts),
+                )
+        else:
+            await ReplySay(
+                websocket,
+                group_id,
+                need_replay_message_id,
+                "此消息还在识别喵,请稍后再回复喵。",
+            )
+
+    except sqlite3.Error as e:
+        print(f"数据库错误: {e}")
+        return None
+
+    finally:
+        # 确保连接被关闭
+        if conn:
+            conn.close()
 
 
 async def banNormal(websocket, user_id: int, group_id: int, duration: int):

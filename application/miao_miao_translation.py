@@ -113,7 +113,7 @@ def CheckAllMiao(text):
     return True
 
 
-class MiaoMiaoTranslationApplicaiton(GroupMessageApplication):
+class MiaoMiaoTranslationApplication(GroupMessageApplication):
     def __init__(
         self,
     ):

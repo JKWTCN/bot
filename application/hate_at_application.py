@@ -10,7 +10,7 @@ from function.group_operation import banNormal, ReplySayGroup
 import random
 
 
-class HateAtApplicaiton(GroupMessageApplication):
+class HateAtApplication(GroupMessageApplication):
     def __init__(
         self,
     ):

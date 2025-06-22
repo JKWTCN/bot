@@ -76,7 +76,7 @@ async def SendMemeMergeForwarding(websocket, group_id: int, nums: int):
         await SayGroup(websocket, group_id, f"图片发送失败了喵。")
 
 
-class RadomMemeApplicaiton(GroupMessageApplication):
+class RadomMemeApplication(GroupMessageApplication):
     def __init__(
         self,
     ):

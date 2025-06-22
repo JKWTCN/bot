@@ -1,20 +1,20 @@
 import application.hate_at_application
 import application.miao_miao_translation
 from application.sample_group_message_application import SampleGroupMessageApplication
-from application.re_read import ReReadApplicaiton
+from application.re_read import ReReadApplication
 from schedule.register import RegisterApplication
-from application.chat_application import GroupChatApplicaiton
-from application.radom_meme import RadomMemeApplicaiton
+from application.chat_application import GroupChatApplication
+from application.radom_meme import RadomMemeApplication
 import application
 
 
 def initApplications():
     """初始化应用"""
     # RegisterApplication(SampleGroupMessageApplication())
-    RegisterApplication(ReReadApplicaiton())
-    RegisterApplication(GroupChatApplicaiton())
-    RegisterApplication(RadomMemeApplicaiton())
+    RegisterApplication(ReReadApplication())
+    RegisterApplication(GroupChatApplication())
+    RegisterApplication(RadomMemeApplication())
     RegisterApplication(
-        application.miao_miao_translation.MiaoMiaoTranslationApplicaiton()
+        application.miao_miao_translation.MiaoMiaoTranslationApplication()
     )
-    RegisterApplication(application.hate_at_application.HateAtApplicaiton())
+    RegisterApplication(application.hate_at_application.HateAtApplication())
