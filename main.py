@@ -10,6 +10,9 @@ from data.message.notice_message_info import NoticeMessageInfo
 from data.message.request_message_info import RequestMessageInfo
 
 from registered_application_list import initApplications
+from function.GroupConfig import get_config
+from function.database_message import write_message
+from function.chat_record import AddChatRecord
 
 
 async def echo(websocket, message):
@@ -23,6 +26,28 @@ async def echo(websocket, message):
                         # 群聊消息
                         case "group":
                             groupMessageInfo = GroupMesssageInfo(websocket, message)
+                            # 增加水群次数
+                            AddChatRecord(
+                                groupMessageInfo.senderId, groupMessageInfo.groupId
+                            )
+                            if (
+                                len(groupMessageInfo.imageFileList) != 0
+                                and get_config(
+                                    "image_parsing", groupMessageInfo.groupId
+                                )
+                                == False
+                            ):
+                                write_message(message, groupMessageInfo.readMessage)
+                            else:
+                                # TODO image-image移植
+                                pass
+                            if groupMessageInfo.senderId in get_config(
+                                "no_reply_list", groupMessageInfo.groupId
+                            ):  # type: ignore
+                                print(
+                                    f"机器人ID:{groupMessageInfo.senderId},其他机器人不理睬。"
+                                )
+                                return
                             if groupMessageInfo.groupId == 755652553:
                                 print(message)
                                 await schedule.processMessage(groupMessageInfo)

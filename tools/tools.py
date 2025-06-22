@@ -15,7 +15,7 @@ def GetLocalIP():
         addresses = [
             i["addr"]
             for i in ifaddresses(ifaceName).setdefault(
-                AF_INET, [{"addr": "No IP addr"}]
+                AF_INET, [{"addr": "No IP addr"}]  # type: ignore
             )
         ]
         if addresses != ["No IP addr"]:
@@ -54,8 +54,6 @@ def HasKeyWords(text: str, key_words: list) -> bool:
         if key_word in text:
             return True
     return False
-
-
 
 
 async def say_and_echo(websocket, group_id: int, text: str, echo: str):
@@ -244,6 +242,7 @@ def get_now_week() -> int:
 
 
 def GetNowDay() -> int:
+    """获取当前日期的天数"""
     return int(time.strftime("%d"))
 
 

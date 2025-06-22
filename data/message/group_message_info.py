@@ -22,6 +22,7 @@ class GroupMesssageInfo(MessageInfo):
         self.imageFileList = []
         self.fileList = []
         self.faceList = []
+        self.readMessage = ""
         try:
             super().__init__(websocket, rawMessage)
             self.messageType = MessageType.GROUP_MESSAGE
@@ -32,15 +33,20 @@ class GroupMesssageInfo(MessageInfo):
                 match i["type"]:
                     case "image":
                         self.imageFileList.append(i["data"]["file"])
+                        self.readMessage += f"[图片]"
                     case "file":
                         pass
                     case "reply":
                         self.replyMessageId = i["data"]["id"]
+                        self.readMessage += f"[回复:{i['data']['id']}]"
                     case "at":
                         self.atList.append(i["data"]["qq"])
+                        self.readMessage += f"[at:{i['data']['qq']}]"
                     case "text":
                         self.painTextMessage += i["data"]["text"]
+                        self.readMessage += i["data"]["text"]
                     case "face":
                         self.faceList.append(i["data"]["id"])
+                        self.readMessage += f"[表情:{i['data']['raw']['faceText']}]"
         except Exception as e:
             print(f"初始化出错: {e},line:{traceback.extract_tb(e.__traceback__)[0][1]}")

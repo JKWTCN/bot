@@ -117,16 +117,19 @@ def set_config(
 
 
 def get_config(
-    config_name,
-    group_id,
+    config_name: str,
+    group_id: int,
 ):
+    """从JSON配置文件中读取配置项，如果不存在则使用默认值并更新文件
+
+    Args:
+        config_name (str): 配置项的名称
+        group_id (int): 群的ID
+
+    Returns:
+        _type_: 配置项的值
     """
-    从JSON配置文件中读取配置项，如果不存在则使用默认值并更新文件
-    :param config_name: 要读取的配置项名称
-    :param default_value: 配置项的默认值（如果不存在）
-    :param config_file: 配置文件路径
-    :return: 配置项的值
-    """
+
     default_value = default_configs.get(config_name, None)
     config_file = f"groups/{group_id}/config.json"
     # 如果配置文件不存在，则创建并写入空字典

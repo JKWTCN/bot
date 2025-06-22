@@ -1,3 +1,4 @@
+import application.hate_at_application
 import application.miao_miao_translation
 from application.sample_group_message_application import SampleGroupMessageApplication
 from application.re_read import ReReadApplicaiton
@@ -16,3 +17,4 @@ def initApplications():
     RegisterApplication(
         application.miao_miao_translation.MiaoMiaoTranslationApplicaiton()
     )
+    RegisterApplication(application.hate_at_application.HateAtApplicaiton())
