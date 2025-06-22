@@ -3,12 +3,12 @@ from data.message.message_info import MessageInfo
 
 
 class NoticeMessageInfo(MessageInfo):
-    senderId: int
-    messageId: int
-    noticeEventType: NoticeType
 
     def __init__(self, websocket, rawMessage: dict):
         super().__init__(websocket, rawMessage)
+        self.senderId: int
+        self.messageId: int
+        self.noticeEventType: NoticeType
         self.messageType = MessageType.NOTICE
         match rawMessage["notice_type"]:
             case "group_upload":

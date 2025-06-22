@@ -9,8 +9,7 @@ from data.message.meta_message_info import MetaMessageInfo
 from data.message.notice_message_info import NoticeMessageInfo
 from data.message.request_message_info import RequestMessageInfo
 
-# 不要删除下面的这一句没有引用的包，此为初始化应用引入函数
-import registered_application_list
+from registered_application_list import initApplications
 
 
 async def echo(websocket, message):
@@ -24,7 +23,9 @@ async def echo(websocket, message):
                         # 群聊消息
                         case "group":
                             groupMessageInfo = GroupMesssageInfo(websocket, message)
-                            await schedule.processMessage(groupMessageInfo)
+                            if groupMessageInfo.groupId == 755652553:
+                                print(message)
+                                await schedule.processMessage(groupMessageInfo)
                         # 私聊消息
                         case "private":
                             privateMessageInfo = PrivateMesssageInfo(websocket, message)
@@ -44,7 +45,6 @@ async def echo(websocket, message):
 
 async def pro(websocket):
     async for message in websocket:
-        print(message)
         await echo(websocket, message)
 
 
@@ -52,6 +52,7 @@ schedule = Schedule()
 
 
 async def main():
+    initApplications()
     async with serve(pro, "localhost", 27434) as server:
         await server.serve_forever()
 

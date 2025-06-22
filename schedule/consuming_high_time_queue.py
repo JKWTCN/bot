@@ -24,7 +24,8 @@ async def process_queue():
             if task is None:  # 用于停止线程的信号
                 continue
             # websocket, param1, param2, param3, text, taskType = task
-            task()
+            coro = task()
+            await coro
             # print(f"开始启动耗时任务类型{taskType}")
         except Exception as e:
             logging.error(f"处理队列任务时出错: {e}")

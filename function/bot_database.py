@@ -119,7 +119,7 @@ def add_unwelcome(user_id: int, time: int, group_id: int):
 
 
 # 信息写入数据库
-def write_message(message: json,text_messgae:str):
+def write_message(message: dict, text_messgae: str):
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
     try:

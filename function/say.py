@@ -45,7 +45,7 @@ async def SayPrivte(websocket, user_id: int, text: str):
     await websocket.send(json.dumps(payload))
 
 
-async def sayRaw(websocket, group_id: int, payload: dict):
+async def SayRaw(websocket, group_id: int, payload: dict):
     """发送数组类型的群消息
 
     Args:
@@ -63,7 +63,14 @@ async def sayRaw(websocket, group_id: int, payload: dict):
     await websocket.send(json.dumps(payload))
 
 
-async def say(websocket, group_id: int, text: str):
+async def SayGroup(websocket, group_id: int, text: str):
+    """发送纯文本的私聊消息
+
+    Args:
+        websocket (_type_): 要回复的websocket
+        group_id (int): 群聊id
+        text (str): 回复的纯文本内容
+    """
     payload = {
         "action": "send_msg_async",
         "params": {

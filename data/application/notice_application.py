@@ -12,7 +12,7 @@ class NoticeMessageApplication(Application):
         self,
         applicationInfo,
         priority: float,
-        isNotEnd=False,
+        canContinue=False,
         applicationCostType=ApplicationCostType.NORMAL,
     ):
         """群消息事件类的构造函数
@@ -20,9 +20,9 @@ class NoticeMessageApplication(Application):
         Args:
             applicationInfo (ApplicationInfo): 应用信息
             priority (float): 应用触发优先级
-            isNotEnd (bool, optional): 是否还能继续触发后面的应用 Defaults to False.
+            canContinue (bool, optional): 是否还能继续触发后面的应用 Defaults to False.
         """
-        super().__init__(applicationInfo, priority, isNotEnd, applicationCostType)
+        super().__init__(applicationInfo, priority, canContinue, applicationCostType)
         self.applicationType = ApplicationType.NOTICE
 
     @abstractmethod

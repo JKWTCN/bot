@@ -18,7 +18,7 @@ class GroupMessageApplication(Application):
         self,
         applicationInfo,
         priority: float,
-        isNotEnd=False,
+        canContinue=False,
         applicationCostType=ApplicationCostType.NORMAL,
     ):
         """群关键词事件应用类的构造函数
@@ -26,9 +26,9 @@ class GroupMessageApplication(Application):
         Args:
             applicationInfo (ApplicationInfo): 应用信息
             priority (float): 应用触发优先级
-            isNotEnd (bool, optional): 是否还能继续触发后面的应用 Defaults to False.
+            canContinue (bool, optional): 是否还能继续触发后面的应用 Defaults to False.
         """
-        super().__init__(applicationInfo, priority, isNotEnd, applicationCostType)
+        super().__init__(applicationInfo, priority, canContinue, applicationCostType)
         self.applicationType = ApplicationType.GROUP_MESSAGE
 
     # @abstractmethod

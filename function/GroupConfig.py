@@ -193,11 +193,11 @@ def manage_config(config_str: str, group_id: int):
                 case "append":
                     match getArgType(optionType):
                         case DataType.DATA_INT:
-                            oppationArg = int(oppationArg)
+                            oppationArg = int(oppationArg)  # type: ignore
                         case DataType.DATA_STRING:
                             oppationArg = str(oppationArg)
                         case DataType.DATA_BOOL:
-                            oppationArg = bool(int(oppationArg))
+                            oppationArg = bool(int(oppationArg))  # type: ignore
                         case DataType.DATA_UNKNOW:
                             return (False, GroupConfigError.UNKNOW_DATA_TYPE)
 
@@ -208,11 +208,11 @@ def manage_config(config_str: str, group_id: int):
                 case "remove":
                     match getArgType(optionType):
                         case DataType.DATA_INT:
-                            oppationArg = int(oppationArg)
+                            oppationArg = int(oppationArg)  # type: ignore
                         case DataType.DATA_STRING:
                             oppationArg = str(oppationArg)
                         case DataType.DATA_BOOL:
-                            oppationArg = bool(int(oppationArg))
+                            oppationArg = bool(int(oppationArg))  # type: ignore
                         case DataType.DATA_UNKNOW:
                             return (False, GroupConfigError.UNKNOW_DATA_TYPE)
                     if oppationArg in oldArg:
@@ -227,11 +227,11 @@ def manage_config(config_str: str, group_id: int):
                 case "set":
                     match getArgType(optionType):
                         case DataType.DATA_INT:
-                            oppationArg = int(oppationArg)
+                            oppationArg = int(oppationArg)  # type: ignore
                         case DataType.DATA_STRING:
                             oppationArg = str(oppationArg)
                         case DataType.DATA_BOOL:
-                            oppationArg = bool(int(oppationArg))
+                            oppationArg = bool(int(oppationArg))  # type: ignore
                         case DataType.DATA_UNKNOW:
                             return (False, GroupConfigError.UNKNOW_DATA_TYPE)
                     oldArg = oppationArg
@@ -246,11 +246,11 @@ def manage_config(config_str: str, group_id: int):
                 case "set":
                     match getArgType(optionType):
                         case DataType.DATA_INT:
-                            oppationArg = int(oppationArg)
+                            oppationArg = int(oppationArg)  # type: ignore
                         case DataType.DATA_STRING:
                             oppationArg = str(oppationArg)
                         case DataType.DATA_BOOL:
-                            oppationArg = bool(int(oppationArg))
+                            oppationArg = bool(int(oppationArg))  # type: ignore
                         case DataType.DATA_UNKNOW:
                             return (False, GroupConfigError.UNKNOW_DATA_TYPE)
                     oldArg = oppationArg

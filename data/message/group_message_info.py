@@ -8,13 +8,20 @@ class GroupMesssageInfo(MessageInfo):
     groupId: int
     messageId: int
 
-    painTextMessage = ""
-    atList = []
-    replyMessageId = -1
-    imageFileList = []
-    fileList = []
+    # painTextMessage = ""
+    # atList = []
+    # replyMessageId = -1
+    # imageFileList = []
+    # fileList = []
+    # faceList = []
 
     def __init__(self, websocket, rawMessage: dict):
+        self.painTextMessage = ""
+        self.atList = []
+        self.replyMessageId = -1
+        self.imageFileList = []
+        self.fileList = []
+        self.faceList = []
         try:
             super().__init__(websocket, rawMessage)
             self.messageType = MessageType.GROUP_MESSAGE
@@ -33,5 +40,7 @@ class GroupMesssageInfo(MessageInfo):
                         self.atList.append(i["data"]["qq"])
                     case "text":
                         self.painTextMessage += i["data"]["text"]
+                    case "face":
+                        self.faceList.append(i["data"]["id"])
         except Exception as e:
             print(f"初始化出错: {e},line:{traceback.extract_tb(e.__traceback__)[0][1]}")

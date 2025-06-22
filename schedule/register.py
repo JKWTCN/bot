@@ -8,7 +8,7 @@ def RegisterApplication(application: Application):
     match application.applicationType:
         case ApplicationType.GROUP_MESSAGE:
             application_list.groupMessageApplicationList.add(application)
-        case ApplicationType.PRIVATE_MESSSAGE:
+        case ApplicationType.PRIVATE_MESSAGE:
             application_list.privateMessageApplicationList.add(application)
         case ApplicationType.NOTICE:
             application_list.noticeApplicationList.add(application)

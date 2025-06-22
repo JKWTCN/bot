@@ -15,7 +15,7 @@ class MessageType(Enum):
     """消息封装类型枚举"""
 
     GROUP_MESSAGE = 0
-    PRIVATE_MESSSAGE = 1
+    PRIVATE_MESSAGE = 1
     NOTICE = 2
     REQUEST = 3
     META = 4
@@ -26,7 +26,7 @@ class ApplicationType(Enum):
     """应用类型封装枚举"""
 
     GROUP_MESSAGE = 0
-    PRIVATE_MESSSAGE = 1
+    PRIVATE_MESSAGE = 1
     NOTICE = 2
     REQUEST = 3
     META = 4

@@ -1,10 +1,10 @@
 from data.message.group_message_info import GroupMesssageInfo
 from data.application.application_info import ApplicationInfo
 from data.application.group_message_application import GroupMessageApplication
-from schedule.register import RegisterApplication
 from data.enumerates import ApplicationCostType
 
-from function.say import say
+from function.say import SayGroup
+
 
 class SampleGroupMessageApplication(GroupMessageApplication):
     """
@@ -18,8 +18,7 @@ class SampleGroupMessageApplication(GroupMessageApplication):
         Args:
             message (MessageInfo): 要处理的消息
         """
-        await say(message.websocket, message.groupId, "触发了关键词应用123")
-        pass
+        await SayGroup(message.websocket, message.groupId, "触发了关键词应用123")
 
     def judge(self, message: GroupMesssageInfo) -> bool:
         """判断是否成立
@@ -42,4 +41,3 @@ class SampleGroupMessageApplication(GroupMessageApplication):
         super().__init__(applicationInfo, 2.0, False, ApplicationCostType.NORMAL)
 
 
-RegisterApplication(SampleGroupMessageApplication())

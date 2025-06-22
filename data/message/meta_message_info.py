@@ -3,11 +3,12 @@ from data.message.message_info import MessageInfo
 
 
 class MetaMessageInfo(MessageInfo):
-    senderId: int
-    messageId: int
-    metaEventType: MetaEventType
 
     def __init__(self, websocket, rawMessage: dict):
+        self.senderId: int
+        self.messageId: int
+        self.metaEventType: MetaEventType
+
         super().__init__(websocket, rawMessage)
         self.messageType = MessageType.META
         match rawMessage["meta_event_type"]:

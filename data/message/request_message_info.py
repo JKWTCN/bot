@@ -3,11 +3,11 @@ from data.message.message_info import MessageInfo
 
 
 class RequestMessageInfo(MessageInfo):
-    senderId: int
-    messageId: int
-    requestEventType: RequestEventType
 
     def __init__(self, websocket, rawMessage: dict):
+        self.senderId: int
+        self.messageId: int
+        self.requestEventType: RequestEventType
         super().__init__(websocket, rawMessage)
         self.messageType = MessageType.REQUEST
         match rawMessage["request_type"]:
