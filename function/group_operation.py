@@ -6,6 +6,17 @@ from function.say import ReplySay
 from function.say import chatNoContext
 
 
+async def delete_msg(websocket, message_id: int):
+    print(f"正在撤回消息:message_id{message_id}")
+    payload = {
+        "action": "delete_msg",
+        "params": {
+            "message_id": message_id,
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
 async def replyImageMessage(
     websocket, group_id: int, message_id: int, need_replay_message_id: int, text: str
 ):

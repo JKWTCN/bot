@@ -17,7 +17,6 @@ class ReReadApplication(GroupMessageApplication):
         await SayRaw(message.websocket, message.groupId, message.rawMessage["message"])
 
     def judge(self, message: GroupMesssageInfo) -> bool:
-        """百分之1概率触发复读"""
         if random.random() < 0.01:
             return True
         else:

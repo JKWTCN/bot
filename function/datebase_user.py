@@ -57,6 +57,25 @@ class Group_member:
         self.card_changeable = list[14]
 
 
+def is_in_group(user_id: int, group_id: int):
+    res, user = get_user_info(user_id, group_id)
+    return res
+
+
+def delete_user_info(user_id: int, group_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "DELETE FROM group_member_info where user_id=? and group_id=?",
+        (
+            user_id,
+            group_id,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
 def get_user_info(user_id: int, group_id: int) -> tuple[bool, Group_member]:
     """从数据库中获取用户在群组中的信息"""
     conn = sqlite3.connect("bot.db")
