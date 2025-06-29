@@ -76,6 +76,58 @@ def delete_user_info(user_id: int, group_id: int):
     conn.close()
 
 
+def updata_user_info(group_member: Group_member):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    is_had, _group_member = get_user_info(group_member.user_id, group_member.group_id)
+    if is_had:
+        cur.execute(
+            "UPDATE group_member_info SET nickname = ?,card = ?,sex = ?,age = ?,area = ?,join_time = ?,last_sent_time = ?,level = ?,role = ?,unfriendly = ?,title = ?,title_expire_time = ?,card_changeable = ? WHERE group_id = ? AND user_id = ?;",
+            (
+                group_member.nickname,
+                group_member.card,
+                group_member.sex,
+                group_member.age,
+                group_member.area,
+                group_member.join_time,
+                group_member.last_sent_time,
+                group_member.level,
+                group_member.role,
+                group_member.unfriendly,
+                group_member.title,
+                group_member.title_expire_time,
+                group_member.card_changeable,
+                group_member.group_id,
+                group_member.user_id,
+            ),
+        )
+        conn.commit()
+        conn.close()
+    else:
+        cur.execute(
+            "INSERT INTO group_member_info VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                group_member.group_id,
+                group_member.user_id,
+                group_member.nickname,
+                group_member.card,
+                group_member.sex,
+                group_member.age,
+                group_member.area,
+                group_member.join_time,
+                group_member.last_sent_time,
+                group_member.level,
+                group_member.role,
+                group_member.unfriendly,
+                group_member.title,
+                group_member.title_expire_time,
+                group_member.card_changeable,
+            ),
+        )
+        conn.commit()
+        conn.close()
+
+
 def get_user_info(user_id: int, group_id: int) -> tuple[bool, Group_member]:
     """从数据库中获取用户在群组中的信息"""
     conn = sqlite3.connect("bot.db")

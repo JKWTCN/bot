@@ -26,7 +26,7 @@ class MetaMessageApplication(Application):
         self.applicationType = ApplicationType.META
 
     @abstractmethod
-    def process(self, message: MetaMessageInfo):
+    async def process(self, message: MetaMessageInfo):
         """处理消息
 
         Args:

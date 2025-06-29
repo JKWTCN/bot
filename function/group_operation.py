@@ -1,4 +1,5 @@
 import json
+import logging
 import sqlite3
 
 from function.GroupConfig import get_config
@@ -9,16 +10,19 @@ from function.datebase_user import delete_user_info
 
 # 踢人
 async def kick_member(websocket, user_id: int, group_id: int):
-    payload = {
-        "action": "set_group_kick",
-        "params": {
-            "user_id": user_id,
-            "group_id": group_id,
-        },
-    }
-    # print(payload)
-    delete_user_info(user_id, group_id)
-    await websocket.send(json.dumps(payload))
+    # todo 测试完成后恢复此函数
+    # payload = {
+    #     "action": "set_group_kick",
+    #     "params": {
+    #         "user_id": user_id,
+    #         "group_id": group_id,
+    #     },
+    # }
+    # # print(payload)
+    # delete_user_info(user_id, group_id)
+    # await websocket.send(json.dumps(payload))
+    logging.info(f"踢人: {user_id} from {group_id}")
+    pass
 
 
 async def delete_msg(websocket, message_id: int):

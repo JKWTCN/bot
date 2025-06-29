@@ -47,3 +47,11 @@ def initApplications():
     RegisterApplication(application.welcome_application.ManualVerifyApplication())
     # 注册签到应用
     RegisterApplication(classic_application.CheckInApplication())
+    # 注册大清洗应用
+    RegisterApplication(classic_application.GreatPurgeApplication())
+    # 随机派发水群积分应用
+    RegisterApplication(classic_application.RandomWaterGroupPointsApplication())
+    # 注册无聊功能
+    RegisterApplication(classic_application.BoringFeatureCollectionManageApplication())
+    RegisterApplication(classic_application.BoringFeatureCollectionApplication())
+    RegisterApplication(classic_application.AtPunishApplication())
