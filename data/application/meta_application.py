@@ -30,6 +30,6 @@ class MetaMessageApplication(Application):
         """处理消息
 
         Args:
-            message (GroupMesssageInfo): 要处理的消息
+            message (GroupMessageInfo): 要处理的消息
         """
         pass

@@ -1,4 +1,4 @@
-from data.message.group_message_info import GroupMesssageInfo
+from data.message.group_message_info import GroupMessageInfo
 from data.application.application_info import ApplicationInfo
 from data.application.group_message_application import GroupMessageApplication
 from data.enumerates import ApplicationCostType
@@ -12,7 +12,7 @@ class SampleGroupMessageApplication(GroupMessageApplication):
     触发关键词为123
     """
 
-    async def process(self, message: GroupMesssageInfo):
+    async def process(self, message: GroupMessageInfo):
         """处理消息
 
         Args:
@@ -20,7 +20,7 @@ class SampleGroupMessageApplication(GroupMessageApplication):
         """
         await SayGroup(message.websocket, message.groupId, "触发了关键词应用123")
 
-    def judge(self, message: GroupMesssageInfo) -> bool:
+    def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否成立
 
         Args:
@@ -39,5 +39,3 @@ class SampleGroupMessageApplication(GroupMessageApplication):
         # super().__init__(applicationInfo, 2.0, False, ApplicationCostType.HIGH_TIME_HIGH_PERFORMANCE)
         # super().__init__(applicationInfo, 2.0, False, ApplicationCostType.HIGH_TIME_LOW_PERFORMANCE)
         super().__init__(applicationInfo, 2.0, False, ApplicationCostType.NORMAL)
-
-

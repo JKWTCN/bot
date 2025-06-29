@@ -5,7 +5,7 @@ import logging
 from data.application.group_message_application import GroupMessageApplication
 from data.application.application_info import ApplicationInfo
 from data.enumerates import ApplicationCostType
-from data.message.group_message_info import GroupMesssageInfo
+from data.message.group_message_info import GroupMessageInfo
 from function.say import SayRaw, SayGroup
 from tools.tools import FindNum, load_setting
 
@@ -83,7 +83,7 @@ class RadomMemeApplication(GroupMessageApplication):
         applicationInfo = ApplicationInfo("随机梗图功能", "触发:梗图X连")
         super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
-    async def process(self, message: GroupMesssageInfo):
+    async def process(self, message: GroupMessageInfo):
         num = FindNum(message.painTextMessage)
         import math
 
@@ -107,7 +107,7 @@ class RadomMemeApplication(GroupMessageApplication):
                 "梗图{}连发货了喵，请好好享用喵。".format(nums),
             )
 
-    def judge(self, message: GroupMesssageInfo) -> bool:
+    def judge(self, message: GroupMessageInfo) -> bool:
         """判断消息是否符合触发条件"""
         if "梗图" in message.painTextMessage and "连" in message.painTextMessage:
             return True

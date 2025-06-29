@@ -5,7 +5,7 @@ import requests
 from data.application.group_message_application import GroupMessageApplication
 from data.application.application_info import ApplicationInfo
 from data.enumerates import ApplicationCostType
-from data.message.group_message_info import GroupMesssageInfo
+from data.message.group_message_info import GroupMessageInfo
 from function.say import SayRaw, ReplySay
 from function.GroupConfig import get_config
 import random
@@ -18,7 +18,7 @@ class BiliBiliParsingApplication(GroupMessageApplication):
         applicationInfo = ApplicationInfo("BiliBili解析", "解析BiliBili视频链接")
         super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
 
-    async def process(self, message: GroupMesssageInfo):
+    async def process(self, message: GroupMessageInfo):
         for k in message.rawMessage["message"]:
             if k["type"] == "json":
                 # qq卡片消息解析
@@ -37,5 +37,5 @@ class BiliBiliParsingApplication(GroupMessageApplication):
                                 no_get_params_url,
                             )
 
-    def judge(self, message: GroupMesssageInfo) -> bool:
+    def judge(self, message: GroupMessageInfo) -> bool:
         return get_config("bilibili_parsing", group_id)  # type: ignore

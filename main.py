@@ -3,7 +3,7 @@ import json
 import asyncio
 from websockets.asyncio.server import serve
 from schedule.schedule import Schedule
-from data.message.group_message_info import GroupMesssageInfo
+from data.message.group_message_info import GroupMessageInfo
 from data.message.private_message_info import PrivateMesssageInfo
 from data.message.meta_message_info import MetaMessageInfo
 from data.message.notice_message_info import NoticeMessageInfo
@@ -25,7 +25,7 @@ async def echo(websocket, message):
                     match message["message_type"]:
                         # 群聊消息
                         case "group":
-                            groupMessageInfo = GroupMesssageInfo(websocket, message)
+                            groupMessageInfo = GroupMessageInfo(websocket, message)
                             # 增加水群次数
                             AddChatRecord(
                                 groupMessageInfo.senderId, groupMessageInfo.groupId

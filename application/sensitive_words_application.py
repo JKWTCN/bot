@@ -1,4 +1,4 @@
-from data.message.group_message_info import GroupMesssageInfo
+from data.message.group_message_info import GroupMessageInfo
 from data.application.application_info import ApplicationInfo
 from data.application.group_message_application import GroupMessageApplication
 from data.enumerates import ApplicationCostType
@@ -11,7 +11,7 @@ from function.group_operation import ban_new, delete_msg
 
 class SensitiveWordsApplication(GroupMessageApplication):
 
-    async def process(self, message: GroupMesssageInfo):
+    async def process(self, message: GroupMessageInfo):
         """处理消息
 
         Args:
@@ -32,7 +32,7 @@ class SensitiveWordsApplication(GroupMessageApplication):
         if get_config("sensitive_withdrawn", message.groupId):
             await delete_msg(message.websocket, message.messageId)
 
-    def judge(self, message: GroupMesssageInfo) -> bool:
+    def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否成立
 
         Args:

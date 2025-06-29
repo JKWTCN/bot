@@ -6,8 +6,9 @@ class NoticeMessageInfo(MessageInfo):
 
     def __init__(self, websocket, rawMessage: dict):
         super().__init__(websocket, rawMessage)
-        self.senderId: int
-        self.messageId: int
+        self.groupId: int = rawMessage["group_id"]
+        self.senderId: int = rawMessage["user_id"]
+        self.messageId: int = rawMessage["message_id"]
         self.noticeEventType: NoticeType
         self.messageType = MessageType.NOTICE
         match rawMessage["notice_type"]:

@@ -1,5 +1,5 @@
 from data.application.application import Application
-from data.message.group_message_info import GroupMesssageInfo
+from data.message.group_message_info import GroupMessageInfo
 from data.enumerates import ApplicationType, ApplicationCostType
 
 from abc import ABC, abstractmethod
@@ -26,10 +26,10 @@ class OtherApplication(Application):
         self.applicationType = ApplicationType.OTHER
 
     @abstractmethod
-    def process(self, message: GroupMesssageInfo):
+    def process(self, message: GroupMessageInfo):
         """处理消息
 
         Args:
-            message (GroupMesssageInfo): 要处理的消息
+            message (GroupMessageInfo): 要处理的消息
         """
         pass

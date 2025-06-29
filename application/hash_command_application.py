@@ -1,7 +1,7 @@
 from data.application.group_message_application import GroupMessageApplication
 from data.application.application_info import ApplicationInfo
 from data.enumerates import ApplicationCostType
-from data.message.group_message_info import GroupMesssageInfo
+from data.message.group_message_info import GroupMessageInfo
 from function.say import SayRaw
 import random
 from function.database_message import getImageInfo
@@ -17,7 +17,7 @@ class HashCommandApplication(GroupMessageApplication):
         )
         super().__init__(applicationInfo, 100, False, ApplicationCostType.NORMAL)
 
-    async def process(self, message: GroupMesssageInfo):
+    async def process(self, message: GroupMessageInfo):
         if "#image#" in message.painTextMessage:
             now_text = message.painTextMessage.replace("#image#", "")
             await replyImageMessage(
@@ -35,7 +35,7 @@ class HashCommandApplication(GroupMessageApplication):
                 message.messageId,
             )
 
-    def judge(self, message: GroupMesssageInfo) -> bool:
+    def judge(self, message: GroupMessageInfo) -> bool:
         """"""
         return (
             "#image#" in message.painTextMessage or "#info#" in message.painTextMessage

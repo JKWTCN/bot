@@ -1,7 +1,7 @@
 from data.application.group_message_application import GroupMessageApplication
 from data.application.application_info import ApplicationInfo
 from data.enumerates import ApplicationCostType
-from data.message.group_message_info import GroupMesssageInfo
+from data.message.group_message_info import GroupMessageInfo
 from function.say import SayRaw
 import random
 
@@ -517,7 +517,7 @@ class CarrotMarketApplication(GroupMessageApplication):
         )
         super().__init__(applicationInfo, 75, False, ApplicationCostType.NORMAL)
 
-    async def process(self, message: GroupMesssageInfo):
+    async def process(self, message: GroupMessageInfo):
         user_id = message.senderId
         group_id = message.groupId
         websocket = message.websocket
@@ -586,7 +586,7 @@ class CarrotMarketApplication(GroupMessageApplication):
 
             await showStockInfoMe(websocket, user_id, group_id, message_id)
 
-    def judge(self, message: GroupMesssageInfo) -> bool:
+    def judge(self, message: GroupMessageInfo) -> bool:
         """判断消息是否为胡萝卜市场相关指令"""
         return (
             message.painTextMessage.startswith("#carrotbuy#")

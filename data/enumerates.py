@@ -46,18 +46,29 @@ class NoticeType(Enum):
     """通知类型封装枚举"""
 
     GROUP_FILE_UPLOAD = 0
+    """群文件上传"""
     GROUP_ADMIN_CHANGE = 1
+    """群管理员变更"""
     GROUP_MEMBER_DELETE = 2
+    """群成员删除"""
     GROUP_MEMBER_ADD = 3
+    """群成员添加"""
     GROUP_BAN_CHAT = 4
+    """群禁言"""
     FRIEND_ADD = 5
+    """好友添加"""
     GROUP_MESSAGE_RECALL = 6
+    """群消息撤回"""
     FRIEND_MESSAGE_RECALL = 7
+    """好友消息撤回"""
     GROUP_POKE = 8
+    """群戳一戳"""
     GROUP_LUCK_DOG = 9
+    """群红包运气王"""
     GROUP_HONOR_CHANGE = 10
-
+    """群荣誉变更"""
     UNKNOW = 11
+    """未知事件"""
 
 
 class RequestEventType(Enum):

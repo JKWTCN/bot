@@ -3,7 +3,7 @@ from data.message.message_info import MessageInfo
 from data.enumerates import MessageType
 
 
-class GroupMesssageInfo(MessageInfo):
+class GroupMessageInfo(MessageInfo):
     senderId: int
     groupId: int
     messageId: int

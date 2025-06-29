@@ -6,7 +6,7 @@ import requests
 from data.application.group_message_application import GroupMessageApplication
 from data.application.application_info import ApplicationInfo
 from data.enumerates import ApplicationCostType
-from data.message.group_message_info import GroupMesssageInfo
+from data.message.group_message_info import GroupMessageInfo
 from function.say import SayRaw, ReplySay
 from function.database_message import GetChatContext
 from function.database_group import GetGroupName
@@ -120,11 +120,11 @@ class MiaoMiaoTranslationApplication(GroupMessageApplication):
         applicationInfo = ApplicationInfo("猫猫翻译", "把群友全是喵喵的话翻译成中文。")
         super().__init__(applicationInfo, 75, True, ApplicationCostType.NORMAL)
 
-    async def process(self, message: GroupMesssageInfo):
+    async def process(self, message: GroupMessageInfo):
         # await SayRaw(message.websocket, message.groupId, message.rawMessage["message"])
         pass
 
-    def judge(self, message: GroupMesssageInfo) -> bool:
+    def judge(self, message: GroupMessageInfo) -> bool:
         """判断消息是否符合喵喵翻译条件:纯文本,而且全部由喵组成。"""
         if (
             CheckAllMiao(message.painTextMessage)

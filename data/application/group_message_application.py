@@ -1,5 +1,5 @@
 from data.application.application import Application
-from data.message.group_message_info import GroupMesssageInfo
+from data.message.group_message_info import GroupMessageInfo
 from data.enumerates import ApplicationType, ApplicationCostType
 
 from abc import ABC, abstractmethod
@@ -32,15 +32,15 @@ class GroupMessageApplication(Application):
         self.applicationType = ApplicationType.GROUP_MESSAGE
 
     # @abstractmethod
-    # def process(self, message: GroupMesssageInfo):
+    # def process(self, message: GroupMessageInfo):
     #     """处理消息
 
     #     Args:
-    #         message (GroupMesssageInfo): 要处理的消息
+    #         message (GroupMessageInfo): 要处理的消息
     #     """
     #     pass
     @abstractmethod
-    def judge(self, message: GroupMesssageInfo) -> bool:
+    def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用
 
         Args:
@@ -49,7 +49,7 @@ class GroupMessageApplication(Application):
         # pass
 
     @abstractmethod
-    async def process(self, message: GroupMesssageInfo):
+    async def process(self, message: GroupMessageInfo):
         """处理消息
 
         Args:

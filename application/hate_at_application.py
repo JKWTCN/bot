@@ -1,7 +1,7 @@
 from data.application.group_message_application import GroupMessageApplication
 from data.application.application_info import ApplicationInfo
 from data.enumerates import ApplicationCostType
-from data.message.group_message_info import GroupMesssageInfo
+from data.message.group_message_info import GroupMessageInfo
 from function.say import SayRaw
 from function.GroupConfig import get_config
 from function.database_message import getWhoAtMe, incWhoAtMe
@@ -19,7 +19,7 @@ class HateAtApplication(GroupMessageApplication):
         )
         super().__init__(applicationInfo, 75, True, ApplicationCostType.NORMAL)
 
-    async def process(self, message: GroupMesssageInfo):
+    async def process(self, message: GroupMessageInfo):
         user_id = message.senderId
         group_id = message.groupId
         websocket = message.websocket
@@ -52,6 +52,6 @@ class HateAtApplication(GroupMessageApplication):
                     f"{get_user_name(user_id,group_id)},你是第{nowAtNums}次艾特{get_user_name(at_id,group_id)}了喵,{get_user_name(at_id,group_id)}不喜欢被艾特喵，引用记得删除艾特喵。",
                 )
 
-    def judge(self, message: GroupMesssageInfo) -> bool:
+    def judge(self, message: GroupMessageInfo) -> bool:
         """艾特提醒"""
         return bool(set(message.atList) & set(get_config("hate_at_list", message.groupId)))  # type: ignore

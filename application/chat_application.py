@@ -7,7 +7,7 @@ import requests
 from data.application.group_message_application import GroupMessageApplication
 from data.application.application_info import ApplicationInfo
 from data.enumerates import ApplicationCostType
-from data.message.group_message_info import GroupMesssageInfo
+from data.message.group_message_info import GroupMessageInfo
 from function.say import SayRaw, ReplySay
 from function.database_message import GetChatContext
 from function.database_group import GetGroupName
@@ -100,12 +100,12 @@ class GroupChatApplication(GroupMessageApplication):
             applicationInfo, 0, True, ApplicationCostType.HIGH_TIME_HIGH_PERFORMANCE
         )
 
-    async def process(self, message: GroupMesssageInfo):
+    async def process(self, message: GroupMessageInfo):
         await chat(
             message.websocket, message.senderId, message.groupId, message.messageId, ""
         )
 
-    def judge(self, message: GroupMesssageInfo) -> bool:
+    def judge(self, message: GroupMessageInfo) -> bool:
         """百分之5概率触发回复或者带名字回复"""
         if (
             load_setting()["bot_name"] in message.painTextMessage
