@@ -55,3 +55,5 @@ def initApplications():
     RegisterApplication(classic_application.BoringFeatureCollectionManageApplication())
     RegisterApplication(classic_application.BoringFeatureCollectionApplication())
     RegisterApplication(classic_application.AtPunishApplication())
+    # 注册被欺负应用
+    RegisterApplication(classic_application.BeTeasedApplication())

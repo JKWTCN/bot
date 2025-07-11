@@ -56,6 +56,15 @@ def HasKeyWords(text: str, key_words: list) -> bool:
     return False
 
 
+# 判断是否有Bot名字
+def HasBotName(text: str) -> bool:
+    bot_name = load_setting()["bot_name"]
+    if bot_name in text:
+        return True
+    else:
+        return False
+
+
 async def say_and_echo(websocket, group_id: int, text: str, echo: str):
     payload = {
         "action": "send_msg_async",

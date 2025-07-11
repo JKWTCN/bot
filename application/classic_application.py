@@ -3,6 +3,7 @@ from datetime import datetime
 import json
 import logging
 import random
+import re
 import sqlite3
 import time
 
@@ -349,7 +350,7 @@ class RandomWaterGroupPointsApplication(GroupMessageApplication):
 
 # todo 无聊功能合集
 # todo 哈气，装，打，GAY [AT管理]
-from tools.tools import HasKeyWords
+from tools.tools import HasKeyWords, HasAllKeyWords, HasBotName
 from function.datebase_user import IsDeveloper
 
 
@@ -630,3 +631,362 @@ class AtPunishApplication(MetaMessageApplication):
 
     async def process(self, message: MetaMessageInfo):
         await AtPunish(message.websocket)
+
+
+class BeTeasedApplication(GroupMessageApplication):
+    """被欺负应用"""
+
+    def __init__(self):
+        applicationInfo = ApplicationInfo(
+            "被欺负的回应", "当有人欺负乐可时,乐可会回应", False
+        )
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo):
+        path = "res/robot.gif"
+        group_id = message.groupId
+        user_id = message.senderId
+        websocket = message.websocket
+        message_id = message.messageId
+        with open(path, "rb") as image_file:
+            image_data = image_file.read()
+            image_base64 = base64.b64encode(image_data)
+            payload = {
+                "action": "send_msg_async",
+                "params": {
+                    "group_id": group_id,
+                    "message": [
+                        {"type": "reply", "data": {"id": message_id}},
+                        {
+                            "type": "text",
+                            "data": {
+                                "text": f"{get_user_name(user_id, group_id)},不要欺负机器人喵!"
+                            },
+                        },
+                        {
+                            "type": "image",
+                            "data": {
+                                "file": "base64://" + image_base64.decode("utf-8")
+                            },
+                        },
+                    ],
+                },
+            }
+        await websocket.send(json.dumps(payload))
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return (
+            HasAllKeyWords(message.painTextMessage, ["乐可"])
+            and HasKeyWords(
+                message.painTextMessage,
+                ["sb", "SB", "傻逼", "透透", "透", "打你", "艹"],
+            )
+            and HasBotName(message.painTextMessage)
+        )
+
+
+from function.group_operation import ban_new
+
+
+# 获取积分等级
+def get_level(user_id: int, group_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT level FROM level where user_id=? and group_id=?;",
+            (user_id, group_id),
+        )
+    except sqlite3.OperationalError:
+        logging.info("数据库表不存在,level")
+        cur.execute(
+            "CREATE TABLE level ( user_id  INTEGER, group_id INTEGER, level INTEGER ); "
+        )
+        conn.commit()
+        cur.execute(
+            "SELECT level FROM level where user_id=? and group_id=?;",
+            (user_id, group_id),
+        )
+    data = cur.fetchall()
+    if len(data) == 0:
+        cur.execute(
+            "INSERT INTO level (user_id,group_id,level ) VALUES (?,?,?);",
+            (user_id, group_id, 0),
+        )
+        conn.commit()
+        conn.close()
+        return 0
+    else:
+        conn.close()
+        return data[0][0]
+
+
+# 设置积分等级
+def set_level(user_id: int, group_id: int, level: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE level SET level=? where user_id=? and group_id=?",
+        (
+            level,
+            user_id,
+            group_id,
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+from function.say import SayAndAt
+
+
+# 赠送积分
+async def GiveGift(
+    websocket, sender_id: int, group_id: int, receiver_id: int, point: int
+):
+    sender_point = find_point(sender_id)
+    if sender_id != receiver_id:
+        if point > 0:
+            if point > sender_point:
+                await SayGroup(
+                    websocket,
+                    group_id,
+                    f"{get_user_name(sender_id, group_id)},你的积分不足喵!当前积分为{sender_point}喵.",
+                )
+            else:
+                receiver_point = find_point(receiver_id)
+                change_point(sender_id, group_id, sender_point - point)
+                res = change_point(receiver_id, group_id, receiver_point + point)
+                if not res:
+                    now_level = get_level(receiver_id, group_id)
+                    set_level(
+                        receiver_id, group_id, get_level(receiver_id, group_id) + 1
+                    )
+                    await SayAndAt(
+                        websocket,
+                        receiver_id,
+                        group_id,
+                        f"爆分了!!!积分归零,积分等级:{now_level}->{now_level+1}.",
+                    )
+                await say(
+                    websocket,
+                    group_id,
+                    f"{get_user_name(sender_id, group_id)}赠送{get_user_name(receiver_id, group_id)}{point}积分喵!",
+                )
+        else:
+            await SayGroup(
+                websocket,
+                group_id,
+                f"{get_user_name(sender_id, group_id)},赠送积分不能为负喵!",
+            )
+    else:
+        await SayGroup(
+            websocket,
+            group_id,
+            f"{get_user_name(sender_id, group_id)},不能给自己赠送积分喵!",
+        )
+
+
+# 艾特管理功能大合集
+class AtManagementApplication(GroupMessageApplication):
+    """艾特管理功能大合集"""
+
+    def __init__(self):
+        applicationInfo = ApplicationInfo("艾特管理功能大合集", "提供一些艾特管理功能")
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo):
+        # 处理消息
+        user_id = message.senderId
+        group_id = message.groupId
+        websocket = message.websocket
+        raw_message = message.painTextMessage
+        for at_id in message.atList:
+            rev_name = get_user_name(at_id, group_id)
+            sender_name = get_user_name(user_id, group_id)
+            if BotIsAdmin(group_id):
+                if "解除禁言" in raw_message:
+                    logging.info(
+                        f"{group_id}:{sender_name}({user_id})解除禁言了{rev_name}({at_id})"
+                    )
+                    await ban_new(websocket, at_id, group_id, 0)
+
+                elif "禁言" in raw_message:
+                    logging.info(
+                        f"{group_id}:{sender_name}({user_id})禁言了{rev_name}({at_id})"
+                    )
+                    await ban_new(websocket, at_id, group_id, 1800)
+
+                elif "说再见" in raw_message:
+                    if not IsAdmin(user_id, group_id):
+                        logging.info(
+                            f"{group_id}:{sender_name}({user_id})踢出了{rev_name}({at_id})"
+                        )
+                        await kick_member(websocket, at_id, group_id)
+
+                elif HasKeyWords(raw_message, ["晋升"]) and IsDeveloper(user_id):
+                    set_level(
+                        at_id,
+                        group_id,
+                        get_level(at_id, group_id) + 1,
+                    )
+                    change_point(at_id, group_id, 0)
+                    await SayGroup(
+                        websocket,
+                        group_id,
+                        f"晋升成功,{get_user_name(at_id,group_id)}({at_id})的等级提升为{get_level(at_id, group_id)}级,积分清零喵。",
+                    )
+
+                elif HasKeyWords(raw_message, ["惩罚取消", "取消惩罚"]) and (
+                    (user_id != at_id and IsAdmin(user_id, group_id))
+                    or IsDeveloper(user_id)
+                ):
+                    DelAtPunish(at_id, group_id)
+                    logging.info(
+                        f"{group_id}:{sender_name}({user_id})取消了{rev_name}({at_id})的惩罚"
+                    )
+                    await SayGroup(
+                        websocket,
+                        group_id,
+                        f"{rev_name}({at_id})的惩罚被{sender_name}({user_id})取消了,快谢谢人家喵！",
+                    )
+                    await ban_new(websocket, at_id, group_id, 0)
+
+                elif HasKeyWords(raw_message, ["送你", "V你", "v你"]):
+                    num = re.findall(r"\d+", raw_message)
+                    if len(num) >= 2:
+                        num = int(num[1])
+                    else:
+                        num = 0
+                    await GiveGift(websocket, user_id, group_id, at_id, num)
+
+                elif HasKeyWords(raw_message, ["你是GAY", "你是gay"]) and IsAdmin(
+                    user_id, group_id
+                ):
+                    # todo 修复bug
+                    # if at_id not in load_setting["boring"]:
+                    #     _setting = load_setting()
+                    #     _setting["boring"].append(at_id)
+                    #     dump_setting(_setting)
+                    # await say(
+                    #     websocket,
+                    #     group_id,
+                    #     f"{get_user_name(at_id, group_id)},GAY追杀令喵!!!!",
+                    # )
+                    pass
+                elif HasKeyWords(raw_message, ["你不是GAY", "你不是gay"]) and IsAdmin(
+                    user_id, group_id
+                ):
+                    _setting = load_setting()
+                    while at_id in load_setting()["boring"]:
+                        _setting["boring"].remove(at_id)
+                    dump_setting(_setting)
+                    await SayGroup(
+                        websocket,
+                        group_id,
+                        f"{get_user_name(at_id, group_id)},GAY追杀令取消了喵。",
+                    )
+                elif HasKeyWords(raw_message, ["不要哈气"]) and IsAdmin(
+                    user_id, group_id
+                ):
+                    _setting = load_setting()
+                    while at_id in load_setting()["huffing"]:
+                        _setting["huffing"].remove(at_id)
+                    dump_setting(_setting)
+                    await SayGroup(
+                        websocket,
+                        group_id,
+                        f"{get_user_name(at_id, group_id)},乐可停止追杀你了喵！",
+                    )
+                elif HasKeyWords(raw_message, ["哈气"]) and IsAdmin(user_id, group_id):
+                    _setting = load_setting()
+                    if at_id not in load_setting()["huffing"]:
+                        _setting["huffing"].append(at_id)
+                        dump_setting(_setting)
+                    await SayGroup(
+                        websocket,
+                        group_id,
+                        f"{get_user_name(at_id, group_id)},乐可要追杀你了喵！",
+                    )
+                elif HasKeyWords(
+                    raw_message,
+                    [
+                        "不要装",
+                    ],
+                ) and IsAdmin(user_id, group_id):
+                    _setting = load_setting()
+                    if at_id not in load_setting()["fly"]:
+                        _setting["fly"].append(at_id)
+                        dump_setting(_setting)
+                    await SayGroup(
+                        websocket,
+                        group_id,
+                        f"{get_user_name(at_id, group_id)},不要再装了喵。",
+                    )
+                elif HasKeyWords(
+                    raw_message,
+                    [
+                        "可以装",
+                    ],
+                ) and IsAdmin(user_id, group_id):
+                    while at_id in load_setting()["fly"]:
+                        _setting["fly"].remove(at_id)
+                    dump_setting(_setting)
+                    await SayGroup(
+                        websocket,
+                        group_id,
+                        f"{get_user_name(at_id, group_id)},可以开始装了喵。",
+                    )
+                elif (
+                    HasKeyWords(raw_message, ["打他", "打它", "打她"])
+                    and (user_id != at_id or IsDeveloper(user_id))
+                    and IsAdmin(user_id, group_id)
+                ):
+                    AddAtPunishList(
+                        at_id,
+                        group_id,
+                        load_setting()["defense_times"],
+                    )
+                    await SayGroup(
+                        websocket,
+                        group_id,
+                        f"{get_user_name(user_id, group_id)},乐可要开始打你了喵！",
+                    )
+
+                elif HasKeyWords(raw_message, ["通过验证", "验证通过"]):
+                    from application.welcome_application import (
+                        find_vcode,
+                        verify,
+                        welcome_new,
+                        welcom_new_no_admin,
+                    )
+
+                    (mod, vcode_str) = find_vcode(at_id, group_id)
+                    if mod:
+                        (mod, times) = verify(
+                            at_id,
+                            group_id,
+                            vcode_str,
+                        )
+                        if mod:
+                            # 通过验证
+                            if BotIsAdmin(group_id):
+                                if group_id == load_setting()["admin_group_main"]:
+                                    await ban_new(
+                                        websocket,
+                                        at_id,
+                                        group_id,
+                                        60,
+                                    )
+                                    await welcome_new(websocket, at_id, group_id)
+                                else:
+                                    await welcom_new_no_admin(
+                                        websocket, at_id, group_id
+                                    )
+                            else:
+                                await welcom_new_no_admin(websocket, at_id, group_id)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return True
