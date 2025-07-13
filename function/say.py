@@ -6,6 +6,25 @@ import re
 import requests
 
 
+def SayGroupReturnMessageId(groupId: int, text: str):
+    """发送群消息并返回消息ID
+
+    Args:
+        groupId (int): 群组ID
+        text (str): 消息内容
+
+    Returns:
+        int: 消息ID
+    """
+    payload = {
+        "group_id": groupId,
+        "message": [{"type": "text", "data": {"text": text}}],
+    }
+    response = requests.post("http://localhost:27433/send_group_msg", json=payload)
+    data = response.json()
+    return data["data"]["message_id"]
+
+
 async def ReplySay(websocket, group_id: int, message_id: int, text: str):
     """引用回复
 

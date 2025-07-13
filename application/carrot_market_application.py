@@ -522,9 +522,9 @@ class CarrotMarketApplication(GroupMessageApplication):
         group_id = message.groupId
         websocket = message.websocket
         message_id = message.messageId
-        if message.painTextMessage.startswith("#carrotbuy#"):
+        if message.plainTextMessage.startswith("#carrotbuy#"):
 
-            tmpMessage = message.painTextMessage.replace("#carrotbuy#", "")
+            tmpMessage = message.plainTextMessage.replace("#carrotbuy#", "")
             match buyStock(
                 user_id,
                 group_id,
@@ -552,9 +552,9 @@ class CarrotMarketApplication(GroupMessageApplication):
                         message_id,
                         "购买成功喵。",
                     )
-        elif message.painTextMessage.startswith("#carrotsell#"):
+        elif message.plainTextMessage.startswith("#carrotsell#"):
 
-            tmpMessage = message.painTextMessage.replace("#carrotsell#", "")
+            tmpMessage = message.plainTextMessage.replace("#carrotsell#", "")
             match sellStock(
                 user_id,
                 group_id,
@@ -582,14 +582,14 @@ class CarrotMarketApplication(GroupMessageApplication):
                         message_id,
                         "出售成功喵。",
                     )
-        elif message.painTextMessage.startswith("#carrotme#"):
+        elif message.plainTextMessage.startswith("#carrotme#"):
 
             await showStockInfoMe(websocket, user_id, group_id, message_id)
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断消息是否为胡萝卜市场相关指令"""
         return (
-            message.painTextMessage.startswith("#carrotbuy#")
-            or message.painTextMessage.startswith("#carrotsell#")
-            or message.painTextMessage.startswith("#carrotme#")
+            message.plainTextMessage.startswith("#carrotbuy#")
+            or message.plainTextMessage.startswith("#carrotsell#")
+            or message.plainTextMessage.startswith("#carrotme#")
         )

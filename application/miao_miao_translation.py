@@ -127,7 +127,7 @@ class MiaoMiaoTranslationApplication(GroupMessageApplication):
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断消息是否符合喵喵翻译条件:纯文本,而且全部由喵组成。"""
         if (
-            CheckAllMiao(message.painTextMessage)
+            CheckAllMiao(message.plainTextMessage)
             and len(message.imageFileList) == 0
             and len(message.fileList) == 0
             and len(message.faceList) == 0

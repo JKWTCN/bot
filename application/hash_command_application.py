@@ -18,8 +18,8 @@ class HashCommandApplication(GroupMessageApplication):
         super().__init__(applicationInfo, 100, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo):
-        if "#image#" in message.painTextMessage:
-            now_text = message.painTextMessage.replace("#image#", "")
+        if "#image#" in message.plainTextMessage:
+            now_text = message.plainTextMessage.replace("#image#", "")
             await replyImageMessage(
                 message.websocket,
                 message.groupId,
@@ -27,7 +27,7 @@ class HashCommandApplication(GroupMessageApplication):
                 message.messageId,
                 "",
             )
-        elif "#info#" in message.painTextMessage:
+        elif "#info#" in message.plainTextMessage:
             await getImageInfo(
                 message.websocket,
                 message.groupId,
@@ -38,5 +38,6 @@ class HashCommandApplication(GroupMessageApplication):
     def judge(self, message: GroupMessageInfo) -> bool:
         """"""
         return (
-            "#image#" in message.painTextMessage or "#info#" in message.painTextMessage
+            "#image#" in message.plainTextMessage
+            or "#info#" in message.plainTextMessage
         )

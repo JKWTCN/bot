@@ -42,7 +42,7 @@ class SensitiveWordsApplication(GroupMessageApplication):
             bool: 判断结果
         """
         for i in get_config("sensitive_words", message.groupId):  # type: ignore
-            if i in message.painTextMessage and i not in "[图片]@":
+            if i in message.plainTextMessage and i not in "[图片]@":
                 return True
         return False
 

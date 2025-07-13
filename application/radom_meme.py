@@ -24,7 +24,7 @@ def FindAllFiles(path: str):
 async def SendMemeMergeForwarding(websocket, group_id: int, nums: int):
     """发送随机梗图合并转发消息"""
     try:
-        all_file = FindAllFiles(load_setting()["meme_path"])
+        all_file = FindAllFiles(load_setting("meme_path", ""))
         logging.info("读取目录完毕")
         payload = {
             "action": "send_forward_msg",
@@ -57,7 +57,7 @@ async def SendMemeMergeForwarding(websocket, group_id: int, nums: int):
                 {
                     "type": "node",
                     "data": {
-                        "user_id": load_setting()["bot_id"],
+                        "user_id": load_setting("bot_id", 0),
                         "nickname": "乐可",
                         "content": [
                             {
@@ -84,7 +84,7 @@ class RadomMemeApplication(GroupMessageApplication):
         super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo):
-        num = FindNum(message.painTextMessage)
+        num = FindNum(message.plainTextMessage)
         import math
 
         num = math.trunc(num)
@@ -109,6 +109,6 @@ class RadomMemeApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断消息是否符合触发条件"""
-        if "梗图" in message.painTextMessage and "连" in message.painTextMessage:
+        if "梗图" in message.plainTextMessage and "连" in message.plainTextMessage:
             return True
         return False

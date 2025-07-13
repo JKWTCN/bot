@@ -8,7 +8,7 @@ class GroupMessageInfo(MessageInfo):
     groupId: int
     messageId: int
 
-    # painTextMessage = ""
+    # plainTextMessage = ""
     # atList = []
     # replyMessageId = -1
     # imageFileList = []
@@ -16,7 +16,7 @@ class GroupMessageInfo(MessageInfo):
     # faceList = []
 
     def __init__(self, websocket, rawMessage: dict):
-        self.painTextMessage = ""
+        self.plainTextMessage = ""
         self.atList = []
         self.replyMessageId = -1
         self.imageFileList = []
@@ -43,7 +43,7 @@ class GroupMessageInfo(MessageInfo):
                         self.atList.append(i["data"]["qq"])
                         self.readMessage += f"[at:{i['data']['qq']}]"
                     case "text":
-                        self.painTextMessage += i["data"]["text"]
+                        self.plainTextMessage += i["data"]["text"]
                         self.readMessage += i["data"]["text"]
                     case "face":
                         self.faceList.append(i["data"]["id"])

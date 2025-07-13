@@ -6,6 +6,7 @@ import random
 import re
 import sqlite3
 import time
+import uuid
 
 import requests
 from data.message.group_message_info import GroupMessageInfo
@@ -95,7 +96,7 @@ class CheckInApplication(GroupMessageApplication):
         )
 
     def judge(self, message: GroupMessageInfo) -> bool:
-        return "签到" in message.painTextMessage
+        return "签到" in message.plainTextMessage
 
 
 # 大清洗功能
@@ -176,7 +177,7 @@ class GreatPurgeApplication(MetaMessageApplication):
 
     async def process(self, message: MetaMessageInfo):
         """处理元消息"""
-        if time.time() - load_setting()["last_update_time"] > 300:
+        if time.time() - load_setting("last_update_time", 0) > 300:
             data = get_group_list(message.websocket)
             print("开始更新群列表")
             logging.info("开始更新群列表")
@@ -188,10 +189,10 @@ class GreatPurgeApplication(MetaMessageApplication):
                     group["member_count"],
                     group["max_member_count"],
                 )
-                if group["group_id"] not in load_setting()["group_list"]:
-                    _setting = load_setting()
-                    _setting["group_list"].append(group["group_id"])
-                    dump_setting(_setting)
+                _setting = load_setting("group_list", [])
+                if group["group_id"] not in _setting:
+                    _setting.append(group["group_id"])
+                    dump_setting("group_list", _setting)
                     new_data = update_group_member_list(
                         message.websocket, group["group_id"]
                     )
@@ -253,9 +254,9 @@ class GreatPurgeApplication(MetaMessageApplication):
                                         message.websocket, user.user_id, user.group_id
                                     )
 
-                _setting = load_setting()
-                _setting["last_update_time"] = time.time()
-                dump_setting(_setting)
+                _setting = load_setting("last_update_time", 0)
+                _setting = time.time()
+                dump_setting("last_update_time", _setting)
                 print("更新全部群列表完毕")
                 logging.info("更新全部群列表完毕")
 
@@ -356,31 +357,31 @@ from function.datebase_user import IsDeveloper
 
 # 删除特定惩罚
 def DelAtPunish(user_id: int, group_id: int):
-    setting = load_setting()
+    setting = load_setting("bleak_admin", [])
     del_index = -1
-    for i, admin in enumerate(setting["bleak_admin"]):
+    for i, admin in enumerate(setting):
         if admin["user_id"] == user_id and admin["group_id"] == group_id:
             del_index = i
-    del setting["bleak_admin"][del_index]
-    dump_setting(setting)
+    del setting[del_index]
+    dump_setting("bleak_admin", setting)
 
 
 # 添加惩罚名单
 def AddAtPunishList(user_id: int, group_id: int, num: int):
-    setting = load_setting()
-    for admin in setting["bleak_admin"]:
+    setting = load_setting("bleak_admin", [])
+    for admin in setting:
         if admin["user_id"] == user_id and admin["group_id"] == group_id:
             admin["num"] += 10
-            dump_setting(setting)
+            dump_setting("bleak_admin", setting)
             return
-    setting["bleak_admin"].append(
+    setting.append(
         {
             "user_id": user_id,
             "group_id": group_id,
             "num": num,
         }
     )
-    dump_setting(setting)
+    dump_setting("bleak_admin", setting)
 
 
 async def SayAndAtDefense(websocket, user_id: int, group_id: int, text: str):
@@ -400,10 +401,10 @@ async def SayAndAtDefense(websocket, user_id: int, group_id: int, text: str):
 
 # 艾特惩罚
 async def AtPunish(websocket):
-    setting = load_setting()
+    setting = load_setting("bleak_admin", [])
     i: int = 0
     del_list = []
-    for admin in setting["bleak_admin"]:
+    for admin in setting:
         if admin["num"] <= 0:
             del_list.append(i)
             i += 1
@@ -417,8 +418,8 @@ async def AtPunish(websocket):
             admin["num"] -= 1
             i += 1
     for i in del_list:
-        del setting["bleak_admin"][i]
-    dump_setting(setting)
+        del setting[i]
+    dump_setting("bleak_admin", setting)
 
 
 # 飞起来的回复
@@ -497,7 +498,7 @@ class BoringFeatureCollectionManageApplication(GroupMessageApplication):
         super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo):
-        raw_message = message.painTextMessage
+        raw_message = message.plainTextMessage
         user_id = message.senderId
         group_id = message.groupId
         websocket = message.websocket
@@ -505,10 +506,10 @@ class BoringFeatureCollectionManageApplication(GroupMessageApplication):
             if HasKeyWords(raw_message, ["你是GAY", "你是gay"]) and IsAdmin(
                 user_id, group_id
             ):
-                if at_id not in load_setting()["boring"]:
-                    _setting = load_setting()
-                    _setting["boring"].append(at_id)
-                    dump_setting(_setting)
+                if at_id not in load_setting("boring", []):
+                    _setting = load_setting("boring", [])
+                    _setting.append(at_id)
+                    dump_setting("boring", _setting)
                     await SayGroup(
                         websocket,
                         group_id,
@@ -517,30 +518,30 @@ class BoringFeatureCollectionManageApplication(GroupMessageApplication):
             elif HasKeyWords(raw_message, ["你不是GAY", "你不是gay"]) and IsAdmin(
                 user_id, group_id
             ):
-                _setting = load_setting()
-                while at_id in load_setting()["boring"]:
-                    _setting["boring"].remove(at_id)
-                dump_setting(_setting)
+                _setting = load_setting("boring", [])
+                while at_id in load_setting("boring", []):
+                    _setting.remove(at_id)
+                dump_setting("boring", _setting)
                 await SayGroup(
                     websocket,
                     group_id,
                     f"{get_user_name(at_id, group_id)},GAY追杀令取消了喵。",
                 )
             elif HasKeyWords(raw_message, ["不要哈气"]) and IsAdmin(user_id, group_id):
-                _setting = load_setting()
-                while at_id in load_setting()["huffing"]:
-                    _setting["huffing"].remove(at_id)
-                dump_setting(_setting)
+                _setting = load_setting("huffing", [])
+                while at_id in load_setting("huffing", []):
+                    _setting.remove(at_id)
+                dump_setting("huffing", _setting)
                 await SayGroup(
                     websocket,
                     group_id,
                     f"{get_user_name(at_id, group_id)},乐可停止追杀你了喵！",
                 )
             elif HasKeyWords(raw_message, ["哈气"]) and IsAdmin(user_id, group_id):
-                _setting = load_setting()
-                if at_id not in load_setting()["huffing"]:
-                    _setting["huffing"].append(at_id)
-                    dump_setting(_setting)
+                _setting = load_setting("huffing", [])
+                if at_id not in _setting:
+                    _setting.append(at_id)
+                    dump_setting("huffing", _setting)
                 await SayGroup(
                     websocket,
                     group_id,
@@ -552,10 +553,10 @@ class BoringFeatureCollectionManageApplication(GroupMessageApplication):
                     "不要装",
                 ],
             ) and IsAdmin(user_id, group_id):
-                _setting = load_setting()
-                if at_id not in load_setting()["fly"]:
-                    _setting["fly"].append(at_id)
-                    dump_setting(_setting)
+                _setting = load_setting("fly", [])
+                if at_id not in _setting:
+                    _setting.append(at_id)
+                    dump_setting("fly", _setting)
                 await SayGroup(
                     websocket,
                     group_id,
@@ -567,9 +568,9 @@ class BoringFeatureCollectionManageApplication(GroupMessageApplication):
                     "可以装",
                 ],
             ) and IsAdmin(user_id, group_id):
-                while at_id in load_setting()["fly"]:
-                    _setting["fly"].remove(at_id)
-                dump_setting(_setting)
+                while at_id in load_setting("fly", []):
+                    _setting.remove(at_id)
+                dump_setting("fly", _setting)
                 await SayGroup(
                     websocket,
                     group_id,
@@ -583,7 +584,7 @@ class BoringFeatureCollectionManageApplication(GroupMessageApplication):
                 AddAtPunishList(
                     at_id,
                     group_id,
-                    load_setting()["defense_times"],
+                    load_setting("defense_times", 100),
                 )
                 await SayGroup(
                     websocket,
@@ -609,11 +610,11 @@ class BoringFeatureCollectionApplication(GroupMessageApplication):
         group_id = message.groupId
         websocket = message.websocket
         message_id = message.messageId
-        if user_id in load_setting()["boring"]:
+        if user_id in load_setting("boring", []):
             await BoringReply(websocket, user_id, group_id, message_id)
-        if user_id in load_setting()["huffing"]:
+        if user_id in load_setting("huffing", []):
             await HuffingReplay(websocket, user_id, group_id, message_id)
-        if user_id in load_setting()["fly"]:
+        if user_id in load_setting("fly", []):
             await FlyReply(websocket, user_id, group_id, message_id)
 
     def judge(self, message: GroupMessageInfo) -> bool:
@@ -677,12 +678,12 @@ class BeTeasedApplication(GroupMessageApplication):
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
         return (
-            HasAllKeyWords(message.painTextMessage, ["乐可"])
+            HasAllKeyWords(message.plainTextMessage, ["乐可"])
             and HasKeyWords(
-                message.painTextMessage,
+                message.plainTextMessage,
                 ["sb", "SB", "傻逼", "透透", "透", "打你", "艹"],
             )
-            and HasBotName(message.painTextMessage)
+            and HasBotName(message.plainTextMessage)
         )
 
 
@@ -769,7 +770,7 @@ async def GiveGift(
                         group_id,
                         f"爆分了!!!积分归零,积分等级:{now_level}->{now_level+1}.",
                     )
-                await say(
+                await SayGroup(
                     websocket,
                     group_id,
                     f"{get_user_name(sender_id, group_id)}赠送{get_user_name(receiver_id, group_id)}{point}积分喵!",
@@ -801,7 +802,7 @@ class AtManagementApplication(GroupMessageApplication):
         user_id = message.senderId
         group_id = message.groupId
         websocket = message.websocket
-        raw_message = message.painTextMessage
+        raw_message = message.plainTextMessage
         for at_id in message.atList:
             rev_name = get_user_name(at_id, group_id)
             sender_name = get_user_name(user_id, group_id)
@@ -878,10 +879,10 @@ class AtManagementApplication(GroupMessageApplication):
                 elif HasKeyWords(raw_message, ["你不是GAY", "你不是gay"]) and IsAdmin(
                     user_id, group_id
                 ):
-                    _setting = load_setting()
-                    while at_id in load_setting()["boring"]:
-                        _setting["boring"].remove(at_id)
-                    dump_setting(_setting)
+                    _setting = load_setting("boring", [])
+                    while at_id in _setting:
+                        _setting.remove(at_id)
+                    dump_setting("boring", _setting)
                     await SayGroup(
                         websocket,
                         group_id,
@@ -890,20 +891,20 @@ class AtManagementApplication(GroupMessageApplication):
                 elif HasKeyWords(raw_message, ["不要哈气"]) and IsAdmin(
                     user_id, group_id
                 ):
-                    _setting = load_setting()
-                    while at_id in load_setting()["huffing"]:
-                        _setting["huffing"].remove(at_id)
-                    dump_setting(_setting)
+                    _setting = load_setting("huffing", [])
+                    while at_id in _setting:
+                        _setting.remove(at_id)
+                    dump_setting("huffing", _setting)
                     await SayGroup(
                         websocket,
                         group_id,
                         f"{get_user_name(at_id, group_id)},乐可停止追杀你了喵！",
                     )
                 elif HasKeyWords(raw_message, ["哈气"]) and IsAdmin(user_id, group_id):
-                    _setting = load_setting()
-                    if at_id not in load_setting()["huffing"]:
-                        _setting["huffing"].append(at_id)
-                        dump_setting(_setting)
+                    _setting = load_setting("huffing", [])
+                    if at_id not in _setting:
+                        _setting.append(at_id)
+                        dump_setting("huffing", _setting)
                     await SayGroup(
                         websocket,
                         group_id,
@@ -915,10 +916,10 @@ class AtManagementApplication(GroupMessageApplication):
                         "不要装",
                     ],
                 ) and IsAdmin(user_id, group_id):
-                    _setting = load_setting()
-                    if at_id not in load_setting()["fly"]:
-                        _setting["fly"].append(at_id)
-                        dump_setting(_setting)
+                    _setting = load_setting("fly", [])
+                    if at_id not in _setting:
+                        _setting.append(at_id)
+                        dump_setting("fly", _setting)
                     await SayGroup(
                         websocket,
                         group_id,
@@ -930,9 +931,10 @@ class AtManagementApplication(GroupMessageApplication):
                         "可以装",
                     ],
                 ) and IsAdmin(user_id, group_id):
-                    while at_id in load_setting()["fly"]:
-                        _setting["fly"].remove(at_id)
-                    dump_setting(_setting)
+                    _setting = load_setting("fly", [])
+                    while at_id in _setting:
+                        _setting.remove(at_id)
+                    dump_setting("fly", _setting)
                     await SayGroup(
                         websocket,
                         group_id,
@@ -946,7 +948,7 @@ class AtManagementApplication(GroupMessageApplication):
                     AddAtPunishList(
                         at_id,
                         group_id,
-                        load_setting()["defense_times"],
+                        load_setting("defense_times", 100),
                     )
                     await SayGroup(
                         websocket,
@@ -972,7 +974,7 @@ class AtManagementApplication(GroupMessageApplication):
                         if mod:
                             # 通过验证
                             if BotIsAdmin(group_id):
-                                if group_id == load_setting()["admin_group_main"]:
+                                if group_id == load_setting("admin_group_main", 0):
                                     await ban_new(
                                         websocket,
                                         at_id,
@@ -990,3 +992,616 @@ class AtManagementApplication(GroupMessageApplication):
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
         return True
+
+
+from tools.tools import timestamp_to_date
+from function.say import SayGroupReturnMessageId
+
+# 丢漂流瓶
+
+
+async def throw_drifting_bottles(websocket, user_id: int, group_id: int, text: str):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    uid = str(uuid.uuid4())
+    try:
+        cur.execute(
+            "INSERT INTO drifting_bottles (uuid,user_id,group_id,text,pick_times,time)VALUES (?,?,?,?,?,?);",
+            (uid, user_id, group_id, text, 0, time.time()),
+        )
+        conn.commit()
+    except sqlite3.OperationalError:
+        logging.info("数据库表不存在,正在创建表drifting_bottles")
+        cur.execute(
+            "CREATE TABLE drifting_bottles (uuid TEXT, user_id INTEGER, group_id INTEGER, text TEXT, pick_times INTEGER, time INTEGER); "
+        )
+        conn.commit()
+        cur.execute(
+            "INSERT INTO drifting_bottles (uuid,user_id,group_id,text,pick_times,time)VALUES (?,?,?,?,?,?);",
+            (uid, user_id, group_id, text, 0, time.time()),
+        )
+        conn.commit()
+    conn.close()
+    # await say(
+    #     websocket,
+    #     group_id,
+    #     f"{get_user_name(user_id,group_id)},成功丢出了一个漂流瓶,标识ID为:{uid}",
+    # )
+    await SayGroup(
+        websocket,
+        group_id,
+        f"{get_user_name(user_id,group_id)},成功丢出了一个漂流瓶,等待有缘人捞起喵。",
+    )
+    return uid
+
+
+# 随机捞漂流瓶
+async def pick_drifting_bottles_radom(websocket, user_id: int, group_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT * FROM drifting_bottles ORDER BY RANDOM() LIMIT 1;")
+    except sqlite3.OperationalError:
+        logging.info("数据库表不存在,正在创建表drifting_bottles")
+        cur.execute(
+            "CREATE TABLE drifting_bottles ( uuid   TEXT, user_id    INTEGER, group_id   INTEGER, text   TEXT, pick_times INTEGER, time  INTEGER ); "
+        )
+        conn.commit()
+        await SayGroup(
+            websocket,
+            group_id,
+            f"{get_user_name(user_id,group_id)},没有漂流瓶了喵，待会再来吧喵。",
+        )
+        return
+    row = cur.fetchone()
+    if row is None:
+        await SayGroup(
+            websocket,
+            group_id,
+            f"{get_user_name(user_id,group_id)},没有漂流瓶了喵，待会再来吧喵。",
+        )
+        return
+    else:
+        text = f"捞到了一个{get_user_name(row[1],row[2])}于{timestamp_to_date(row[5])}在{GetGroupName(row[2])}丢的漂流瓶。\n{row[3]}"
+        # user_id, group_id, text, time
+        all_comment = load_comment(row[0])
+        for comment in all_comment:
+            text = (
+                text
+                + f"\n{timestamp_to_date(comment[3])}({GetGroupName(comment[1])}){get_user_name(comment[0],comment[1])}:{comment[2]}"
+            )
+        messageId = SayGroupReturnMessageId(group_id, text)
+        write_bottles_uuid_message_id(messageId, row[0], group_id)
+        cur.execute(
+            "UPDATE drifting_bottles SET pick_times = pick_times + 1 WHERE uuid = ?;",
+            (row[0],),
+        )
+        conn.commit()
+        return messageId
+
+
+# 写入评论
+def dump_comment(uuid: str, user_id: int, group_id: int, text: str):
+    matches = re.search(r"\[(.*?)\]\[(.*?)\]\s*(.*)", text)
+    if matches:
+        text = matches.group(3)
+    else:
+        matches = re.search(r"\[(.*?)\]\s*(.*)", text)
+        if matches:
+            text = matches.group(2)
+        else:
+            return
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "INSERT INTO drifting_bottles_comments (user_id,group_id,text,time,uuid)VALUES (?,?,?,?,?);",
+            (user_id, group_id, text, time.time(), uuid),
+        )
+        conn.commit()
+    except sqlite3.OperationalError:
+        logging.info("数据库表不存在,正在创建表drifting_bottles_comments")
+        cur.execute(
+            "CREATE TABLE drifting_bottles_comments(user_id INTEGER, group_id INTEGER, text TEXT, time INTEGER,uuid TEXT); "
+        )
+        conn.commit()
+        cur.execute(
+            "INSERT INTO drifting_bottles_comments (user_id,group_id,text,time)VALUES (?,?,?,?,?);",
+            (user_id, group_id, text, time.time(), uuid),
+        )
+        conn.commit()
+    conn.close()
+
+
+# 读取评论
+def load_comment(uuid: str):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT user_id, group_id, text, time FROM drifting_bottles_comments where uuid = ?; ",
+            (uuid,),
+        )
+    except sqlite3.OperationalError:
+        logging.info("数据库表不存在,正在创建表drifting_bottles_comments")
+        cur.execute(
+            "CREATE TABLE drifting_bottles_comments(user_id INTEGER, group_id INTEGER, text TEXT, time INTEGER,uuid TEXT); "
+        )
+        conn.commit()
+        cur.execute(
+            "SELECT user_id, group_id, text, time FROM drifting_bottles_comments where uuid = ?; ",
+            (uuid,),
+        )
+    all = cur.fetchall()
+    conn.close()
+    if len(all) == 0:
+        return []
+    else:
+        return all
+
+
+# 漂流瓶消息ID写入数据库，方便评论
+def write_bottles_uuid_message_id(message_id: int, uuid: str, group_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "INSERT INTO bottles_uuid_message_id (message_id,uuid,group_id)VALUES (?,?,?);",
+            (message_id, uuid, group_id),
+        )
+        conn.commit()
+    except sqlite3.OperationalError:
+        logging.info("数据库表不存在,正在创建表bottles_uuid_message_id")
+        cur.execute(
+            "CREATE TABLE bottles_uuid_message_id ( message_id   INTEGER, uuid   TEXT, group_id   INTEGER ); "
+        )
+        conn.commit()
+        cur.execute(
+            "INSERT INTO bottles_uuid_message_id (message_id,uuid,group_id)VALUES (?,?,?);",
+            (message_id, uuid, group_id),
+        )
+        conn.commit()
+    conn.close()
+
+
+def IsComment(user_id: int, group_id: int, reply_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT uuid FROM bottles_uuid_message_id where message_id=? and group_id=?",
+            (reply_id, group_id),
+        )
+    except sqlite3.OperationalError:
+        logging.info("数据库表不存在,正在创建表bottles_uuid_message_id")
+        cur.execute(
+            "CREATE TABLE bottles_uuid_message_id ( message_id   INTEGER, uuid   TEXT, group_id   INTEGER ); "
+        )
+        conn.commit()
+        cur.execute(
+            "SELECT uuid FROM bottles_uuid_message_id where message_id=? and group_id=?",
+            (reply_id, group_id),
+        )
+    a = cur.fetchone()
+    if a == None:
+        return False
+    else:
+        if len(a) > 0:
+            return True
+    return False
+
+
+async def WriteBottlesComment(
+    websocket, userId: int, groupId: int, plainMessage: str, replyId: int
+):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT uuid FROM bottles_uuid_message_id where message_id=? and group_id=?",
+            (replyId, groupId),
+        )
+    except sqlite3.OperationalError:
+        logging.info("数据库表不存在,正在创建表bottles_uuid_message_id")
+        cur.execute(
+            "CREATE TABLE bottles_uuid_message_id ( message_id   INTEGER, uuid   TEXT, group_id   INTEGER ); "
+        )
+        conn.commit()
+        cur.execute(
+            "SELECT uuid FROM bottles_uuid_message_id where message_id=? and group_id=?",
+            (replyId, groupId),
+        )
+    uuid = cur.fetchone()
+    dump_comment(uuid, userId, groupId, plainMessage)
+    return uuid
+
+
+# 判断是否为评论并写入
+async def is_comment_write(websocket, user_id: int, group_id: int, raw_message: str):
+    match = re.search(r"\[CQ:reply,id=(\d+)\]", raw_message)
+    if match:
+        message_id = int(match.group(1))
+        conn = sqlite3.connect("bot.db")
+        cur = conn.cursor()
+        try:
+            cur.execute(
+                "SELECT uuid FROM bottles_uuid_message_id where message_id=? and group_id=?",
+                (message_id, group_id),
+            )
+        except sqlite3.OperationalError:
+            logging.info("数据库表不存在,正在创建表bottles_uuid_message_id")
+            cur.execute(
+                "CREATE TABLE bottles_uuid_message_id ( message_id   INTEGER, uuid   TEXT, group_id   INTEGER ); "
+            )
+            conn.commit()
+            cur.execute(
+                "SELECT uuid FROM bottles_uuid_message_id where message_id=? and group_id=?",
+                (message_id, group_id),
+            )
+        a = cur.fetchone()
+        if a == None:
+            return False
+        else:
+            if len(a) > 0:
+                uuid = a[0]
+                if not HasKeyWords(raw_message, ["[CQ:image"]):
+                    dump_comment(uuid, user_id, group_id, raw_message)
+                    await ReplySay(
+                        websocket,
+                        group_id,
+                        message_id,
+                        f"评论ID为{uuid}的漂流瓶成功喵!",
+                    )
+                    return True
+                else:
+                    return False
+    else:
+        return False
+
+
+class DriftBottleApplication(GroupMessageApplication):
+    """漂流瓶应用"""
+
+    def __init__(self):
+        applicationInfo = ApplicationInfo("漂流瓶应用", "可以捞和捡漂流瓶")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        websocket = message.websocket
+        group_id = message.groupId
+        user_id = message.senderId
+        message_id = message.messageId
+        if HasKeyWords(
+            message.plainTextMessage,
+            [
+                "捡漂流瓶",
+                "捞漂流瓶",
+            ],
+        ):
+            await pick_drifting_bottles_radom(websocket, user_id, group_id)
+        else:
+            # 丢漂流瓶
+            if len(message.imageFileList) != 0:
+                await SayGroup(
+                    websocket,
+                    group_id,
+                    f"{get_user_name(user_id, group_id)},暂时不支持图片喵。",
+                )
+            else:
+                match = re.search(
+                    r"throw\s*([\s\S]*)$",
+                    message.plainTextMessage,
+                )
+                if match:
+                    print(match.group(1))
+                    uid = await throw_drifting_bottles(
+                        websocket,
+                        user_id,
+                        group_id,
+                        match.group(1),
+                    )
+                    write_bottles_uuid_message_id(message_id, uid, group_id)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage,
+            ["throw", "丢漂流瓶"],
+        ) or HasKeyWords(
+            message.plainTextMessage,
+            [
+                "捡漂流瓶",
+                "捞漂流瓶",
+            ],
+        )
+
+
+class CommentDriftBottleApplication(GroupMessageApplication):
+    """评论漂流瓶应用"""
+
+    def __init__(self):
+        applicationInfo = ApplicationInfo("评论漂流瓶应用", "可以评论漂流瓶")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        websocket = message.websocket
+        groupId = message.groupId
+        messageId = message.messageId
+        uuid = await WriteBottlesComment(
+            websocket,
+            message.senderId,
+            groupId,
+            message.plainTextMessage,
+            message.replyMessageId,
+        )
+        await ReplySay(
+            websocket,
+            groupId,
+            messageId,
+            f"评论ID为{uuid}的漂流瓶成功喵!",
+        )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return (
+            IsComment(message.senderId, message.groupId, message.messageId)
+            and message.replyMessageId != -1
+        )
+
+
+from function.group_operation import GetGroupMessageSenderId
+
+# 特殊回复应用
+class SpicalReplyApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("特殊回复应用", "特殊回复应用", False)
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        sender_id = GetGroupMessageSenderId(message.replyMessageId)
+        now_point = find_point(sender_id)
+        if message.plainTextMessage.startswith("好好好"):
+            change_point(sender_id, message.groupId, now_point + 100)
+            sender_name = get_user_name(sender_id, message.groupId)
+            await ReplySay(
+                message.websocket,
+                message.groupId,
+                message.replyMessageId,
+                "{},受到☁️赞扬,积分:{}->{}".format(
+                    sender_name, now_point, now_point + 100
+                ),
+            )
+        elif message.plainTextMessage.startswith("坏坏坏"):
+            change_point(sender_id, message.groupId, now_point - 100)
+            sender_name = get_user_name(sender_id, message.groupId)
+            await ReplySay(
+                message.websocket,
+                message.groupId,
+                message.replyMessageId,
+                "{},不要搬💩了喵,积分:{}->{}".format(
+                    sender_name, now_point, now_point - 100
+                ),
+            )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return (
+            (
+                message.plainTextMessage.startswith("好好好")
+                or message.plainTextMessage.startswith("坏坏坏")
+            )
+            and message.senderId in load_setting("developers_list", [])
+            and message.replyMessageId != -1
+        )
+
+
+from function.group_operation import SetEssenceMsg, DeleteEssenceMsg
+
+# 加精/移除加精应用
+class EssenceAboutGroupMessageApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo(
+            "加精/移除加精应用",
+            f"引用回复消息,说{load_setting("bot_name","乐可")},加精/移除加精",
+        )
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+
+        if message.plainTextMessage.startswith("加精"):
+            await SetEssenceMsg(message.websocket, message.replyMessageId)
+
+        elif message.plainTextMessage.startswith("移除加精"):
+            await DeleteEssenceMsg(message.websocket, message.replyMessageId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return (
+            (
+                message.plainTextMessage.startswith("加精")
+                or message.plainTextMessage.startswith("移除加精")
+            )
+            and BotIsAdmin(message.groupId)
+            and message.replyMessageId != -1
+        )
+
+
+# 你们看到她了吗
+async def SoCute(websocket, user_id: int, group_id: int):
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {
+                    "type": "image",
+                    "data": {
+                        "file": f"https://api.tangdouz.com/wz/cute.php?q={user_id}"
+                    },
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+class WhoLookYouApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo(
+            "你们看到他了嘛?",
+            f"引用回复消息,说你们看到他了嘛?",
+        )
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+
+        group_id = message.groupId
+        sender_id = GetGroupMessageSenderId(message.replyMessageId)
+        await SoCute(message.websocket, sender_id, group_id)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return (
+            HasAllKeyWords(message.plainTextMessage, ["看到", "了", "你"])
+            and HasKeyWords(message.plainTextMessage, ["吗", "嘛"])
+            and message.replyMessageId != -1
+        )
+
+
+from tools.tools import HasChinese
+
+# 香香软软小南梁群友功能
+class GroupKotomitakoApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo(
+            "香香软软小南梁群友",
+            f"香香软软小南梁群友,说话要带第一人称代词要用咱得带喵。",
+        )
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        if "喵" not in message.plainTextMessage:
+            await ban_new(
+                message.websocket,
+                message.senderId,
+                message.groupId,
+                60,
+            )
+            if "我" in message.plainTextMessage:
+                await ReplySay(
+                    message.websocket,
+                    message.groupId,
+                    message.messageId,
+                    f"{get_user_name(message.senderId, message.groupId)},你作为本群的香香软软小南梁，因为不用咱自称被禁言了喵。",
+                )
+            else:
+                await ReplySay(
+                    message.websocket,
+                    message.groupId,
+                    message.messageId,
+                    f"{get_user_name(message.senderId, message.groupId)},你作为本群的香香软软小南梁，因为不带喵被禁言了喵。",
+                )
+        elif "我" in message.plainTextMessage:
+            await ReplySay(
+                message.websocket,
+                message.groupId,
+                message.messageId,
+                f"{get_user_name(message.senderId, message.groupId)},你作为本群的香香软软小南梁，因为不用咱自称被禁言了喵。",
+            )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return message.senderId in get_config("kotomitako", message.groupId) and BotIsAdmin(message.groupId) and HasChinese(message.plainTextMessage)  # type: ignore
+
+# 猫娘群友
+class GroupMiaoMiaoApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo(
+            "猫娘群友",
+            "猫娘群友,说话得带喵。",
+        )
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await ban_new(
+            message.websocket,
+            message.senderId,
+            message.groupId,
+            60,
+        )
+        await ReplySay(
+            message.websocket,
+            message.groupId,
+            message.messageId,
+            "{},你因为说话不带喵被禁言了喵。".format(
+                get_user_name(message.senderId, message.groupId)
+            ),
+        )
+        await ban_new(
+            message.websocket,
+            message.senderId,
+            message.groupId,
+            0,
+        )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return message.senderId in get_config("catgirl", message.groupId) and BotIsAdmin(message.groupId) and HasChinese(message.plainTextMessage) and "喵" not in message.plainTextMessage  # type: ignore
+
+
+from datetime import datetime
+
+# 喵喵日
+class GroupMiaoMiaoDayApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo(
+            "喵喵日",
+            "喵喵日，那天所以人说话都要带喵。",
+        )
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        if IsAdmin(message.senderId, message.groupId) and not get_config(
+            "cat_day_ignore_admin", message.groupId
+        ):
+            await ReplySay(
+                message.websocket,
+                message.groupId,
+                message.messageId,
+                f"{get_user_name(message.senderId, message.groupId)},每月{get_config("cat_day_date", message.groupId)}号是本群喵喵日,虽然你是管理,{load_setting("bot_name","乐可")}禁言不了你喵，但是希望你还是喵一下子喵。",
+            )
+        else:
+            await ban_new(
+                message.websocket,
+                message.senderId,
+                message.groupId,
+                60,
+            )
+            await ReplySay(
+                message.websocket,
+                message.groupId,
+                message.messageId,
+                "{},每月{}号是本群喵喵日,你因为说话不带喵被禁言了喵。".format(
+                    get_user_name(message.senderId, message.groupId),
+                    get_config("cat_day_date", message.groupId),
+                ),
+            )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return (
+            "喵" not in message.plainTextMessage
+            and len(message.imageFileList) == 0
+            and len(message.imageFileList) == 0
+            and HasChinese(message.plainTextMessage)
+            and datetime.now().day == get_config("cat_day_date", message.groupId)
+            and BotIsAdmin(message.groupId)
+        )

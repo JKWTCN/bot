@@ -298,7 +298,6 @@ async def welcome_verify(websocket, user_id: int, group_id: int):
         image_data = image_file.read()
     image_base64 = base64.b64encode(image_data)
 
-    setting = load_setting()
     payload = {
         "action": "send_msg_async",
         "params": {
@@ -309,7 +308,7 @@ async def welcome_verify(websocket, user_id: int, group_id: int):
                     "type": "text",
                     "data": {
                         "text": '\n请在{}分钟内输入以下验证码喵,注意是全大写字符喵。你有5次输入机会喵,如果看不清说"乐可，看不清",乐可会给你换一张验证码的喵。'.format(
-                            setting["timeout"]
+                            load_setting("timeout", 5)
                         )
                     },
                 },
@@ -329,8 +328,10 @@ import time
 # 检测是否验证超时
 def check_validation_timeout(user_id: int, group_id: int):
 
-    setting = load_setting()
-    if time.time() - find_last_time(user_id, group_id) > setting["timeout"] * 60:
+    if (
+        time.time() - find_last_time(user_id, group_id)
+        > load_setting("timeout", 5) * 60
+    ):
         return True
     else:
         return False
@@ -347,7 +348,7 @@ class WelcomeApplication(NoticeMessageApplication):
     async def process(self, message: NoticeMessageInfo):
         if BotIsAdmin(message.senderId):
             await welcome_verify(message.websocket, message.senderId, message.groupId)
-        elif message.groupId == load_setting()["main_group_id"]:
+        elif message.groupId == load_setting("main_group_id", 0):
             await welcome_new(message.websocket, message.senderId, message.groupId)
         else:
             await welcom_new_no_admin(
@@ -435,7 +436,7 @@ class VerifyApplication(GroupMessageApplication):
         websocket = message.websocket
         sender_name = get_user_name(user_id, group_id)
         if "{}_{}.jpg".format(user_id, group_id) in os.listdir("./cache/vcode"):
-            if "看不清" in message.painTextMessage:
+            if "看不清" in message.plainTextMessage:
                 if "{}_{}.jpg".format(user_id, group_id) in os.listdir("./cache/vcode"):
                     update_vcode(user_id, group_id)
                     await welcome_verify(websocket, user_id, group_id)
@@ -444,11 +445,11 @@ class VerifyApplication(GroupMessageApplication):
                 (mod, times) = verify(
                     user_id,
                     group_id,
-                    message.painTextMessage,
+                    message.plainTextMessage,
                 )
                 if mod:
                     # 通过验证
-                    if group_id == load_setting()["admin_group_main"]:
+                    if group_id == load_setting("admin_group_main", 0):
                         await ban_new(
                             websocket,
                             user_id,
@@ -499,7 +500,7 @@ class ManualVerifyApplication(GroupMessageApplication):
         group_id = message.groupId
         websocket = message.websocket
         sender_name = get_user_name(user_id, group_id)
-        if HasKeyWords(message.painTextMessage, ["通过验证", "验证通过"]):
+        if HasKeyWords(message.plainTextMessage, ["通过验证", "验证通过"]):
             for at_id in message.atList:
                 (mod, vcode_str) = find_vcode(at_id, group_id)
                 if mod:
@@ -511,7 +512,7 @@ class ManualVerifyApplication(GroupMessageApplication):
                     if mod:
                         # 通过验证
                         if BotIsAdmin(group_id):
-                            if group_id == load_setting()["main_group_id"]:
+                            if group_id == load_setting("main_group_id", 0):
                                 await ban_new(
                                     websocket,
                                     at_id,

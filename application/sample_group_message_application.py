@@ -29,8 +29,8 @@ class SampleGroupMessageApplication(GroupMessageApplication):
         Returns:
             bool: 判断结果
         """
-        if "123" in message.painTextMessage:
-            print(f"触发了关键词应用123,消息内容:{message.painTextMessage}")
+        if "123" in message.plainTextMessage:
+            print(f"触发了关键词应用123,消息内容:{message.plainTextMessage}")
             return True
         return False
 

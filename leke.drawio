@@ -576,7 +576,7 @@
                 <mxCell id="Hmg4KkV10iB5puFWYJFH-3" value="+ messageId: int" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="H8Uf076lWjkvo2L4JizN-1" vertex="1">
                     <mxGeometry y="104" width="230" height="26" as="geometry"/>
                 </mxCell>
-                <mxCell id="Hmg4KkV10iB5puFWYJFH-1" value="+ painTextMessage" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="H8Uf076lWjkvo2L4JizN-1" vertex="1">
+                <mxCell id="Hmg4KkV10iB5puFWYJFH-1" value="+ plainTextMessage" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="H8Uf076lWjkvo2L4JizN-1" vertex="1">
                     <mxGeometry y="130" width="230" height="26" as="geometry"/>
                 </mxCell>
                 <mxCell id="H8Uf076lWjkvo2L4JizN-4" value="+ atList: list&amp;lt;int&amp;gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="H8Uf076lWjkvo2L4JizN-1" vertex="1">
@@ -623,7 +623,7 @@
                 <mxCell id="fVCUQw0HLa4_QFKY6jJk-15" value="+ messageId: int" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="fVCUQw0HLa4_QFKY6jJk-12" vertex="1">
                     <mxGeometry y="78" width="230" height="26" as="geometry"/>
                 </mxCell>
-                <mxCell id="fVCUQw0HLa4_QFKY6jJk-16" value="+ painTextMessage" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="fVCUQw0HLa4_QFKY6jJk-12" vertex="1">
+                <mxCell id="fVCUQw0HLa4_QFKY6jJk-16" value="+ plainTextMessage" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="fVCUQw0HLa4_QFKY6jJk-12" vertex="1">
                     <mxGeometry y="104" width="230" height="26" as="geometry"/>
                 </mxCell>
                 <mxCell id="fVCUQw0HLa4_QFKY6jJk-18" value="+ replyMessageId: int" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" parent="fVCUQw0HLa4_QFKY6jJk-12" vertex="1">

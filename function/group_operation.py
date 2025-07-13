@@ -2,10 +2,44 @@ import json
 import logging
 import sqlite3
 
+import requests
+
 from function.GroupConfig import get_config
 from function.say import ReplySay
 from function.say import chatNoContext
 from function.datebase_user import delete_user_info
+from data.message.group_message_info import GroupMessageInfo
+
+
+# 设置群聊精华信息
+async def SetEssenceMsg(websocket, message_id: int):
+    payload = {
+        "action": "set_essence_msg",
+        "params": {
+            "message_id": message_id,
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+# 移除群聊精华信息
+async def DeleteEssenceMsg(websocket, message_id: int):
+    payload = {
+        "action": "delete_essence_msg",
+        "params": {
+            "message_id": message_id,
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+def GetGroupMessageSenderId(messageId: int) -> int:
+    payload = {
+        "message_id": messageId,
+    }
+    response = requests.post("http://localhost:27433/get_msg", json=payload)
+    data = response.json()
+    return data["sender"]["user_id"]
 
 
 # 踢人

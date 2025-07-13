@@ -178,11 +178,9 @@ def IsAdmin(user_id: int, group_id: int):
 
 def IsDeveloper(user_id: int):
     """检测用户是否为开发者"""
-    setting = load_setting()
-    return user_id in setting["developers_list"]
+    return user_id in load_setting("developers_list", [])
 
 
 def BotIsAdmin(group_id: int):
     """检测机器人是否为该群的管理员"""
-    setting = load_setting()
-    return IsAdmin(setting["bot_id"], group_id)
+    return IsAdmin(load_setting("bot_id", 0), group_id)

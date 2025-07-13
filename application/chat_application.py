@@ -108,7 +108,7 @@ class GroupChatApplication(GroupMessageApplication):
     def judge(self, message: GroupMessageInfo) -> bool:
         """百分之5概率触发回复或者带名字回复"""
         if (
-            load_setting()["bot_name"] in message.painTextMessage
+            load_setting("bot_name", "乐可") in message.plainTextMessage
             or random.random() < 0.05
         ):
             return True

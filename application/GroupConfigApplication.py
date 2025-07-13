@@ -17,7 +17,7 @@ class GroupConfigApplication(GroupMessageApplication):
             message (MessageInfo): 要处理的消息
         """
         argStatus, newArg = manage_config(
-            message.painTextMessage, message.groupId  # type: ignore
+            message.plainTextMessage, message.groupId  # type: ignore
         )
         if argStatus:
             await SayGroup(
@@ -50,7 +50,7 @@ class GroupConfigApplication(GroupMessageApplication):
         Returns:
             bool: 判断结果
         """
-        return message.painTextMessage.startswith(".") and IsAdmin(
+        return message.plainTextMessage.startswith(".") and IsAdmin(
             message.senderId, message.groupId
         )
 

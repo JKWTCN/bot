@@ -58,7 +58,7 @@ def HasKeyWords(text: str, key_words: list) -> bool:
 
 # 判断是否有Bot名字
 def HasBotName(text: str) -> bool:
-    bot_name = load_setting()["bot_name"]
+    bot_name = load_setting("bot_name", "乐可")
     if bot_name in text:
         return True
     else:
@@ -267,16 +267,6 @@ def get_timestamp_week(timestamp) -> int:
     return int(datetime.datetime.fromtimestamp(timestamp).strftime("%W"))
 
 
-def load_setting():
-    try:
-        with open("setting.json", "r", encoding="utf-8") as file:
-            setting = json.load(file)
-        return setting
-    except Exception as e:
-        logging.error(f"读取配置文件出错: {e}")
-        return {}
-
-
 def check_all_miao(text):
     """
     检查给定文本中的字符除标点符号外的字符是否都是"喵"
@@ -293,7 +283,25 @@ def check_all_miao(text):
     return True
 
 
-def dump_setting(setting: dict):
+def load_setting(setting_name: str, default_value):
+    try:
+        with open("setting.json", "r", encoding="utf-8") as file:
+            setting = json.load(file)
+        return setting[setting_name]
+    except Exception as e:
+        logging.error(f"读取配置文件出错: {e}")
+        dump_setting(setting_name, default_value)
+        return default_value
+
+
+def dump_setting(setting_name: str, value):
+    try:
+        with open("setting.json", "r", encoding="utf-8") as file:
+            setting = json.load(file)
+    except Exception as e:
+        logging.error(f"读取配置文件出错: {e}")
+        setting = {}
+    setting[setting_name] = value
     with open("setting.json", "w", encoding="utf-8") as f:
         json.dump(setting, f, ensure_ascii=False, indent=4)
 

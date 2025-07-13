@@ -8,7 +8,7 @@ class PrivateMesssageInfo(MessageInfo):
         self.senderId: int
         self.messageId: int
 
-        self.painTextMessage = ""
+        self.plainTextMessage = ""
         self.replyMessageId = -1
         self.imageFileList = []
         self.faceList = []
@@ -25,6 +25,6 @@ class PrivateMesssageInfo(MessageInfo):
                 case "reply":
                     self.replyMessageId = i["data"]["id"]
                 case "text":
-                    self.painTextMessage += i["data"]["text"]
+                    self.plainTextMessage += i["data"]["text"]
                 case "face":
                     self.faceList.append(i["data"]["id"])
