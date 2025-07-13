@@ -11,6 +11,14 @@ from function.datebase_user import delete_user_info
 from data.message.group_message_info import GroupMessageInfo
 
 
+from function.datebase_user import get_user_info
+
+
+def IsInGroup(user_id: int, group_id: int):
+    res, user = get_user_info(user_id, group_id)
+    return res
+
+
 # 设置群聊精华信息
 async def SetEssenceMsg(websocket, message_id: int):
     payload = {

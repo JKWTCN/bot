@@ -1,5 +1,6 @@
 import base64
 from datetime import datetime
+import glob
 import json
 import logging
 import random
@@ -1353,6 +1354,7 @@ class CommentDriftBottleApplication(GroupMessageApplication):
 
 from function.group_operation import GetGroupMessageSenderId
 
+
 # 特殊回复应用
 class SpicalReplyApplication(GroupMessageApplication):
     def __init__(self):
@@ -1399,6 +1401,7 @@ class SpicalReplyApplication(GroupMessageApplication):
 
 
 from function.group_operation import SetEssenceMsg, DeleteEssenceMsg
+
 
 # 加精/移除加精应用
 class EssenceAboutGroupMessageApplication(GroupMessageApplication):
@@ -1475,6 +1478,7 @@ class WhoLookYouApplication(GroupMessageApplication):
 
 from tools.tools import HasChinese
 
+
 # 香香软软小南梁群友功能
 class GroupKotomitakoApplication(GroupMessageApplication):
     def __init__(self):
@@ -1519,6 +1523,7 @@ class GroupKotomitakoApplication(GroupMessageApplication):
         """判断是否触发应用"""
         return message.senderId in get_config("kotomitako", message.groupId) and BotIsAdmin(message.groupId) and HasChinese(message.plainTextMessage)  # type: ignore
 
+
 # 猫娘群友
 class GroupMiaoMiaoApplication(GroupMessageApplication):
     def __init__(self):
@@ -1557,6 +1562,7 @@ class GroupMiaoMiaoApplication(GroupMessageApplication):
 
 
 from datetime import datetime
+
 
 # 喵喵日
 class GroupMiaoMiaoDayApplication(GroupMessageApplication):
@@ -1604,4 +1610,1436 @@ class GroupMiaoMiaoDayApplication(GroupMessageApplication):
             and HasChinese(message.plainTextMessage)
             and datetime.now().day == get_config("cat_day_date", message.groupId)
             and BotIsAdmin(message.groupId)
+        )
+
+
+# 乐可不是可乐
+
+
+# 不要叫乐可可乐
+async def cute2(websocket, group_id: int):
+    path = "res/cute2.gif"
+    logging.info("有人叫乐可可乐。")
+    with open(path, "rb") as image_file:
+        image_data = image_file.read()
+    image_base64 = base64.b64encode(image_data)
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {
+                    "type": "text",
+                    "data": {
+                        "text": "抗议！！！抗议！！！人家叫乐可喵，不叫可乐喵！！！！",
+                    },
+                },
+                {
+                    "type": "image",
+                    "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+class LeKeNotKeleApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("乐可不是可乐", "乐可不是可乐", False)
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await cute2(message.websocket, message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return message.plainTextMessage.startswith("可乐")
+
+
+from function.say import SayImgReply
+
+
+# 早安应用
+class GoodMorningApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("乐可不是可乐", "乐可不是可乐", False)
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await SayImgReply(
+            message.websocket,
+            message.senderId,
+            message.groupId,
+            message.messageId,
+            "早上好喵！",
+            "res/good_morning.jpg",
+        )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return (
+            HasKeyWords(
+                message.plainTextMessage,
+                ["早安", "早上好", "早"],
+            )
+            and datetime.now().hour < 10
+            and datetime.now().hour >= 6
+        )
+
+
+# 功能菜单应用
+
+
+async def return_function(websocket, user_id: int, group_id: int):
+    with open("res/function.png", "rb") as image_file:
+        image_data = image_file.read()
+    image_base64 = base64.b64encode(image_data)
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "at", "data": {"qq": user_id}},
+                {
+                    "type": "text",
+                    "data": {
+                        "text": """
+    "catgirl": [],  # 猫娘群友
+    "kotomitako": [],  # 香香软软小南梁群友
+    "blacklist": [],  # 黑名单群友
+    "no_reply_list": [],  # 不回复的群友
+    "cold_group": False,  # 冷群回复开关
+    "cold_group_num_out": 5,  # 多少句触发冷群
+    "cold_group_time_out": 300,  # 多久触发冷群
+    "group_decrease_reminder": True,  # 退群提醒
+    "cat_day_date": -1,  # 猫猫日日期，-1表示不设置
+    "cat_day_ignore_admin": True,  # 猫猫日忽略管理员
+    "kick_time_sec": -1,  # 踢掉多久没发言的群友，-1表示不踢
+"""
+                    },
+                },
+                {
+                    "type": "image",
+                    "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+class FeaturesMenuApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("功能菜单", "功能菜单", False)
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await return_function(message.websocket, message.senderId, message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage,
+            ["功能菜单", "功能"],
+        ) and HasKeyWords(
+            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+        )
+
+
+# 每日一言
+async def daily_word(websocket, user_id: int, group_id: int):
+    r = requests.get("https://api.tangdouz.com/a/perday.php", timeout=60)
+    # print(r.text)
+    text = r.text.split("±")
+    # print(text)
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "at", "data": {"qq": user_id}},
+                {"type": "image", "data": {"file": text[1][4:]}},
+                {
+                    "type": "text",
+                    "data": {
+                        "text": "{}\n{}".format(
+                            text[2].split("\\r")[0], text[2].split("\\r")[1]
+                        )
+                    },
+                },
+            ],
+        },
+    }
+    # print(payload)
+    await websocket.send(json.dumps(payload))
+
+
+class EveryDayOnePassageApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("每日一言", "每日一言")
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await daily_word(message.websocket, message.senderId, message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage,
+            ["每日一句"],
+        ) and HasKeyWords(
+            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+        )
+
+
+# 黑名单查询
+class BlacklistQueryApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("黑名单查询", "黑名单查询")
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        user_id = re.search(
+            r"\d+",
+            message.plainTextMessage,
+        ).group()  # type: ignore
+        if user_id in list(load_setting("blacklist", {}).keys()):
+            await SayGroup(
+                message.websocket,
+                message.groupId,
+                "{}在黑名单中，原因:{}。".format(
+                    user_id,
+                    load_setting("blacklist", {}).get(user_id),
+                ),
+            )
+
+        else:
+            await SayGroup(
+                message.websocket,
+                message.groupId,
+                "{}不在黑名单中".format(user_id),
+            )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage,
+            ["查询黑名单"],
+        ) and HasKeyWords(
+            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+        )
+
+
+# 今天吃什么
+class TodayEatWhatApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("今天吃什么", "今天吃什么")
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await ban_new(
+            message.websocket,
+            message.senderId,
+            message.groupId,
+            60,
+        )
+        await SayAndAt(
+            message.websocket,
+            message.senderId,
+            message.groupId,
+            ",吃大嘴巴子🖐喵。",
+        )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage,
+            ["吃什么"],
+        ) and HasKeyWords(
+            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+        )
+
+
+# 群友的恶趣味功能
+async def WhoAskPants(websocket, group_id: int):
+    payload = {
+        "action": "send_msg",
+        "params": {
+            "group_id": group_id,
+            "message": [],
+        },
+    }
+    payload["params"]["message"].append(
+        {
+            "type": "text",
+            "data": {"text": "你问的胖次我不知道喵,但是我知道群友最喜欢的胖次。"},
+        }
+    )
+    file_dir = "res/1.jpg"
+    # print(file_dir)
+    with open(file_dir, "rb") as image_file:
+        image_data = image_file.read()
+    image_base64 = base64.b64encode(image_data)
+    payload["params"]["message"].append(
+        {
+            "type": "image",
+            "data": {"file": "base64://" + image_base64.decode("utf-8")},
+        }
+    )
+    await websocket.send(json.dumps(payload))
+
+
+class GroupFriendBadTasteApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("群友的恶趣味", "群友的恶趣味", False)
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await WhoAskPants(message.websocket, message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage,
+            ["胖次", "内裤"],
+        ) and HasKeyWords(
+            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+        )
+
+
+# 大头菜
+# B股股指
+import tushare as ts
+
+
+def GetBShock():
+    ts.set_token(load_setting("tushare_token", ""))
+    df = ts.realtime_quote(ts_code="000003.SH")
+    return df.PRICE[0]  # type: ignore
+
+
+def GetDogeCoinV2():
+    import re
+    from requests_html import HTMLSession
+
+    try:
+        s = HTMLSession()
+        response = s.get("https://www.528btc.com/coin/2993/binance-doge-usdt-usd")
+        # print(response.text)
+        # with open("tmp.html", "w", encoding="utf-8") as f:
+        #     f.write(response.text)
+        pattern = re.compile(
+            '<i class="price_num wordRise">(.*?)</i>',
+        )
+        m = pattern.findall(response.text)
+        if len(m) != 0:
+            setting = float(m[0])
+            dump_setting("kohlrabi_price", setting)
+            return m[0]
+        else:
+            pattern = re.compile(
+                '<i class="price_num wordFall">(.*?)</i>',
+            )
+            m = pattern.findall(response.text)
+            setting = float(m[0])
+            dump_setting("kohlrabi_price", setting)
+            return m[0]
+    except:
+        setting = load_setting("kohlrabi_price", 100)
+        print("获取大头菜价格失败，使用上一次的价格:{}".format(setting))
+        logging.info("获取大头菜价格失败，使用上一次的价格:{}".format(setting))
+        return setting
+
+
+# 狗狗币
+def GetDogeCoin():
+    import re
+    import requests
+
+    try:
+        r = requests.get("https://bitcompare.net/zh-cn/coins/dogecoin", timeout=60)
+        # with open("tmp.txt", "w", encoding="utf-8") as f:
+        #     f.write(r.text)
+        pattern = re.compile(
+            'placeholder="0.00" min="0" step="1" value="(.*?)"/>',
+        )
+        m = pattern.findall(r.text)
+        setting = load_setting("kohlrabi_price", 100)
+        setting = float(m[0])
+        dump_setting("kohlrabi_price", setting)
+        return m[0]
+    except:
+        setting = load_setting("kohlrabi_price", 100)
+        logging.info("获取大头菜价格失败，使用上一次的价格:{}".format(setting))
+        return setting
+
+
+# 获取大头菜价格
+def GetNowPrice():
+    setting = load_setting("kohlrabi_version", 0)
+    if setting == 0:
+        now_price = GetBShock()
+        now_price = round(float(now_price), 3)
+    elif setting == 1:
+        now_price = GetDogeCoin()
+        now_price = round(float(now_price) * 1000, 3)
+    else:
+        now_price = GetDogeCoinV2()
+        now_price = round(float(now_price) * 1000, 3)
+    return now_price
+
+
+# 获取我的本周交易记录
+def GetMyKohlrabi(user_id: int, group_id: int):
+    now_week = time.strftime("%W")
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT nums FROM kohlrabi_week where user_id=? and group_id=?;",
+        (
+            user_id,
+            group_id,
+        ),
+    )
+    data = cur.fetchall()
+    if len(data) == 0:
+        cur.execute(
+            "INSERT INTO kohlrabi_week (user_id,group_id,nums,now_weeks)VALUES (?,?,0,?);",
+            (
+                user_id,
+                group_id,
+                now_week,
+            ),
+        )
+        conn.commit()
+        conn.close()
+        return 0
+    else:
+        conn.close()
+        return data[0][0]
+
+
+# 定期清理过期对的大头菜
+def ClearKohlrabi():
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "DELETE FROM kohlrabi_week WHERE  now_weeks != ?;", (time.strftime("%W"),)
+    )
+    conn.commit()
+    conn.close()
+
+
+# 改变大头菜本周交易记录
+def ChangeMyKohlrabi(user_id: int, group_id: int, nums: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE kohlrabi_week SET nums = ? WHERE user_id = ? AND group_id = ?;",
+        (nums, user_id, group_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+# 梭哈
+async def ShowHand(websocket, user_id: int, group_id: int):
+    import math
+
+    now_num = GetMyKohlrabi(user_id, group_id)
+    now_point = find_point(user_id)
+    now_price = GetNowPrice()
+    if now_point > now_price:
+        num = math.trunc(now_point / now_price)
+        (all_buy, all_buy_cost, all_sell, all_sell_price) = GetRecordKohlrabi(
+            user_id, group_id
+        )
+        all_buy = all_buy + num
+        get_point = int(round(now_price * num, 3))
+        all_buy_cost = round(all_buy_cost + get_point, 3)
+        change_point(user_id, group_id, now_point - get_point)
+        ChangeMyKohlrabi(user_id, group_id, now_num + num)
+        UpdateRecordKohlrabi(
+            user_id, group_id, all_buy, all_buy_cost, all_sell, all_sell_price
+        )
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": f"{get_user_name(user_id, group_id)},梭哈成功喵,单价{now_price},您的大头菜数目:{now_num}->{now_num + num},积分:{now_point}->{now_point - get_point}。"
+                        },
+                    },
+                    {
+                        "type": "text",
+                        "data": {"text": "大头菜会在每周一的0点过期,请及时卖出喵。"},
+                    },
+                ],
+            },
+        }
+    else:
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": f"{get_user_name(user_id, group_id)},没积分?没积分不要来买大头菜喵!"
+                        },
+                    },
+                ],
+            },
+        }
+    await websocket.send(json.dumps(payload))
+
+
+# 购买大头菜
+async def BuyKohlrabi(websocket, user_id: int, group_id: int, num: int):
+
+    now_num = GetMyKohlrabi(user_id, group_id)
+    now_point = find_point(user_id)
+    now_price = GetNowPrice()
+    if now_point >= now_price * num:
+        (all_buy, all_buy_cost, all_sell, all_sell_price) = GetRecordKohlrabi(
+            user_id, group_id
+        )
+        all_buy = all_buy + num
+        get_point = int(round(now_price * num, 3))
+        all_buy_cost = round(all_buy_cost + get_point, 3)
+        change_point(user_id, group_id, now_point - get_point)
+        ChangeMyKohlrabi(user_id, group_id, now_num + num)
+        UpdateRecordKohlrabi(
+            user_id, group_id, all_buy, all_buy_cost, all_sell, all_sell_price
+        )
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": f"{get_user_name(user_id, group_id)},买入成功喵,单价{now_price},您的大头菜数目:{now_num}->{now_num + num},积分:{now_point}->{now_point - get_point}。"
+                        },
+                    },
+                    {
+                        "type": "text",
+                        "data": {"text": "大头菜会在每周一的0点过期,请及时卖出喵。"},
+                    },
+                ],
+            },
+        }
+    else:
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": f"{get_user_name(user_id, group_id)},没积分?没积分不要来买大头菜喵!"
+                        },
+                    },
+                ],
+            },
+        }
+    await websocket.send(json.dumps(payload))
+
+
+# 获取大头菜相关统计信息
+def GetRecordKohlrabi(user_id: int, group_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT all_buy,all_buy_cost,all_sell,all_sell_price FROM kohlrabi_record where user_id=? and group_id=?;",
+        (
+            user_id,
+            group_id,
+        ),
+    )
+    data = cur.fetchall()
+    if len(data) == 0:
+        cur.execute(
+            "INSERT INTO kohlrabi_record (user_id,group_id,all_buy,all_buy_cost,all_sell,all_sell_price)VALUES(?, ?, ?, ?, ?, ?);",
+            (user_id, group_id, 0, 0, 0, 0),
+        )
+        conn.commit()
+        conn.close()
+        return (0, 0, 0, 0)
+    else:
+        return (data[0][0], data[0][1], data[0][2], data[0][3])
+
+
+# 更新大头菜相关统计信息
+def UpdateRecordKohlrabi(
+    user_id: int, group_id: int, all_buy, all_buy_cost, all_sell, all_sell_price
+):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE kohlrabi_record SET all_buy=?,all_buy_cost=?,all_sell=?,all_sell_price=? WHERE user_id = ? AND group_id = ?;",
+        (all_buy, all_buy_cost, all_sell, all_sell_price, user_id, group_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+# 售出大头菜
+async def SellKohlrabiAll(websocket, user_id: int, group_id: int):
+    now_num = GetMyKohlrabi(user_id, group_id)
+    if now_num > 0:
+
+        num = now_num
+        now_point = find_point(user_id)
+        now_price = GetNowPrice()
+        (all_buy, all_buy_cost, all_sell, all_sell_price) = GetRecordKohlrabi(
+            user_id, group_id
+        )
+        get_point = int(round(now_price * num, 3))
+        change_point(user_id, group_id, now_point + get_point)
+        ChangeMyKohlrabi(user_id, group_id, now_num - num)
+        all_sell = all_sell + num
+        all_sell_price = round(all_sell_price + get_point, 3)
+        UpdateRecordKohlrabi(
+            user_id, group_id, all_buy, all_buy_cost, all_sell, all_sell_price
+        )
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": f"{get_user_name(user_id, group_id)},售出成功喵,单价{now_price},你的大头菜库存:{now_num}->{now_num - num},积分:{now_point}->{now_point + get_point}喵!"
+                        },
+                    },
+                ],
+            },
+        }
+    else:
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": f"{get_user_name(user_id, group_id)},大头菜数目不够喵,你当前的大头菜数目为:{now_num}个喵!"
+                        },
+                    },
+                ],
+            },
+        }
+    await websocket.send(json.dumps(payload))
+
+
+# 售出大头菜
+async def SellKohlrabi(websocket, user_id: int, group_id: int, num: int):
+    now_num = GetMyKohlrabi(user_id, group_id)
+    if now_num > 0 and num <= now_num:
+
+        now_point = find_point(user_id)
+        now_price = GetNowPrice()
+        (all_buy, all_buy_cost, all_sell, all_sell_price) = GetRecordKohlrabi(
+            user_id, group_id
+        )
+        get_point = int(round(now_price * num, 3))
+        change_point(user_id, group_id, now_point + get_point)
+        ChangeMyKohlrabi(user_id, group_id, now_num - num)
+        all_sell = all_sell + num
+        all_sell_price = round(all_sell_price + get_point, 3)
+        UpdateRecordKohlrabi(
+            user_id, group_id, all_buy, all_buy_cost, all_sell, all_sell_price
+        )
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": f"{get_user_name(user_id, group_id)},售出成功喵,单价{now_price},你的大头菜库存:{now_num}->{now_num - num},积分:{now_point}->{now_point + get_point}喵!"
+                        },
+                    },
+                ],
+            },
+        }
+    else:
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": f"{get_user_name(user_id, group_id)},大头菜数目不够喵,你当前的大头菜数目为:{now_num}个喵!"
+                        },
+                    },
+                ],
+            },
+        }
+    await websocket.send(json.dumps(payload))
+
+
+from tools.tools import FindNum
+
+
+class KohlrabiApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("大头菜贸易", "大头菜贸易")
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        if "价格" in message.plainTextMessage and "大头菜" in message.plainTextMessage:
+            await SayGroup(
+                message.websocket,
+                message.groupId,
+                f"当前大头菜价格为: {GetNowPrice()} 喵,\n你的积分为 {find_point(message.senderId)} 喵。",
+            )
+
+        elif "买入" in message.plainTextMessage:
+            num = FindNum(message.plainTextMessage)
+            import math
+
+            num = math.trunc(num)
+            if num >= 1:
+                await BuyKohlrabi(
+                    message.websocket,
+                    message.senderId,
+                    message.groupId,
+                    num,
+                )
+        elif "梭哈" in message.plainTextMessage:
+            await ShowHand(
+                message.websocket,
+                message.senderId,
+                message.groupId,
+            )
+
+        elif "卖出" in message.plainTextMessage:
+            if "全部" in message.plainTextMessage:
+                await SellKohlrabiAll(
+                    message.websocket,
+                    message.senderId,
+                    message.groupId,
+                )
+        else:
+            num = FindNum(message.plainTextMessage)
+            import math
+
+            num = math.trunc(num)
+            if num >= 1:
+                await SellKohlrabi(
+                    message.websocket,
+                    message.senderId,
+                    message.groupId,
+                    num,
+                )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(message.plainTextMessage, [load_setting("bot_name", "乐可")]) and (HasKeyWords(message.plainTextMessage, ["买入"]) or HasAllKeyWords(message.plainTextMessage, ["大头菜", "价格"]) or HasKeyWords(message.plainTextMessage, ["梭哈"] or HasKeyWords(message.plainTextMessage, ["卖出", "全部"])))  # type: ignore
+
+
+# 午时已到
+def changed_russian_pve(user_id: int, shots: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute("UPDATE russian_pve SET shots=? WHERE user_id=?", (shots, user_id))
+    conn.commit()
+    conn.close()
+
+
+def delete_russian_pve(user_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute("delete FROM russian_pve where user_id=?", (user_id,))
+    conn.commit()
+    conn.close()
+
+
+def check_russian_pve(user_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM russian_pve where user_id=?", (user_id,))
+    data = cur.fetchall()
+    if len(data) == 0:
+        cur.execute("INSERT INTO russian_pve VALUES(?,?)", (user_id, 6))
+        conn.commit()
+        conn.close()
+        return -1
+    else:
+        return data[0][1]
+
+
+# @return (x,y)
+# x=-1代表子弹错误 y=-1代表积分数目错误
+# x=-2,y=-2代表赌上全部
+# 装弹 <子弹数> <积分数>
+def pro_str(message: str):
+    if message.endswith((".", "。")):
+        message = message[:-1]
+    parm_list_str = message.split(" ")
+    # print(parm_list_str)
+    # 只输入了子弹，未输入积分
+    if len(parm_list_str) == 2:
+        if (int(parm_list_str[1])) > 0 and int(parm_list_str[1]) <= 5:
+            return (parm_list_str[1], -2)
+        else:
+            return (-1, -2)
+    # 只输入了装弹
+    elif len(parm_list_str) == 1:
+        return (-2, -2)
+    else:
+        if int(parm_list_str[2]) <= 0:
+            y = -1
+        else:
+            y = parm_list_str[2]
+        if int(parm_list_str[1]) <= 0 or int(parm_list_str[1]) > 5:
+            x = -1
+        else:
+            x = parm_list_str[1]
+        return (x, y)
+
+
+async def russian_pve_shot(websocket, user_id: int, group_id: int, nick_name: str):
+    now_shots = check_russian_pve(user_id)
+    if now_shots == -1:
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {"type": "at", "data": {"qq": user_id}},
+                    {
+                        "type": "text",
+                        "data": {"text": "\n拔枪吧！午时已到！乐可可是第一神枪手喵！"},
+                    },
+                ],
+            },
+        }
+        await websocket.send(json.dumps(payload))
+        return
+    now_choice = random.randint(1, now_shots)
+    # 自己开枪中枪了
+    if now_choice == 1:
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {"type": "at", "data": {"qq": user_id}},
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": ",对不起喵，你中枪了，乐可要拿走你的全部积分和大头菜了喵。"
+                        },
+                    },
+                ],
+            },
+        }
+        if GetMyKohlrabi(user_id, group_id) != 0:
+            ChangeMyKohlrabi(user_id, group_id, 0)
+        change_point(user_id, group_id, 0)
+        delete_russian_pve(user_id)
+        await websocket.send(json.dumps(payload))
+        return
+    now_shots = now_shots - 1
+    now_choice = random.randint(1, now_shots)
+    # 乐可开枪中枪了
+    if now_choice == 1:
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {"type": "at", "data": {"qq": user_id}},
+                    {
+                        "type": "text",
+                        "data": {"text": ",你开了一枪未中,乐可开了一枪，中了。"},
+                    },
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": "\n乐可:怎么可能，你一定是作弊了喵！(恭喜{}赢了，积分翻倍)".format(
+                                nick_name
+                            )
+                        },
+                    },
+                ],
+            },
+        }
+        change_point(user_id, group_id, find_point(user_id) * 2)
+        delete_russian_pve(user_id)
+        await websocket.send(json.dumps(payload))
+        return
+    now_shots = now_shots - 1
+    changed_russian_pve(user_id, now_shots)
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "at", "data": {"qq": user_id}},
+                {
+                    "type": "text",
+                    "data": {
+                        "text": "你开了一枪，未中；乐可开了一枪，未中。剩余子弹:{}".format(
+                            now_shots
+                        )
+                    },
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+async def russian_pve(websocket, user_id: int, group_id: int, nick_name: str):
+    if find_point(user_id) > 0:
+        now_shots = check_russian_pve(user_id)
+        if now_shots == -1:
+            payload = {
+                "action": "send_msg_async",
+                "params": {
+                    "group_id": group_id,
+                    "message": [
+                        {"type": "at", "data": {"qq": user_id}},
+                        {
+                            "type": "text",
+                            "data": {
+                                "text": "\n{},拔枪吧！午时已到！乐可可是第一神枪手喵！".format(
+                                    nick_name
+                                )
+                            },
+                        },
+                    ],
+                },
+            }
+        else:
+            payload = {
+                "action": "send_msg_async",
+                "params": {
+                    "group_id": group_id,
+                    "message": [
+                        {
+                            "type": "text",
+                            "data": {
+                                "text": "{},你已经在乐可在决斗了喵，快开抢吧！".format(
+                                    nick_name
+                                )
+                            },
+                        },
+                    ],
+                },
+            }
+    else:
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": "{},没积分？没积分不要来挑战乐可喵。".format(
+                                nick_name
+                            )
+                        },
+                    },
+                ],
+            },
+        }
+    await websocket.send(json.dumps(payload))
+
+
+#
+async def russian(websocket, message: str, user_id: int, group_id: int):
+    (bullet, point) = pro_str(message)
+    if bullet == -1 or point == -1:
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {"type": "at", "data": {"qq": user_id}},
+                    {
+                        "type": "text",
+                        "data": {"text": "子弹数目必须在1~5，积分不能为负数。"},
+                    },
+                ],
+            },
+        }
+    elif bullet != -1 and point == -2:
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {"type": "at", "data": {"qq": user_id}},
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": "装入{}颗子弹;未输入积分，默认全部积分：{}。".format(
+                                bullet, find_point(user_id)
+                            )
+                        },
+                    },
+                ],
+            },
+        }
+    elif point == -2 and bullet == -2:
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {"type": "at", "data": {"qq": user_id}},
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": "经典模式，1颗子弹和全部积分:{}。".format(
+                                find_point(user_id)
+                            )
+                        },
+                    },
+                ],
+            },
+        }
+    else:
+        user_point = find_point(user_id)
+        if int(user_point) > int(point):
+            payload = {
+                "action": "send_msg_async",
+                "params": {
+                    "group_id": group_id,
+                    "message": [
+                        {"type": "at", "data": {"qq": user_id}},
+                        {
+                            "type": "text",
+                            "data": {
+                                "text": "子弹上膛，{}颗子弹，{}积分。".format(
+                                    bullet, point
+                                )
+                            },
+                        },
+                    ],
+                },
+            }
+        else:
+            payload = {
+                "action": "send_msg_async",
+                "params": {
+                    "group_id": group_id,
+                    "message": [
+                        {"type": "at", "data": {"qq": user_id}},
+                        {"type": "text", "data": "积分不足，无法上膛。"},
+                    ],
+                },
+            }
+    await websocket.send(json.dumps(payload))
+
+
+class LunchTimeApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("午时已到", "午时已到")
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        if HasKeyWords(
+            message.plainTextMessage,
+            ["挑战你", "午时已到"],
+        ):
+            await russian_pve(
+                message.websocket,
+                message.senderId,
+                message.groupId,
+                get_user_name(message.senderId, message.groupId),
+            )
+
+        elif HasKeyWords(
+            message.plainTextMessage,
+            ["开枪"],
+        ):
+            await russian_pve_shot(
+                message.websocket,
+                message.senderId,
+                message.groupId,
+                get_user_name(message.senderId, message.groupId),
+            )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return (
+            HasKeyWords(
+                message.plainTextMessage,
+                ["挑战你", "午时已到"],
+            )
+            or HasKeyWords(
+                message.plainTextMessage,
+                ["开枪"],
+            )
+        ) and HasKeyWords(
+            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+        )
+
+
+# 梗图统计
+from tools.tools import GetDirSizeByUnit
+
+
+async def MemeStatistics(websocket, group_id: int):
+    all_file = find_all_file(load_setting("meme_path", ""))
+    num, unit = GetDirSizeByUnit(load_setting("meme_path", ""))
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {
+                    "type": "text",
+                    "data": {
+                        "text": f"共有{len(all_file)}张图片,占用{num}{unit}空间喵!"
+                    },
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+def find_all_file(path: str):
+    s = []
+    dir_path = "{}/**/*.*".format(path)
+    for file in glob.glob(dir_path, recursive=True):
+        # print(file)
+        s.append(file)
+    return s
+
+
+class MemeStatisticsApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("梗图统计", "统计梗图库存")
+        super().__init__(applicationInfo, 65, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await MemeStatistics(message.websocket, message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+        ) and HasAllKeyWords(message.plainTextMessage, ["统计", "梗图"])
+
+
+# todo 个人统计应用
+
+
+class PersonalStatisticsApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("个人统计", "统计个人库存")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        pass
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+        ) and HasAllKeyWords(message.plainTextMessage, ["统计"])
+
+
+# 排名应用
+import matplotlib.pyplot as plt
+from plottable import Table
+import pandas as pd
+
+
+# 群友水群次数表格
+def ShowTableByBase64(data):
+    plt.rcParams["font.sans-serif"] = ["AR PL UKai CN"]
+    # plt.rcParams["font.sans-serif"] = ["Unifont"]  # 设置字体
+    # plt.rcParams["font.sans-serif"] = ["SimHei"]  # 设置字体
+    plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
+    table = pd.DataFrame(data)
+    fig, ax = plt.subplots()
+    table = table.set_index("排名")
+    Table(table)
+    plt.title("水群排名")
+    plt.savefig("figs/chat_table.png", dpi=460)
+    plt.close()
+    with open("figs/chat_table.png", "rb") as image_file:
+        image_data = image_file.read()
+    return base64.b64encode(image_data)
+
+
+# 统计生涯水群次数
+async def GetLifeChatRecord(websocket, group_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT user_id,all_num FROM ChatRecord WHERE group_id=? ORDER BY all_num DESC ;",
+        (group_id,),
+    )
+    data = cur.fetchall()
+    num: int = 0
+    if len(data) == 0:
+        return
+    elif len(data) <= 20:
+        num = len(data)
+    else:
+        num = 20
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [],
+        },
+    }
+    table_list = {"排名": [], "昵称": [], "QQ": [], "生涯次数": []}
+    for i in range(num):
+
+        name = get_user_name(data[i][0], group_id)
+        table_list["排名"].append(i + 1)
+        table_list["QQ"].append(data[i][0])
+        table_list["昵称"].append(name)
+        table_list["生涯次数"].append(data[i][1])
+    payload["params"]["message"].append(
+        {
+            "type": "image",
+            "data": {
+                "file": "base64://" + ShowTableByBase64(table_list).decode("utf-8")
+            },
+        }
+    )
+    await websocket.send(json.dumps(payload))
+
+
+# 统计今日水群次数
+async def GetNowChatRecord(websocket, group_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT user_id,today_num FROM ChatRecord WHERE group_id=? and today=? ORDER BY today_num DESC ;",
+        (
+            group_id,
+            GetNowDay(),
+        ),
+    )
+    data = cur.fetchall()
+    num: int = 0
+    if len(data) == 0:
+        return
+    elif len(data) <= 20:
+        num = len(data)
+    else:
+        num = 20
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [],
+        },
+    }
+    table_list = {"排名": [], "昵称": [], "QQ": [], "今日次数": []}
+    for i in range(num):
+
+        name = get_user_name(data[i][0], group_id)
+        table_list["排名"].append(i + 1)
+        table_list["QQ"].append(data[i][0])
+        table_list["昵称"].append(name)
+        table_list["今日次数"].append(data[i][1])
+    payload["params"]["message"].append(
+        {
+            "type": "image",
+            "data": {
+                "file": "base64://" + ShowTableByBase64(table_list).decode("utf-8")
+            },
+        }
+    )
+    await websocket.send(json.dumps(payload))
+
+
+class User_point:
+    user_id: int
+    point: int
+    time: int
+
+    def __init__(self, user_id: int, point: int, time: int):
+        self.user_id = user_id
+        self.point = point
+        self.time = time
+
+
+def find_points_ranking():
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM user_point ORDER BY point DESC")
+    data = cur.fetchall()
+    # print(data)
+    if len(data) == 0:
+        return (False, [])
+    else:
+        points_list = []
+        for user in data:
+            # print(user)
+            points_list.append(User_point(user[0], user[1], user[2]))
+        return (True, points_list)
+
+
+from function.group_operation import IsInGroup
+from function.datebase_user import get_user_info
+
+
+# 群友积分统计表格
+def ShowRankingByBase64(data):
+    plt.rcParams["font.sans-serif"] = ["AR PL UKai CN"]
+    # plt.rcParams["font.sans-serif"] = ["Unifont"]  # 设置字体
+    # plt.rcParams["font.sans-serif"] = ["SimHei"]  # 设置字体
+    plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
+    table = pd.DataFrame(data)
+    fig, ax = plt.subplots()
+    table = table.set_index("积分排名")
+    Table(table)
+    plt.title("积分排名")
+    plt.savefig("figs/point_table.png", dpi=460)
+    plt.close()
+    with open("figs/point_table.png", "rb") as image_file:
+        image_data = image_file.read()
+    return base64.b64encode(image_data)
+
+
+def find_value(type: int, group_id: int):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM rankings where type=? and group_id=?", (type, group_id))
+    data = cur.fetchall()
+    if len(data) == 0:
+        return (False, Ranking(-1, -1, -1, -1, -1))
+    else:
+        ranking = Ranking(data[0][0], data[0][1], data[0][2], data[0][3], data[0][4])
+        return (True, ranking)
+
+
+# 积分排名
+async def ranking_point_payload(websocket, group_id: int):
+    data_list = {"积分排名": [], "昵称": [], "QQ": [], "值": []}
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [],
+        },
+    }
+    (is_exist, points_list) = find_points_ranking()
+    true_points_list = []
+    for points_info in points_list:
+        if IsInGroup(points_info.user_id, group_id):
+            true_points_list.append(points_info)
+    if is_exist:
+        i = 0
+        j = 0
+        if len(true_points_list) < 10:
+            num = len(true_points_list)
+        else:
+            num = 10
+        while j < num:
+            res, user_info = get_user_info(points_list[i].user_id, group_id)
+            if res:
+                name = ""
+                # print(user_info.card)
+                if user_info.card != "":
+                    name = user_info.card
+                else:
+                    name = user_info.nickname
+                data_list["积分排名"].append(j + 1)
+                data_list["QQ"].append(points_list[i].user_id)
+                data_list["昵称"].append(name)
+                data_list["值"].append(points_list[i].point)
+                j += 1
+            i += 1
+    payload["params"]["message"].append(
+        {
+            "type": "image",
+            "data": {
+                "file": "base64://" + ShowRankingByBase64(data_list).decode("utf-8")
+            },
+        }
+    )
+    (is_exist, ranking) = find_value(1, group_id)
+    if is_exist:
+        res, user_info = get_user_info(ranking.user_id, group_id)
+        if res:
+            if user_info.card != "":
+                name = user_info.card
+            else:
+                name = user_info.nickname
+        else:
+            name = ranking.user_id
+
+        payload["params"]["message"].append(
+            {
+                "type": "text",
+                "data": {
+                    "text": "本群积分历史最高为{}分,由{}于{}创造喵。".format(
+                        ranking.max_value,
+                        name,
+                        time.strftime(
+                            "%Y年%m月%d日%H:%M:%S", time.localtime(ranking.time)
+                        ),
+                    )
+                },
+            },
+        )
+    # print(payload)
+    await websocket.send(json.dumps(payload))
+
+
+class RankingApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("排名", "统计个人排名")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        if HasAllKeyWords(
+            message.plainTextMessage,
+            ["生涯", "水群", "排名"],
+        ):
+            await GetLifeChatRecord(message.websocket, message.groupId)
+        elif "水群排名" in message.plainTextMessage:
+            await GetNowChatRecord(message.websocket, message.groupId)
+        elif "排名" in message.plainTextMessage:
+            await ranking_point_payload(message.websocket, message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+        ) and (
+            HasAllKeyWords(message.plainTextMessage, ["生涯", "水群", "排名"])
+            or HasKeyWords(message.plainTextMessage, ["水群排名", "排名"])
         )

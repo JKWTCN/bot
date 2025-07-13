@@ -6,6 +6,33 @@ import re
 import requests
 
 
+# 图片回复
+async def SayImgReply(
+    websocket, user_id: int, group_id: int, message_id: int, text: str, img_path: str
+):
+    with open(img_path, "rb") as image_file:
+        image_data = image_file.read()
+    image_base64 = base64.b64encode(image_data)
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "reply", "data": {"id": message_id}},
+                {
+                    "type": "text",
+                    "data": {"text": text},
+                },
+                {
+                    "type": "image",
+                    "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
 def SayGroupReturnMessageId(groupId: int, text: str):
     """发送群消息并返回消息ID
 
