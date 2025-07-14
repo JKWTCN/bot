@@ -103,7 +103,7 @@ def add_gambling_times(user_id: int, add_times: int):
 
 
 # 查找积分
-def find_point(user_id):
+def find_point(user_id) -> int:
     conn = sqlite3.connect("bot.db")
     cur = conn.cursor()
     cur.execute("SELECT * FROM user_point where user_id=?", (user_id,))
@@ -116,7 +116,7 @@ def find_point(user_id):
     else:
         # print(data[0][1])
         conn.close()
-        return round(data[0][1], 3)
+        return int(round(data[0][1], 3))
         # return cur.fetchall()
 
 

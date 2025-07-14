@@ -183,7 +183,7 @@ class GreatPurgeApplication(MetaMessageApplication):
             print("开始更新群列表")
             logging.info("开始更新群列表")
             for group in data:
-                logging.info(f"正在更新群:{group["group_name"]}({group["group_id"]})")
+                logging.info(f'正在更新群:{group["group_name"]}({group["group_id"]})')
                 update_group_info(
                     group["group_id"],
                     group["group_name"],
@@ -414,7 +414,7 @@ async def AtPunish(websocket):
                 websocket,
                 admin["user_id"],
                 admin["group_id"],
-                f"艾特惩罚,剩余:{admin["num"]-1}次喵.",
+                f'艾特惩罚,剩余:{admin["num"]-1}次喵.',
             )
             admin["num"] -= 1
             i += 1
@@ -791,6 +791,14 @@ async def GiveGift(
 
 
 # 艾特管理功能大合集
+from application.welcome_application import (
+    find_vcode,
+    verify,
+    welcome_new,
+    welcom_new_no_admin,
+)
+
+
 class AtManagementApplication(GroupMessageApplication):
     """艾特管理功能大合集"""
 
@@ -958,12 +966,6 @@ class AtManagementApplication(GroupMessageApplication):
                     )
 
                 elif HasKeyWords(raw_message, ["通过验证", "验证通过"]):
-                    from application.welcome_application import (
-                        find_vcode,
-                        verify,
-                        welcome_new,
-                        welcom_new_no_admin,
-                    )
 
                     (mod, vcode_str) = find_vcode(at_id, group_id)
                     if mod:
@@ -1408,7 +1410,7 @@ class EssenceAboutGroupMessageApplication(GroupMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo(
             "加精/移除加精应用",
-            f"引用回复消息,说{load_setting("bot_name","乐可")},加精/移除加精",
+            f'引用回复消息,说{load_setting("bot_name","乐可")},加精/移除加精',
         )
         super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
 
@@ -1578,11 +1580,14 @@ class GroupMiaoMiaoDayApplication(GroupMessageApplication):
         if IsAdmin(message.senderId, message.groupId) and not get_config(
             "cat_day_ignore_admin", message.groupId
         ):
+            botName = load_setting("bot_name", "乐可")
+            maoDay = get_config("cat_day_date", message.groupId)
+            userName = get_user_name(message.senderId, message.groupId)
             await ReplySay(
                 message.websocket,
                 message.groupId,
                 message.messageId,
-                f"{get_user_name(message.senderId, message.groupId)},每月{get_config("cat_day_date", message.groupId)}号是本群喵喵日,虽然你是管理,{load_setting("bot_name","乐可")}禁言不了你喵，但是希望你还是喵一下子喵。",
+                f"{userName},每月{maoDay}号是本群喵喵日,虽然你是管理,{botName}禁言不了你喵，但是希望你还是喵一下子喵。",
             )
         else:
             await ban_new(
@@ -1746,7 +1751,7 @@ class FeaturesMenuApplication(GroupMessageApplication):
             message.plainTextMessage,
             ["功能菜单", "功能"],
         ) and HasKeyWords(
-            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]  # type: ignore
         )
 
 
@@ -1793,7 +1798,7 @@ class EveryDayOnePassageApplication(GroupMessageApplication):
             message.plainTextMessage,
             ["每日一句"],
         ) and HasKeyWords(
-            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]  # type: ignore
         )
 
 
@@ -1832,7 +1837,7 @@ class BlacklistQueryApplication(GroupMessageApplication):
             message.plainTextMessage,
             ["查询黑名单"],
         ) and HasKeyWords(
-            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]  # type: ignore
         )
 
 
@@ -1863,7 +1868,7 @@ class TodayEatWhatApplication(GroupMessageApplication):
             message.plainTextMessage,
             ["吃什么"],
         ) and HasKeyWords(
-            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]  # type: ignore
         )
 
 
@@ -1911,7 +1916,7 @@ class GroupFriendBadTasteApplication(GroupMessageApplication):
             message.plainTextMessage,
             ["胖次", "内裤"],
         ) and HasKeyWords(
-            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]  # type: ignore
         )
 
 
@@ -2357,7 +2362,7 @@ class KohlrabiApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
-        return HasKeyWords(message.plainTextMessage, [load_setting("bot_name", "乐可")]) and (HasKeyWords(message.plainTextMessage, ["买入"]) or HasAllKeyWords(message.plainTextMessage, ["大头菜", "价格"]) or HasKeyWords(message.plainTextMessage, ["梭哈"] or HasKeyWords(message.plainTextMessage, ["卖出", "全部"])))  # type: ignore
+        return HasKeyWords(message.plainTextMessage, [[load_setting("bot_name", "乐可")]]) and (HasKeyWords(message.plainTextMessage, ["买入"]) or HasAllKeyWords(message.plainTextMessage, ["大头菜", "价格"]) or HasKeyWords(message.plainTextMessage, ["梭哈"] or HasKeyWords(message.plainTextMessage, ["卖出", "全部"])))  # type: ignore
 
 
 # 午时已到
@@ -2700,7 +2705,7 @@ class LunchTimeApplication(GroupMessageApplication):
                 ["开枪"],
             )
         ) and HasKeyWords(
-            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]  # type: ignore
         )
 
 
@@ -2749,7 +2754,7 @@ class MemeStatisticsApplication(GroupMessageApplication):
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
         return HasKeyWords(
-            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]  # type: ignore
         ) and HasAllKeyWords(message.plainTextMessage, ["统计", "梗图"])
 
 
@@ -2768,7 +2773,7 @@ class PersonalStatisticsApplication(GroupMessageApplication):
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
         return HasKeyWords(
-            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]  # type: ignore
         ) and HasAllKeyWords(message.plainTextMessage, ["统计"])
 
 
@@ -3038,8 +3043,626 @@ class RankingApplication(GroupMessageApplication):
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
         return HasKeyWords(
-            message.plainTextMessage, load_setting("bot_name", "乐可")  # type: ignore
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]  # type: ignore
         ) and (
             HasAllKeyWords(message.plainTextMessage, ["生涯", "水群", "排名"])
             or HasKeyWords(message.plainTextMessage, ["水群排名", "排名"])
         )
+
+
+# 抽签应用
+# 抽签
+async def DrawingLottery(websocket, user_id: int, group_id: int):
+    r = requests.get("https://api.tangdouz.com/a/ccscq.php", timeout=60)
+    # print(r.text)
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "at", "data": {"qq": user_id}},
+                {
+                    "type": "text",
+                    "data": {"text": "\n{}".format(r.text.replace("\\r", "\r"))},
+                },
+            ],
+        },
+    }
+    # print(payload)
+    await websocket.send(json.dumps(payload))
+
+
+class DrawLotteryApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("抽签", "抽签")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await DrawingLottery(message.websocket, message.senderId, message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可"), "抽签"]
+        )
+
+
+# 积分帮助
+class PointHelpApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("积分帮助", "积分帮助")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await SayGroup(
+            message.websocket,
+            message.groupId,
+            f"{get_user_name(message.senderId, message.groupId)},积分可通过抽奖、签到、在有权限的群水群和大头菜贸易获得喵。",
+        )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可"), "积分帮助"]
+        )
+
+
+# 跑路或者梭哈
+
+
+# 梭哈或者跑路
+async def RunOrShot(websocket, user_id, group_id):
+    list = [0, 1]
+    _ = random.choice(list)
+    if _ == 0:
+        __ = random.choice(list)
+        if __ == 0:
+            await SayGroup(
+                websocket,
+                group_id,
+                f"{get_user_name(user_id, group_id)},梭哈失败,跑路失败喵!(清空全部积分和大头菜并施加100次艾特惩罚)",
+            )
+            if GetMyKohlrabi(user_id, group_id) != 0:
+                ChangeMyKohlrabi(user_id, group_id, 0)
+            change_point(user_id, group_id, find_point(user_id) * 0)
+            AddAtPunishList(user_id, group_id, 100)
+        else:
+            await SayGroup(
+                websocket,
+                group_id,
+                f"{get_user_name(user_id, group_id)},梭哈失败,跑路成功喵!(清空全部积分和大头菜,踢了!?)",
+            )
+            if GetMyKohlrabi(user_id, group_id) != 0:
+                ChangeMyKohlrabi(user_id, group_id, 0)
+            change_point(user_id, group_id, find_point(user_id) * 0)
+    else:
+        await SayGroup(
+            websocket,
+            group_id,
+            f"{get_user_name(user_id, group_id)},梭哈成功,积分和大头菜翻10倍喵.",
+        )
+        change_point(user_id, group_id, find_point(user_id) * 10)
+        ChangeMyKohlrabi(user_id, group_id, GetMyKohlrabi(user_id, group_id) * 10)
+
+
+class RunOrShotApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("跑路或者梭哈", "跑路或者梭哈")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await RunOrShot(message.websocket, message.senderId, message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]
+        ) and HasAllKeyWords(message.plainTextMessage, ["跑路", "梭哈"])
+
+
+# 反击应用
+class DefenseApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("反击", "反击", False)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        result = re.search(r"\d+", message.plainTextMessage)
+        if result != None:
+            qq = int(result.group())
+            if qq is not None:
+                await SayAndAt(
+                    message.websocket,
+                    qq,
+                    message.groupId,
+                    f"惩罚性艾特{load_setting('defense_times',50)}次。",
+                )
+                AddAtPunishList(
+                    qq,
+                    message.groupId,
+                    load_setting("defense_times", 50),
+                )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]
+        ) and HasAllKeyWords(message.plainTextMessage, ["反击"])
+
+
+# 睡眠套餐应用
+from tools.tools import GetSleepSeconds
+
+
+class IWantToSleep(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("反击", "反击", False)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await SayGroup(
+            message.websocket,
+            message.groupId,
+            f"{get_user_name(message.senderId,message.groupId)}睡眠套餐已开启,明天早上6点见。",
+        )
+        await ban_new(
+            message.websocket, message.senderId, message.groupId, GetSleepSeconds()
+        )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return (
+            HasKeyWords(message.plainTextMessage, [load_setting("bot_name", "乐可")])
+            and HasAllKeyWords(message.plainTextMessage, ["睡眠套餐"])
+            and BotIsAdmin(message.groupId)
+            and not IsAdmin(message.senderId, message.groupId)
+        )
+
+
+# 涩图兑换
+
+
+# 发送一张绝对涩的涩图
+async def sex_img(websocket, user_id: int, group_id: int):
+    now_point = find_point(user_id)
+    if now_point < 500000:
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": "{},你的积分不够喵,需要500000积分的喵,目前你的积分为{}喵,还差{}积分喵。".format(
+                                get_user_name(
+                                    user_id,
+                                    group_id,
+                                ),
+                                now_point,
+                                500000 - now_point,
+                            )
+                        },
+                    },
+                ],
+            },
+        }
+    else:
+        change_point(
+            user_id,
+            group_id,
+            now_point - 500000,
+        )
+        path = "res/sex_img.jpg"
+        with open(path, "rb") as image_file:
+            image_data = image_file.read()
+        image_base64 = base64.b64encode(image_data)
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {
+                        "type": "text",
+                        "data": {
+                            "text": "{},乐可收到你的积分了喵,售出不退喵,积分离柜概不负责喵。你的积分{}->{}喵。".format(
+                                get_user_name(
+                                    user_id,
+                                    group_id,
+                                ),
+                                now_point,
+                                now_point - 500000,
+                            )
+                        },
+                    },
+                    {
+                        "type": "image",
+                        "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                    },
+                ],
+            },
+        }
+    await websocket.send(json.dumps(payload))
+
+
+class SexImageApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("涩图兑换", "涩图兑换")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await sex_img(message.websocket, message.senderId, message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]
+        ) and HasAllKeyWords(message.plainTextMessage, ["兑换", "涩图"])
+
+
+# 丢骰子
+class GetRadomNum1to6Application(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("丢骰子", "丢骰子")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await SayGroup(
+            message.websocket,
+            message.groupId,
+            f"你的骰子结果是{random.randint(1,6)}",
+        )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]
+        ) and HasAllKeyWords(message.plainTextMessage, ["丢骰子"])
+
+
+# COS图
+# 涩涩
+async def get_cos(websocket, user_id: int, group_id: int):
+    r = requests.get("https://api.tangdouz.com/hlxmt.php", timeout=60)
+    text = r.text.split("±")
+    text = list(filter(None, text))
+    # print(text)
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "at", "data": {"qq": user_id}},
+                {
+                    "type": "text",
+                    "data": {"text": "\n{}".format(text[0])},
+                },
+            ],
+        },
+    }
+    for i in range(1, len(text)):
+        payload["params"]["message"].append(
+            {"type": "image", "data": {"file": text[i][4:]}},
+        )
+    print(payload)
+    payload["params"]["message"].append(
+        {"type": "text", "data": {"text": "随机手机分辨率美图\n"}},
+    )
+    r = requests.get(
+        "https://api.vvhan.com/api/wallpaper/mobileGirl?type=json", timeout=60
+    )
+    json_data = json.loads(r.text)
+    if "url" in json_data:
+        payload["params"]["message"].append(
+            {"type": "image", "data": {"file": json_data["url"]}},
+        )
+    payload["params"]["message"].append(
+        {"type": "text", "data": {"text": "随机PC分辨率美图\n"}},
+    )
+    r = requests.get("https://api.vvhan.com/api/wallpaper/pcGirl?type=json", timeout=60)
+    json_data = json.loads(r.text)
+    if "url" in json_data:
+        payload["params"]["message"].append(
+            {"type": "image", "data": {"file": json_data["url"]}},
+        )
+    await websocket.send(json.dumps(payload))
+
+
+class GetCosImageApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("获取COS图", "获取COS图")
+        super().__init__(applicationInfo, 30, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await get_cos(message.websocket, message.senderId, message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]
+        ) and HasKeyWords(message.plainTextMessage, ["cos", "COS", "涩图"])
+
+
+# 自助退群应用
+class SeeYouAgain(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("再也不见", "自助退群")
+        super().__init__(applicationInfo, 30, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        if IsAdmin(message.senderId, message.groupId):
+            await SayGroup(
+                message.websocket,
+                message.groupId,
+                f"{get_user_name(message.senderId, message.groupId)},你是管理员，不能自助退群喵。",
+            )
+        else:
+            await kick_member(message.websocket, message.senderId, message.groupId)
+            await ReplySay(
+                message.websocket,
+                message.groupId,
+                message.messageId,
+                "再见,再也不见。",
+            )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return (
+            HasKeyWords(message.plainTextMessage, [load_setting("bot_name", "乐可")])
+            and HasKeyWords(message.plainTextMessage, ["再也不见", "重开"])
+            and BotIsAdmin(message.groupId)
+        )
+
+
+# 二次元美图应用
+# 随机二次元美图
+async def radom_waifu(websocket, user_id: int, group_id: int):
+    r = requests.get("https://api.tangdouz.com/abz/dm.php", timeout=60)
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "at", "data": {"qq": user_id}},
+                {"type": "image", "data": {"file": r.text}},
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+class GetWaiFuApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("二次元应用", "获取随机二次元美图")
+        super().__init__(applicationInfo, 30, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await radom_waifu(message.websocket, message.senderId, message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]
+        ) and HasKeyWords(message.plainTextMessage, ["二次元"])
+
+
+# 三次元美图应用
+from random import choice
+
+
+# 随机三次元美图
+async def radom_real(websocket, user_id: int, group_id: int):
+    url1 = requests.get("https://api.tangdouz.com/mn.php", timeout=60)
+    url2 = requests.get(
+        choice(["https://api.tangdouz.com/mt.php", "https://api.tangdouz.com/mt1.php"]),
+        timeout=60,
+    )
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "at", "data": {"qq": user_id}},
+                {"type": "image", "data": {"file": url1.text}},
+                {"type": "image", "data": {"file": url2.text}},
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+class GetRealWifeApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("三次元应用", "获取随机三次元美图")
+        super().__init__(applicationInfo, 30, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await radom_real(message.websocket, message.senderId, message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]
+        ) and HasKeyWords(message.plainTextMessage, ["三次元"])
+
+
+# 随机一言应用
+
+
+# 随机一言
+async def one_word(websocket, user_id: int, group_id: int):
+    url_list = [
+        "https://api.tangdouz.com/aqgy.php",
+        "https://api.tangdouz.com/sjyy.php",
+        "https://api.tangdouz.com/a/one.php",
+    ]
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "at", "data": {"qq": user_id}},
+                {
+                    "type": "text",
+                    "data": {
+                        "text": "\n{}".format(
+                            requests.get(choice(url_list), timeout=60).text
+                        )
+                    },
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+class RadomOneWordApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("随机一言", "获取随机一言")
+        super().__init__(applicationInfo, 30, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await one_word(message.websocket, message.senderId, message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]
+        ) and HasKeyWords(message.plainTextMessage, ["一言"])
+
+
+# 随机HTTP猫猫
+async def send_radom_http_cat(websocket, group_id: int):
+    http_code = [
+        100,
+        101,
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        300,
+        301,
+        302,
+        303,
+        304,
+        305,
+        306,
+        307,
+        400,
+        401,
+        402,
+        403,
+        404,
+        405,
+        406,
+        407,
+        408,
+        409,
+        410,
+        411,
+        412,
+        413,
+        414,
+        415,
+        416,
+        417,
+        418,
+        500,
+        501,
+        502,
+        503,
+        504,
+        505,
+    ]
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": {
+                "type": "image",
+                "data": {
+                    "file": "https://http.cat/{}".format(
+                        http_code[random.randint(0, len(http_code) - 1)]
+                    )
+                },
+            },
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+class RadomHttpCatApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("随机HTTP猫猫", "获取随机HTTP猫猫")
+        super().__init__(applicationInfo, 30, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await send_radom_http_cat(message.websocket, message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]
+        ) and HasKeyWords(message.plainTextMessage, ["随机HTTP猫猫", "随机http猫猫"])
+
+# 运势应用
+from datetime import date
+# 运势
+def ys_simple(ys):
+    if ys == 0:
+        return "大吉喵，快买彩票喵。"
+    elif ys < 20:
+        return "吉"
+    elif ys < 40:
+        return "小吉"
+    elif ys < 70:
+        return "普通"
+    elif ys < 99:
+        return "凶"
+    elif ys == 99:
+        return "大凶，快去洗澡喵"
+
+# 运势详情
+async def luck_dog(websocket, user_id: int, group_id: int):
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": "{},{}。".format(
+                get_user_name(user_id,group_id),
+                ys_simple((date.today().day * user_id) % 100),
+            ),
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+class LuckDogApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("每日运势", "获取每日运势")
+        super().__init__(applicationInfo, 30, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await luck_dog(message.websocket, message.senderId,message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]
+        ) and HasKeyWords(message.plainTextMessage, ["运势"])
