@@ -3621,8 +3621,11 @@ class RadomHttpCatApplication(GroupMessageApplication):
             message.plainTextMessage, [load_setting("bot_name", "乐可")]
         ) and HasKeyWords(message.plainTextMessage, ["随机HTTP猫猫", "随机http猫猫"])
 
+
 # 运势应用
 from datetime import date
+
+
 # 运势
 def ys_simple(ys):
     if ys == 0:
@@ -3638,6 +3641,7 @@ def ys_simple(ys):
     elif ys == 99:
         return "大凶，快去洗澡喵"
 
+
 # 运势详情
 async def luck_dog(websocket, user_id: int, group_id: int):
     payload = {
@@ -3645,12 +3649,13 @@ async def luck_dog(websocket, user_id: int, group_id: int):
         "params": {
             "group_id": group_id,
             "message": "{},{}。".format(
-                get_user_name(user_id,group_id),
+                get_user_name(user_id, group_id),
                 ys_simple((date.today().day * user_id) % 100),
             ),
         },
     }
     await websocket.send(json.dumps(payload))
+
 
 class LuckDogApplication(GroupMessageApplication):
     def __init__(self):
@@ -3659,10 +3664,889 @@ class LuckDogApplication(GroupMessageApplication):
 
     async def process(self, message: GroupMessageInfo) -> None:
         # 处理消息
-        await luck_dog(message.websocket, message.senderId,message.groupId)
+        await luck_dog(message.websocket, message.senderId, message.groupId)
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
         return HasKeyWords(
             message.plainTextMessage, [load_setting("bot_name", "乐可")]
         ) and HasKeyWords(message.plainTextMessage, ["运势"])
+
+
+# 签到应用
+async def DailyCheckIn(websocket, user_id: int, group_id: int):
+    sender_name = get_user_name(user_id, group_id)
+    result = check_in(user_id, group_id)
+    if result[0] == 1:
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": "{},签到成功,您当前的积分为:{}。".format(
+                    sender_name, result[1]
+                ),
+            },
+        }
+    else:
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": group_id,
+                "message": "{},你今天已经签过到了,明天再来吧!您当前的积分为:{}。".format(
+                    sender_name, result[1]
+                ),
+            },
+        }
+    await websocket.send(json.dumps(payload))
+
+
+class DailyCheckInApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("签到", "签到")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await DailyCheckIn(message.websocket, message.senderId, message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]
+        ) and HasKeyWords(message.plainTextMessage, ["签到"])
+
+
+# 疯狂星期四应用
+
+
+# kfcv我50彩蛋
+async def KFCVME50(websocket, group_id: int):
+    r = requests.get("https://api.shadiao.pro/kfc", timeout=60)
+    data = json.loads(r.text)
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "text", "data": {"text": data["data"]["text"]}},
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+class KFCVME50Application(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("疯狂星期四应用", "疯狂星期四应用")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await KFCVME50(message.websocket, message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]
+        ) and HasKeyWords(message.plainTextMessage, ["V我50", "v我50"])
+
+
+# 塔罗牌应用
+
+
+# 塔罗牌
+async def ReturnTrarotCard(websocket, user_id: int, group_id: int):
+    r = requests.get("https://api.tangdouz.com/tarot.php", timeout=60)
+    text = r.text.split("±")
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "at", "data": {"qq": user_id}},
+                {
+                    "type": "text",
+                    "data": {"text": "\n{}".format(text[0].split("\\r")[1])},
+                },
+                {"type": "image", "data": {"file": text[1][4:]}},
+                {
+                    "type": "text",
+                    "data": {
+                        "text": "{}{}".format(
+                            text[2].split("\\r")[0], text[2].split("\\r")[1]
+                        )
+                    },
+                },
+            ],
+        },
+    }
+    # print(payload)
+    await websocket.send(json.dumps(payload))
+
+
+class TarotApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("塔罗牌应用", "塔罗牌应用")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        await ReturnTrarotCard(message.websocket, message.senderId, message.groupId)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasAllKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可"), "塔罗牌"]
+        )
+
+
+# 晚安应用
+class GoodNightApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("晚安应用", "晚安应用")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        now_hour = int(datetime.now().strftime("%H"))
+        if now_hour >= 22 or now_hour < 6:
+            if IsAdmin(message.senderId, message.groupId):
+                await SayGroup(
+                    message.websocket,
+                    message.groupId,
+                    f"{get_user_name(message.senderId, message.groupId)},晚安，好梦喵。(∪.∪ )...zzz",
+                )
+
+            else:
+                await SayGroup(
+                    message.websocket,
+                    message.groupId,
+                    f"{get_user_name(message.senderId, message.groupId)},明天早上六点见喵,晚安，好梦喵。(∪.∪ )...zzz",
+                )
+                await ban_new(
+                    message.websocket,
+                    message.senderId,
+                    message.groupId,
+                    GetSleepSeconds(),
+                )
+
+        elif now_hour < 22:
+            await SayGroup(
+                message.websocket,
+                message.groupId,
+                f"{get_user_name(message.senderId, message.groupId)},还没到晚上10点喵,睡的有点早喵。",
+            )
+        elif now_hour >= 22 and now_hour < 6:
+            await SayGroup(
+                message.websocket,
+                message.groupId,
+                f"{get_user_name(message.senderId, message.groupId)},夜深了，早点休息喵。(∪.∪ )...zzz",
+            )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasAllKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可"), "晚安"]
+        )
+
+
+# 随机猫猫
+class RandomCatApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("随机猫猫", "随机猫猫")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        r = requests.get("https://api.thecatapi.com/v1/images/search", timeout=60)
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": message.groupId,
+                "message": [
+                    {"type": "image", "data": {"file": r.json()[0]["url"]}},
+                ],
+            },
+        }
+        await message.websocket.send(json.dumps(payload))
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasAllKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可"), "猫猫"]
+        )
+
+
+# 随机猫猫动图
+class RandomCatGifApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("随机猫猫动图", "随机猫猫动图")
+        super().__init__(applicationInfo, 75, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": message.groupId,
+                "message": [
+                    {"type": "image", "data": {"file": "https://edgecats.net/"}},
+                ],
+            },
+        }
+        await message.websocket.send(json.dumps(payload))
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasAllKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可"), "猫猫动图"]
+        )
+
+
+# 看世界应用
+class LookWorldApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("随机猫猫动图", "随机猫猫动图")
+        super().__init__(applicationInfo, 75, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        r = requests.get("https://api.tangdouz.com/60.php", timeout=60)
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": message.groupId,
+                "message": [
+                    {"type": "at", "data": {"qq": message.senderId}},
+                    {"type": "image", "data": {"file": r.text}},
+                ],
+            },
+        }
+        await message.websocket.send(json.dumps(payload))
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasAllKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可"), "看世界"]
+        )
+
+
+# 灭霸应用
+from function.database_group import GetAllGroupMemberId
+
+
+async def set_qq_avatar(websocket, file_dir: str):
+    with open(file_dir, "rb") as image_file:
+        image_data = image_file.read()
+    payload = {
+        "action": "set_qq_avatar",
+        "params": {"file": "base64://" + base64.b64encode(image_data).decode("utf-8")},
+    }
+    await websocket.send(json.dumps(payload))
+
+
+class TimelyCheckTanosApplication(MetaMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo(
+            "定期检测打响指有效性", "定期检测打响指有效性", False
+        )
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: MetaMessageInfo):
+        """处理元消息"""
+        thanos_queue = load_setting("thanos_queue", [])
+        for i in thanos_queue:
+            if time.time() - i["thanosTime"] > 300:
+                await SayGroup(
+                    message.websocket,
+                    i["groupId"],
+                    f"{load_setting("bot_name", "乐可")}不是紫薯精喵。",
+                )
+                del i
+        if len(thanos_queue) == 0:
+            await set_qq_avatar(message.websocket, "res/leike.jpg")
+        dump_setting("thanos_queue", thanos_queue)
+
+    def judge(self, message: MetaMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return (
+            len(load_setting("thanos_queue", [])) > 0
+            and message.metaEventType == MetaEventType.HEART_BEAT
+        )
+
+
+class ThanosApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("打响指应用", "清除一半人")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        if HasKeyWords(message.plainTextMessage, ["打响指"]):
+            await SayGroup(
+                message.websocket,
+                message.groupId,
+                f"{get_user_name(message.senderId,message.groupId,)},你确定吗？此功能会随机清除一半的群友,如果确定的话,请在5分钟内说“{load_setting("bot_name", "乐可")},清楚明白”。如果取消的话,请说“{load_setting("bot_name", "乐可")},取消”。",
+            )
+            await set_qq_avatar(message.websocket, "res/leike_red.jpg")
+            thanos_queue = load_setting("thanos_queue", [])
+            thanos_queue.append({"groupId": message.groupId, "thanosTime": time.time()})
+            dump_setting("thanos_queue", thanos_queue)
+        elif HasKeyWords(message.plainTextMessage, ["清楚明白"]) and load_setting(
+            "is_thanos", False
+        ):
+            thanos_queue = load_setting("thanos_queue", [])
+            if random.random() < 0.5:
+                for i in GetAllGroupMemberId(message.groupId):
+                    await kick_member(message.websocket, i, message.groupId)
+            for i in thanos_queue:
+                if i["groupId"] == message.groupId:
+                    del i
+                    break
+            dump_setting("thanos_queue", thanos_queue)
+
+        elif HasKeyWords(message.plainTextMessage, ["取消"]) and load_setting(
+            "is_thanos", False
+        ):
+            await set_qq_avatar(message.websocket, "res/leike.jpg")
+            await SayGroup(
+                message.websocket,
+                message.groupId,
+                f"{load_setting("bot_name", "乐可")}不是紫薯精喵。",
+            )
+            thanos_queue = load_setting("thanos_queue", [])
+            for i in thanos_queue:
+                if i["groupId"] == message.groupId:
+                    del i
+                    break
+            dump_setting("thanos_queue", thanos_queue)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return (
+            HasAllKeyWords(message.plainTextMessage, [load_setting("bot_name", "乐可")])
+            and HasKeyWords(message.plainTextMessage, ["打响指", "清楚明白", "取消"])
+            and IsAdmin(message.senderId, message.groupId)
+            and BotIsAdmin(message.groupId)
+        )
+
+
+# 环境温度应用
+import re
+import subprocess
+
+
+class GetTemperatureApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("获取环境温度", "获取环境温度")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        # 处理消息
+        command = "sensors"
+        result = subprocess.check_output(command, shell=True, text=True)
+        pattern = r"\d+\.\d+"
+        matches = re.findall(pattern, str(result))
+
+        await SayGroup(
+            message.websocket,
+            message.groupId,
+            f"CPU:{matches[0]}/{matches[1]}°C,GPU:{matches[2]}°C,环境温度:{"错误,请检查传感器"}",
+        )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasAllKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可"), "环境温度"]
+        )
+
+
+# 早上好应用
+class OldGoodMorningApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("早上好应用", "早上好应用")
+        super().__init__(applicationInfo, 20, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        now_hour = int(datetime.now().strftime("%H"))
+        if now_hour < 10:
+            await SayGroup(
+                message.websocket,
+                message.groupId,
+                f"{get_user_name(message.senderId, message.groupId)},早上好喵ヾ(•ω•`)o,今天也是元气满满的一天喵！",
+            )
+        else:
+            await SayGroup(
+                message.websocket,
+                message.groupId,
+                f"{get_user_name(message.senderId, message.groupId)},现在已经不早了喵！",
+            )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasAllKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可"), "早"]
+        )
+
+
+# 喜报悲报应用
+class HappySadNewsApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("喜报悲报应用", "喜报悲报应用")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        if HasKeyWords(message.plainTextMessage, ["喜报"]):
+            text = re.findall(
+                r"喜报\s*([\s\S]*)$",
+                message.plainTextMessage,
+            )
+            if len(text) != 0:
+                payload = {
+                    "action": "send_msg_async",
+                    "params": {
+                        "group_id": message.groupId,
+                        "message": [
+                            {
+                                "type": "image",
+                                "data": {
+                                    "file": f"https://api.tangdouz.com/wz/xb.php?nr={text[0]}"
+                                },
+                            },
+                        ],
+                    },
+                }
+                await message.websocket.send(json.dumps(payload))
+        elif HasKeyWords(message.plainTextMessage, ["悲报"]):
+            text = re.findall(
+                r"悲报\s*([\s\S]*)$",
+                message.plainTextMessage,
+            )
+            if len(text) != 0:
+                payload = {
+                    "action": "send_msg_async",
+                    "params": {
+                        "group_id": message.groupId,
+                        "message": [
+                            {
+                                "type": "image",
+                                "data": {
+                                    "file": f"https://www.oexan.cn/API/beibao.php?msg={text[0]}"
+                                },
+                            },
+                        ],
+                    },
+                }
+                await message.websocket.send(json.dumps(payload))
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasAllKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]
+        ) and HasKeyWords(message.plainTextMessage, ["喜报", "悲报"])
+
+
+# 答案之书应用
+class AnswerBookApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("答案之书应用", "答案之书应用")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        r = requests.get("https://api.tangdouz.com/answer.php", timeout=60)
+        await ReplySay(message.websocket, message.groupId, message.messageId, r.text)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasAllKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可"), "答案之书"]
+        )
+
+
+# 获取系统状态应用
+
+
+# 获取系统状态
+def ShowSystemInfoTableByBase64():
+    import matplotlib.pyplot as plt
+    from plottable import Table
+    import pandas as pd
+    import base64
+    import psutil
+    import platform
+
+    plt.rcParams["font.sans-serif"] = ["AR PL UKai CN"]
+    # plt.rcParams["font.sans-serif"] = ["Unifont"]  # 设置字体
+    # plt.rcParams["font.sans-serif"] = ["SimHei"]  # 设置字体
+    plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
+    data = {"项目": [], "值": []}
+    if platform.system() == "Linux":
+        info = platform.freedesktop_os_release()
+        data["项目"].append("操作系统名称")
+        data["值"].append(info["NAME"])
+        data["项目"].append("操作系统版本")
+        data["值"].append(info["VERSION"])
+    elif platform.system() == "Windows":
+        os_name = platform.system()
+        data["项目"].append("操作系统名称")
+        data["值"].append(f"{os_name}")
+        os_version = platform.version()
+        data["项目"].append("操作系统版本")
+        data["值"].append(f"{os_version}")
+    # 获取计算机的处理器名称
+    data["项目"].append("处理器名称")
+    data["值"].append(platform.processor())
+    # 获取计算机的处理器架构
+    data["项目"].append("处理器架构")
+    data["值"].append(platform.architecture())
+    mem = psutil.virtual_memory()
+    # 系统总计内存
+    zj = float(mem.total) / 1024 / 1024
+    # 系统已经使用内存
+    ysy = float(mem.used) / 1024 / 1024
+    # 系统空闲内存
+    kx = float(mem.free) / 1024 / 1024
+    data["项目"].append("系统总计内存")
+    data["值"].append(f"{zj:.4f} MB")
+    data["项目"].append("系统已经使用内存")
+    data["值"].append(f"{ysy:.4f} MB")
+    data["项目"].append("系统空闲内存")
+    data["值"].append(f"{kx:.4f} MB")
+    # 查看cpu逻辑个数的信息
+    data["项目"].append("逻辑CPU个数")
+    data["值"].append(psutil.cpu_count())
+    # 查看cpu物理个数的信息
+    data["项目"].append("物理CPU个数")
+    data["值"].append(psutil.cpu_count(logical=False))
+    # CPU的使用率
+    cpu = (str(psutil.cpu_percent(1))) + "%"
+    data["项目"].append("CPU使用率")
+    data["值"].append((str(psutil.cpu_percent(1))) + "%")
+    dk = psutil.disk_usage("/")
+    # 总磁盘
+    total = dk.total / 1024 / 1024 / 1024
+    used = dk.used / 1024 / 1024 / 1024
+    free = dk.free / 1024 / 1024 / 1024
+    data["项目"].append("系统总计磁盘")
+    data["值"].append(f"{total:0.3f} GB")
+    data["项目"].append("系统已经使用磁盘")
+    data["值"].append(f"{used:0.3f} GB")
+    data["项目"].append("系统空闲磁盘")
+    data["值"].append(f"{free:0.3f} GB")
+    data["项目"].append("磁盘使用率")
+    data["值"].append(f"{dk.percent:0.1f}%")
+    # 发送数据包
+    data["项目"].append("发送数据字节")
+    data["值"].append(f"{psutil.net_io_counters().bytes_sent} bytes")
+    # 接收数据包
+    data["项目"].append("发送数据字节")
+    data["值"].append(f"{psutil.net_io_counters().bytes_recv} bytes")
+    table = pd.DataFrame(data)
+    table = table.set_index("项目")
+    fig, ax = plt.subplots()
+    Table(table)
+    plt.title("系统状态")
+    plt.savefig("figs/system_table.png", dpi=460)
+    # plt.show()
+    plt.close()
+    with open("figs/system_table.png", "rb") as image_file:
+        image_data = image_file.read()
+    return base64.b64encode(image_data)
+
+
+class GetSystemStatusApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("获取系统状态应用", "获取系统状态应用")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": message.groupId,
+                "message": [],
+            },
+        }
+        payload["params"]["message"].append(
+            {
+                "type": "image",
+                "data": {
+                    "file": "base64://" + ShowSystemInfoTableByBase64().decode("utf-8")
+                },
+            }
+        )
+        await message.websocket.send(json.dumps(payload))
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasAllKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]
+        ) and HasKeyWords(message.plainTextMessage, ["系统状态", "系统信息", "状态信息", "status"])
+
+
+# 获取IP应用
+
+
+# 获取本机局域网IP
+def GetLocalIP():
+    from netifaces import interfaces, ifaddresses, AF_INET
+
+    ip_addrs = []
+    for ifaceName in interfaces():
+        addresses = [
+            i["addr"]
+            for i in ifaddresses(ifaceName).setdefault(
+                AF_INET, [{"addr": "No IP addr"}]  # type: ignore
+            )
+        ]
+        if addresses != ["No IP addr"]:
+            ip_addrs.append(addresses[0])
+    # print(ip_addrs)
+    return ip_addrs
+
+
+class GetSystemIPApplcation(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("获取IP应用", "获取IP应用")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        ip = requests.get("https://api.ipify.org?format=json", timeout=60).json()
+        await SayGroup(
+            message.websocket,
+            message.groupId,
+            f"本机IP:{GetLocalIP()}",
+        )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasAllKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]
+        ) and HasKeyWords(message.plainTextMessage, ["获取IP", "IP地址", "获取ip", "ip地址"])
+
+
+# 讲冷笑话应用
+class JokeApplcation(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("讲冷笑话应用", "讲冷笑话应用")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        r = requests.get("https://api.vvhan.com/api/text/joke")
+        await SayGroup(message.websocket, message.groupId, r.text)
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasAllKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可"), "笑话"]
+        )
+
+
+# 乐可可爱应用
+from tools.tools import HasNoneKeyWords
+
+
+class CuteApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("卖萌应用", "卖萌应用")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        list = ["res/cute3.gif", "res/cute4.gif", "res/cute5.gif", "res/cute6.gif"]
+        path = random.choice(list)
+        logging.info("有人夸乐可可爱。")
+        with open(path, "rb") as image_file:
+            image_data = image_file.read()
+        image_base64 = base64.b64encode(image_data)
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": message.groupId,
+                "message": [
+                    {
+                        "type": "image",
+                        "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                    },
+                ],
+            },
+        }
+        await message.websocket.send(json.dumps(payload))
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasAllKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可"), "可爱"]
+        ) and HasNoneKeyWords(message.plainTextMessage, ["可乐"])
+
+
+# 私聊功能
+from function.say import SayPrivte
+from data.application.private_message_application import PrivateMessageApplication
+
+
+# 私聊聊天功能
+from function.chat import PrivateChatNoContext
+from data.message.private_message_info import PrivateMesssageInfo
+
+
+class PrivateChatApplication(PrivateMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("私聊聊天应用", "私聊聊天应用")
+        super().__init__(
+            applicationInfo, 0, False, ApplicationCostType.HIGH_TIME_HIGH_PERFORMANCE
+        )
+
+    async def process(self, message: PrivateMesssageInfo) -> None:
+        await SayPrivte(
+            message.websocket,
+            message.senderId,
+            PrivateChatNoContext(message.plainTextMessage),
+        )
+
+    def judge(self, message: PrivateMesssageInfo) -> bool:
+        """判断是否触发应用"""
+        return True
+
+
+# 偷偷加积分应用
+class StealthyPointsApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("偷偷加积分应用", "偷偷加积分应用", False)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: PrivateMesssageInfo) -> None:
+        # 在这里实现偷偷加积分的逻辑
+        result = re.search(r"\d+", message.plainTextMessage)
+        if result != None:
+            now_point = find_point(message.senderId)
+            change_point(message.senderId, 0, now_point + int(result.group()))
+            await SayPrivte(
+                message.websocket,
+                message.senderId,
+                f"充值成功,积分{now_point}->{now_point +  int(result.group())}。",
+            )
+
+    def judge(self, message: PrivateMesssageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasAllKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可"), "积分"]
+        ) and message.senderId in load_setting("developers_list", [])
+
+
+# 发送日志应用
+
+import yagmail
+from tools.tools import GetLogTime
+
+
+# 发送日志文件到邮箱
+def send_log_email():
+    email = load_setting("email", {"user": "", "password": "", "host": ""})
+    # 连接邮箱服务器 发送方邮箱+授权码+邮箱服务地址
+    yag = yagmail.SMTP(
+        user=email["user"],
+        password=email["password"],
+        host=email["host"],
+        encoding="GBK",
+    )
+    # 邮件正文 支持html，支持上传附件
+    now = GetLogTime()
+    log_path = f"log/{now}.log"
+    content = [f"{GetLogTime()}的日志"]
+    # logging.info(f"发送{log_path}日志文件到邮箱")
+    print(f"发送{log_path}日志文件到邮箱")
+    yag.send(
+        email["rev_email"],
+        "运行日志",
+        content,
+        [
+            log_path,
+        ],
+    )
+    yag.close()
+
+
+class SendLogApplication(PrivateMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("发送日志应用", "发送日志应用", False)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: PrivateMesssageInfo) -> None:
+        # 在这里实现发送日志的逻辑
+        send_log_email()
+        await SayPrivte(message.websocket, message.senderId, "发送日志成功喵！")
+
+    def judge(self, message: PrivateMesssageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasAllKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可"), "日志"]
+        ) and message.senderId in load_setting("developers_list", [])
+
+
+# Notice应用
+from data.application.notice_application import NoticeMessageApplication
+from data.message.notice_message_info import NoticeMessageInfo
+from data.enumerates import  NoticeType
+# 拍一拍卖萌应用
+class PokeCuteApplication(NoticeMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("拍一拍卖萌应用", "拍一拍卖萌应用", False)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: NoticeMessageInfo) -> None:
+        # 在这里实现发送日志的逻辑
+        list = ["res/cute3.gif", "res/cute4.gif", "res/cute5.gif", "res/cute6.gif"]
+        path = random.choice(list)
+        with open(path, "rb") as image_file:
+            image_data = image_file.read()
+        image_base64 = base64.b64encode(image_data)
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": message.groupId,
+                "message": [
+                    {
+                        "type": "image",
+                        "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                    },
+                ],
+            },
+        }
+        await message.websocket.send(json.dumps(payload))
+
+    def judge(self, message: NoticeMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return message.noticeEventType==NoticeType.GROUP_POKE and message.target_id==load_setting("bot_id", 0) 
+
+
+# 随机卖萌应用
+from function.database_group import GetAllGroupId
+class RandomCuteApplication(MetaMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo(
+            "随机卖萌", "随机卖萌", False
+        )
+        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+
+    async def process(self, message: MetaMessageInfo):
+        """处理元消息"""
+        list = ["res/cute3.gif", "res/cute4.gif", "res/cute5.gif", "res/cute6.gif"]
+        path = random.choice(list)
+        with open(path, "rb") as image_file:
+            image_data = image_file.read()
+        image_base64 = base64.b64encode(image_data)
+        groupId=random.choice(GetAllGroupId())
+        payload = {
+            "action": "send_msg_async",
+            "params": {
+                "group_id": groupId,
+                "message": [
+                    {
+                        "type": "image",
+                        "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                    },
+                ],
+            },
+        }
+        await message.websocket.send(json.dumps(payload))
+        
+    def judge(self, message: MetaMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return (
+            message.metaEventType == MetaEventType.HEART_BEAT and random.random() < 0.001  # 每次心跳有0.1%的概率触发
+        )

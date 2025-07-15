@@ -33,3 +33,11 @@ class RequestMessageApplication(Application):
             message (RequestMessageInfo): 要处理的消息
         """
         pass
+
+    @abstractmethod
+    def judge(self, message: RequestMessageInfo) -> bool:
+        """判断是否触发应用
+
+        Args:
+            message (MessageInfo): 要判断的消息
+        """

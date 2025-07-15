@@ -32,4 +32,11 @@ class NoticeMessageApplication(Application):
         Args:
             message (GroupMessageInfo): 要处理的消息
         """
-        pass
+
+    @abstractmethod
+    def judge(self, message: NoticeMessageInfo) -> bool:
+        """判断是否触发应用
+
+        Args:
+            message (MessageInfo): 要判断的消息
+        """

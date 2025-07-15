@@ -114,7 +114,7 @@ async def SayRaw(websocket, group_id: int, payload: dict):
 
 
 async def SayGroup(websocket, group_id: int, text: str):
-    """发送纯文本的私聊消息
+    """发送纯文本的群聊消息
 
     Args:
         websocket (_type_): 要回复的websocket

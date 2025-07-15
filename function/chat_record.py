@@ -194,3 +194,4 @@ def AddChatRecord(user_id: int, group_id: int):
     conn.commit()
     conn.close()
     return (all_num, today_num)
+

@@ -21,3 +21,38 @@ def GetGroupName(group_id: int) -> int:
         return group_id
     else:
         return int(data[0][0])
+
+
+def GetAllGroupMemberId(groupId: int) -> list:
+    """获取群聊所有成员的用户ID
+
+    Args:
+        groupId (int): 群聊ID
+
+    Returns:
+        list: 群聊所有成员的用户ID列表
+    """
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT user_id FROM group_member_info where group_id=?;",
+        (groupId,),
+    )
+    data = cur.fetchall()
+    conn.close()
+    return [item[0] for item in data]
+
+def GetAllGroupId() -> list:
+    """获取所有群聊ID
+
+    Returns:
+        list: 所有群聊ID列表
+    """
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT group_id FROM group_info;",
+    )
+    data = cur.fetchall()
+    conn.close()
+    return [item[0] for item in data]

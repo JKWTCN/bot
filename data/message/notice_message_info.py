@@ -32,6 +32,7 @@ class NoticeMessageInfo(MessageInfo):
                 match rawMessage["sub_type"]:
                     case "poke":
                         self.noticeEventType = NoticeType.GROUP_POKE
+                        self.target_id = rawMessage["target_id"]
                     case "lucky_king":
                         self.noticeEventType = NoticeType.GROUP_LUCK_DOG
                     case "honor":

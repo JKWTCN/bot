@@ -41,9 +41,15 @@ def GetSleepSeconds():
 # 要求全部在
 def HasAllKeyWords(text: str, key_words: list) -> bool:
     for key_word in key_words:
+        if key_word not in text:
+            return False
+    return True
+
+
+# 要求全部不在
+def HasNoneKeyWords(text: str, key_words: list) -> bool:
+    for key_word in key_words:
         if key_word in text:
-            pass
-        else:
             return False
     return True
 
@@ -54,6 +60,14 @@ def HasKeyWords(text: str, key_words: list) -> bool:
         if key_word in text:
             return True
     return False
+
+
+# 有一个关键词不在即可
+def HasNoOneKeyWords(text: str, key_words: list) -> bool:
+    for key_word in key_words:
+        if key_word in text:
+            return False
+    return True
 
 
 # 判断是否有Bot名字
