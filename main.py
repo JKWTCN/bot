@@ -16,12 +16,16 @@ from registered_application_list import initApplications
 from function.GroupConfig import get_config
 from function.database_message import write_message
 from function.chat_record import AddChatRecord
+from tools.tools import load_setting
 
 
 async def echo(websocket, message):
     try:
         message = json.loads(message)
-        print(f"收到消息: {message}")  # 打印接收到的消息内容
+        if not load_setting("debug_mode", False):
+            print(f"收到消息: {message}")  # 打印接收到的消息内容
+        else:
+            logging.info(f"收到消息: {message}")
         # 解析消息数据结构
         if "post_type" in message:
             match message["post_type"]:
@@ -45,9 +49,14 @@ async def echo(websocket, message):
                             if groupMessageInfo.senderId in get_config(
                                 "no_reply_list", groupMessageInfo.groupId
                             ):  # type: ignore
-                                print(
-                                    f"机器人ID:{groupMessageInfo.senderId},其他机器人不理睬。"
-                                )
+                                if not load_setting("debug_mode", False):
+                                    print(
+                                        f"机器人ID:{groupMessageInfo.senderId},其他机器人不理睬。"
+                                    )
+                                else:
+                                    logging.info(
+                                        f"机器人ID:{groupMessageInfo.senderId},其他机器人不理睬。"
+                                    )
                                 return
                             # if groupMessageInfo.groupId == 755652553:
                             await schedule.processMessage(groupMessageInfo)

@@ -98,6 +98,9 @@ async def miaomiaoTranslation(websocket, user_id: int, group_id: int, message_id
     await ReplySay(websocket, group_id, message_id, re_text)
 
 
+from tools.tools import HasChinese
+
+
 def CheckAllMiao(text):
     """
     检查给定文本中的字符除标点符号外的字符是否都是"喵"
@@ -139,6 +142,7 @@ class MiaoMiaoTranslationApplication(GroupMessageApplication):
             and len(message.imageFileList) == 0
             and len(message.fileList) == 0
             and len(message.faceList) == 0
+            and HasChinese(message.plainTextMessage)
         ):
             return True
         return False

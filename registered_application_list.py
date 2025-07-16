@@ -174,7 +174,12 @@ def initApplications():
     RegisterApplication(classic_application.GroupMemberDecreaseApplication())
     # 随机卖萌应用
     RegisterApplication(classic_application.RandomCuteApplication())
-    
+
+    from application.debug_application import DebugApplication
+
+    # 注册调试应用
+    RegisterApplication(DebugApplication())
+
     if os.path.exists("private/private.py"):
         from private_application.private_application import initPrivateApplication
 

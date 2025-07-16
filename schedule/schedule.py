@@ -5,6 +5,7 @@ from data.message.message_info import MessageInfo
 import schedule.application_list as application_list
 from data.enumerates import MessageType, ApplicationCostType, ApplicationType
 from schedule.consuming_high_time_queue import consuming_time_process_queue
+from tools.tools import load_setting
 
 
 class Schedule:
@@ -30,9 +31,14 @@ class Schedule:
             try:
                 if i.judge(messageInfo):
                     if i.applicationType != ApplicationType.META:
-                        print(
-                            f"触发应用: {i.applicationInfo.name}: {i.applicationInfo.info}"
-                        )
+                        if not load_setting("debug_mode", False):
+                            print(
+                                f"触发应用: {i.applicationInfo.name}: {i.applicationInfo.info}"
+                            )
+                        else:
+                            logging.info(
+                                f"触发应用: {i.applicationInfo.name}: {i.applicationInfo.info}"
+                            )
                     from functools import partial
 
                     match i.applicationCostType:
