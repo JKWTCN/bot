@@ -21,6 +21,7 @@ from function.chat_record import AddChatRecord
 async def echo(websocket, message):
     try:
         message = json.loads(message)
+        print(f"收到消息: {message}")  # 打印接收到的消息内容
         # 解析消息数据结构
         if "post_type" in message:
             match message["post_type"]:
@@ -33,17 +34,14 @@ async def echo(websocket, message):
                             AddChatRecord(
                                 groupMessageInfo.senderId, groupMessageInfo.groupId
                             )
-                            if (
-                                len(groupMessageInfo.imageFileList) != 0
-                                and get_config(
-                                    "image_parsing", groupMessageInfo.groupId
-                                )
-                                == False
+                            if len(groupMessageInfo.imageFileList) != 0 and get_config(
+                                "image_parsing", groupMessageInfo.groupId
                             ):
-                                write_message(message, groupMessageInfo.readMessage)
-                            else:
                                 # TODO image-image移植
                                 pass
+
+                            else:
+                                write_message(message, groupMessageInfo.readMessage)
                             if groupMessageInfo.senderId in get_config(
                                 "no_reply_list", groupMessageInfo.groupId
                             ):  # type: ignore
@@ -51,9 +49,8 @@ async def echo(websocket, message):
                                     f"机器人ID:{groupMessageInfo.senderId},其他机器人不理睬。"
                                 )
                                 return
-                            if groupMessageInfo.groupId == 755652553:
-                                print(message)
-                                await schedule.processMessage(groupMessageInfo)
+                            # if groupMessageInfo.groupId == 755652553:
+                            await schedule.processMessage(groupMessageInfo)
                         # 私聊消息
                         case "private":
                             privateMessageInfo = PrivateMesssageInfo(websocket, message)
@@ -68,7 +65,7 @@ async def echo(websocket, message):
                     requestMessageInfo = RequestMessageInfo(websocket, message)
                     await schedule.processMessage(requestMessageInfo)
     except Exception as e:
-        print(f"处理消息时出错: {e},line:{traceback.extract_tb(e.__traceback__)[0][1]}")
+        logging.error("发生错误: %s", e, exc_info=True)
 
 
 async def pro(websocket):

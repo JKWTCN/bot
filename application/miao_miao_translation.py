@@ -12,6 +12,8 @@ from function.database_message import GetChatContext
 from function.database_group import GetGroupName
 
 from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
+
+
 async def miaomiaoTranslation(websocket, user_id: int, group_id: int, message_id: int):
     """喵喵翻译功能
 
@@ -100,6 +102,8 @@ def CheckAllMiao(text):
     """
     检查给定文本中的字符除标点符号外的字符是否都是"喵"
     """
+    if len(text) == 0:
+        return False
     # 遍历文本中的每个字符
     # 获取所有标点符号
     punctuations = string.punctuation + "。，、；：「」『』（）【】《》？！…—"
@@ -117,10 +121,15 @@ class MiaoMiaoTranslationApplication(GroupMessageApplication):
         self,
     ):
         applicationInfo = ApplicationInfo("猫猫翻译", "把群友全是喵喵的话翻译成中文。")
-        super().__init__(applicationInfo, 75, True, ApplicationCostType.NORMAL)
+        super().__init__(
+            applicationInfo, 75, True, ApplicationCostType.HIGH_TIME_HIGH_PERFORMANCE
+        )
 
     async def process(self, message: GroupMessageInfo):
         # await SayRaw(message.websocket, message.groupId, message.rawMessage["message"])
+        await miaomiaoTranslation(
+            message.websocket, message.senderId, message.groupId, message.messageId
+        )
         pass
 
     def judge(self, message: GroupMessageInfo) -> bool:

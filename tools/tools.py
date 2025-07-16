@@ -4,6 +4,7 @@ import string
 import time
 import base64
 import json
+import traceback
 
 
 # 获取本机局域网IP
@@ -135,7 +136,7 @@ def FindNum(text: str):
             return 100
         elif "十" in text:
             return 10
-        return 0
+        return -1
 
 
 # 获取系统状态
@@ -260,6 +261,14 @@ def getTemper():
     return float(matches[0]), float(matches[1]), float(matches[2])
 
 
+def GetNowHour() -> int:
+    return int(time.strftime("%H"))
+
+
+def GetNowMinute() -> int:
+    return int(time.strftime("%M"))
+
+
 def get_now_week() -> int:
     return int(time.strftime("%W"))
 
@@ -301,27 +310,46 @@ def check_all_miao(text):
     return True
 
 
+settingLock = False
+
+
 def load_setting(setting_name: str, default_value):
+    global settingLock
+    while settingLock:
+        time.sleep(0.001)
+    settingLock = True
     try:
         with open("setting.json", "r", encoding="utf-8") as file:
             setting = json.load(file)
+        settingLock = False
         return setting[setting_name]
     except Exception as e:
-        logging.error(f"读取配置文件出错: {e}")
-        dump_setting(setting_name, default_value)
-        return default_value
+        if e.args[0] == "Expecting value: line 1 column 1 (char 0)":
+            logging.error(f"配置文件为空,重建新配置文件;")
+        elif type(e) == KeyError:
+            logging.error(f"{setting_name},键值缺失,补全默认值{default_value}")
+        else:
+            logging.error(f"读取配置文件出错: {e},{traceback.format_exc()}")
+    settingLock = False
+    dump_setting(setting_name, default_value)
+    return default_value
 
 
 def dump_setting(setting_name: str, value):
+    global settingLock
+    while settingLock:
+        time.sleep(0.001)
+    settingLock = True
     try:
         with open("setting.json", "r", encoding="utf-8") as file:
             setting = json.load(file)
     except Exception as e:
-        logging.error(f"读取配置文件出错: {e}")
+        logging.error(f"读取配置文件出错,清空配置文件: {e},{traceback.format_exc()}")
         setting = {}
     setting[setting_name] = value
     with open("setting.json", "w", encoding="utf-8") as f:
         json.dump(setting, f, ensure_ascii=False, indent=4)
+    settingLock = False
 
 
 async def red_qq_avatar(websocket):

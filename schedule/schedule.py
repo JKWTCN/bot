@@ -3,7 +3,7 @@ import logging
 import traceback
 from data.message.message_info import MessageInfo
 import schedule.application_list as application_list
-from data.enumerates import MessageType, ApplicationCostType
+from data.enumerates import MessageType, ApplicationCostType, ApplicationType
 from schedule.consuming_high_time_queue import consuming_time_process_queue
 
 
@@ -29,7 +29,10 @@ class Schedule:
         for i in applicationList.get():
             try:
                 if i.judge(messageInfo):
-                    print(f"触发应用{i.applicationInfo.name}")
+                    if i.applicationType != ApplicationType.META:
+                        print(
+                            f"触发应用: {i.applicationInfo.name}: {i.applicationInfo.info}"
+                        )
                     from functools import partial
 
                     match i.applicationCostType:
@@ -45,7 +48,6 @@ class Schedule:
                     if not i.canContinue:
                         return
             except Exception as e:
-                logging.error(f"应用{i.applicationInfo.name}出错: {e},line:{traceback.extract_tb(e.__traceback__)[0][1]}")
-                print(
-                    f"应用{i.applicationInfo.name}出错: {e},line:{traceback.extract_tb(e.__traceback__)[0][1]}"
+                logging.error(
+                    f"应用{i.applicationInfo.name}出错:{e},{traceback.format_exc()}"
                 )

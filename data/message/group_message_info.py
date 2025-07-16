@@ -37,10 +37,10 @@ class GroupMessageInfo(MessageInfo):
                     case "file":
                         pass
                     case "reply":
-                        self.replyMessageId = i["data"]["id"]
+                        self.replyMessageId = int(i["data"]["id"])
                         self.readMessage += f"[回复:{i['data']['id']}]"
                     case "at":
-                        self.atList.append(i["data"]["qq"])
+                        self.atList.append(int(i["data"]["qq"]))
                         self.readMessage += f"[at:{i['data']['qq']}]"
                     case "text":
                         self.plainTextMessage += i["data"]["text"]

@@ -1,3 +1,4 @@
+import os
 import application.GroupConfigApplication
 import application.bilibili_parsing_application
 import application.carrot_market_application
@@ -173,4 +174,8 @@ def initApplications():
     RegisterApplication(classic_application.GroupMemberDecreaseApplication())
     # 随机卖萌应用
     RegisterApplication(classic_application.RandomCuteApplication())
+    
+    if os.path.exists("private/private.py"):
+        from private_application.private_application import initPrivateApplication
 
+        initPrivateApplication()

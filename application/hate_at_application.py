@@ -54,4 +54,7 @@ class HateAtApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """艾特提醒"""
-        return bool(set(message.atList) & set(get_config("hate_at_list", message.groupId)))  # type: ignore
+        for at_id in message.atList:
+            if at_id in get_config("hate_at_list", message.groupId):
+                return True
+        return False

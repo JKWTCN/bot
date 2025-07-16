@@ -28,7 +28,7 @@ async def process_queue():
             await coro
             # print(f"开始启动耗时任务类型{taskType}")
         except Exception as e:
-            logging.error(f"处理队列任务时出错: {e}")
+            logging.error(f"处理队列任务时出错: {e}", exc_info=True)
 
 
 # 创建耗时任务队列和处理线程

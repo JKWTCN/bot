@@ -21,6 +21,34 @@ def FindAllFiles(path: str):
     return s
 
 
+async def SendSingleMeme(websocket, groupId: int):
+    try:
+        all_file = FindAllFiles(load_setting("meme_path", ""))
+        logging.info("读取目录完毕")
+        payload = {
+            "action": "send_forward_msg",
+            "params": {
+                "message_type": "group",
+                "group_id": groupId,
+                "message": [],
+            },
+        }
+        dir = random.choice(all_file)
+        with open(dir, "rb") as image_file:
+            image_data = image_file.read()
+        image_base64 = base64.b64encode(image_data)
+        payload["params"]["message"].append(
+            {
+                "type": "image",
+                "data": {"file": "base64://" + image_base64.decode("utf-8")},
+            }
+        )
+        await websocket.send(json.dumps(payload))
+    except Exception as e:
+        logging.error(e)
+        await SayGroup(websocket, groupId, f"图片发送失败了喵。")
+
+
 async def SendMemeMergeForwarding(websocket, group_id: int, nums: int):
     """发送随机梗图合并转发消息"""
     try:
@@ -76,12 +104,15 @@ async def SendMemeMergeForwarding(websocket, group_id: int, nums: int):
         await SayGroup(websocket, group_id, f"图片发送失败了喵。")
 
 
+from tools.tools import HasAllKeyWords, HasKeyWords
+
+
 class RadomMemeApplication(GroupMessageApplication):
     def __init__(
         self,
     ):
         applicationInfo = ApplicationInfo("随机梗图功能", "触发:梗图X连")
-        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 10, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo):
         num = FindNum(message.plainTextMessage)
@@ -94,6 +125,8 @@ class RadomMemeApplication(GroupMessageApplication):
                 message.groupId,
                 "最大50连喵！",
             )
+        elif num == -1:
+            await SendSingleMeme(message.websocket, message.groupId)
         else:
             nums = num
             await SendMemeMergeForwarding(
@@ -109,6 +142,6 @@ class RadomMemeApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断消息是否符合触发条件"""
-        if "梗图" in message.plainTextMessage and "连" in message.plainTextMessage:
-            return True
-        return False
+        return HasAllKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可"), "梗图"]
+        )

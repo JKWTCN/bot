@@ -14,6 +14,8 @@ from function.database_group import GetGroupName
 from tools.tools import load_setting
 
 from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
+
+
 async def chat(websocket, user_id: int, group_id: int, message_id: int, text: str):
     """ai聊天功能回复
     Args:
@@ -106,6 +108,9 @@ class GroupChatApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """百分之5概率触发回复或者带名字回复"""
-        if load_setting("bot_name", "乐可") in message.plainTextMessage or random.random() < 0.05:
+        if (
+            load_setting("bot_name", "乐可") in message.plainTextMessage
+            or random.random() < 0.05
+        ):
             return True
         return False

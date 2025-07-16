@@ -85,7 +85,7 @@ class CheckInApplication(GroupMessageApplication):
 
     def __init__(self):
         applicationInfo = ApplicationInfo("签到应用", "签到功能")
-        super().__init__(applicationInfo, 65, True, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 65, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo):
         """处理消息"""
@@ -111,6 +111,8 @@ from function.database_group import GetGroupName
 from function.group_operation import kick_member
 
 from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
+
+
 # 发送获取群名单
 def get_group_list(websocket):
     url = f"http://localhost:{GetNCHSPort()}/get_group_list"
@@ -183,7 +185,6 @@ class GreatPurgeApplication(MetaMessageApplication):
             print("开始更新群列表")
             logging.info("开始更新群列表")
             for group in data:
-                logging.info(f'正在更新群:{group["group_name"]}({group["group_id"]})')
                 update_group_info(
                     group["group_id"],
                     group["group_name"],
@@ -197,6 +198,11 @@ class GreatPurgeApplication(MetaMessageApplication):
                     new_data = update_group_member_list(
                         message.websocket, group["group_id"]
                     )
+                    if new_data is None:
+                        logging.error(
+                            f"更新群成员列表失败,群:{group['group_name']}({group['group_id']})"
+                        )
+                        continue
                     for group_member in new_data:
                         user = Group_member()
                         user.init_by_dict(group_member)
@@ -254,16 +260,17 @@ class GreatPurgeApplication(MetaMessageApplication):
                                     await kick_member(
                                         message.websocket, user.user_id, user.group_id
                                     )
-
-                _setting = load_setting("last_update_time", 0)
-                _setting = time.time()
-                dump_setting("last_update_time", _setting)
-                print("更新全部群列表完毕")
-                logging.info("更新全部群列表完毕")
+                logging.info(f'更新群:{group["group_name"]}({group["group_id"]})完成。')
+            dump_setting("last_update_time", time.time())
+            print("更新全部群列表完毕")
+            logging.info("更新全部群列表完毕")
 
     def judge(self, message: MetaMessageInfo) -> bool:
         """判断是否触发应用"""
-        return message.metaEventType == MetaEventType.HEART_BEAT
+        return (
+            message.metaEventType == MetaEventType.HEART_BEAT
+            and time.time() - load_setting("last_update_time", 0) > 300
+        )
 
 
 # 管理员随机派发水群积分应用
@@ -496,7 +503,7 @@ class BoringFeatureCollectionManageApplication(GroupMessageApplication):
         applicationInfo = ApplicationInfo(
             "无聊功能管理合集", "提供一些无聊的管理功能,哈气、装、打、GAY等"
         )
-        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo):
         raw_message = message.plainTextMessage
@@ -595,14 +602,29 @@ class BoringFeatureCollectionManageApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
-        return len(message.atList) != 0
+        return len(message.atList) != 0 and HasKeyWords(
+            message.plainTextMessage,
+            [
+                "你是GAY",
+                "你是gay",
+                "你不是GAY",
+                "你不是gay",
+                "不要哈气",
+                "哈气",
+                "不要装",
+                "可以装",
+                "打他",
+                "打它",
+                "打她",
+            ],
+        )
 
 
 class BoringFeatureCollectionApplication(GroupMessageApplication):
     """无聊功能触发合集(除艾特惩罚)"""
 
     def __init__(self):
-        applicationInfo = ApplicationInfo("无聊功能合集", "提供一些无聊的功能")
+        applicationInfo = ApplicationInfo("无聊功能触发合集", "无聊功能触发合集")
         super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo):
@@ -620,7 +642,11 @@ class BoringFeatureCollectionApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
-        return True
+        return (
+            message.senderId in load_setting("boring", [])
+            or message.senderId in load_setting("huffing", [])
+            or message.senderId in load_setting("fly", [])
+        )
 
 
 class AtPunishApplication(MetaMessageApplication):
@@ -642,7 +668,7 @@ class BeTeasedApplication(GroupMessageApplication):
         applicationInfo = ApplicationInfo(
             "被欺负的回应", "当有人欺负乐可时,乐可会回应", False
         )
-        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo):
         path = "res/robot.gif"
@@ -804,7 +830,7 @@ class AtManagementApplication(GroupMessageApplication):
 
     def __init__(self):
         applicationInfo = ApplicationInfo("艾特管理功能大合集", "提供一些艾特管理功能")
-        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo):
         # 处理消息
@@ -994,7 +1020,33 @@ class AtManagementApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
-        return True
+        return len(message.atList) > 0 and HasKeyWords(
+            message.plainTextMessage,
+            [
+                "解除禁言",
+                "禁言",
+                "说再见",
+                "晋升",
+                "惩罚取消",
+                "取消惩罚",
+                "送你",
+                "V你",
+                "v你",
+                "你是GAY",
+                "你是gay",
+                "你不是GAY",
+                "你不是gay",
+                "不要哈气",
+                "哈气",
+                "不要装",
+                "可以装",
+                "打他",
+                "打它",
+                "打她",
+                "通过验证",
+                "验证通过",
+            ],
+        )
 
 
 from tools.tools import timestamp_to_date
@@ -1361,7 +1413,7 @@ from function.group_operation import GetGroupMessageSenderId
 class SpicalReplyApplication(GroupMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo("特殊回复应用", "特殊回复应用", False)
-        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
         # 处理消息
@@ -1412,7 +1464,7 @@ class EssenceAboutGroupMessageApplication(GroupMessageApplication):
             "加精/移除加精应用",
             f'引用回复消息,说{load_setting("bot_name","乐可")},加精/移除加精',
         )
-        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
         # 处理消息
@@ -1460,7 +1512,7 @@ class WhoLookYouApplication(GroupMessageApplication):
             "你们看到他了嘛?",
             f"引用回复消息,说你们看到他了嘛?",
         )
-        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
         # 处理消息
@@ -1652,7 +1704,7 @@ async def cute2(websocket, group_id: int):
 class LeKeNotKeleApplication(GroupMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo("乐可不是可乐", "乐可不是可乐", False)
-        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
         # 处理消息
@@ -1669,8 +1721,8 @@ from function.say import SayImgReply
 # 早安应用
 class GoodMorningApplication(GroupMessageApplication):
     def __init__(self):
-        applicationInfo = ApplicationInfo("乐可不是可乐", "乐可不是可乐", False)
-        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+        applicationInfo = ApplicationInfo("早安应用", "早安应用", False)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
         # 处理消息
@@ -1739,7 +1791,7 @@ async def return_function(websocket, user_id: int, group_id: int):
 class FeaturesMenuApplication(GroupMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo("功能菜单", "功能菜单", False)
-        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
         # 处理消息
@@ -1786,7 +1838,7 @@ async def daily_word(websocket, user_id: int, group_id: int):
 class EveryDayOnePassageApplication(GroupMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo("每日一言", "每日一言")
-        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
         # 处理消息
@@ -1806,7 +1858,7 @@ class EveryDayOnePassageApplication(GroupMessageApplication):
 class BlacklistQueryApplication(GroupMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo("黑名单查询", "黑名单查询")
-        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
         # 处理消息
@@ -1845,7 +1897,7 @@ class BlacklistQueryApplication(GroupMessageApplication):
 class TodayEatWhatApplication(GroupMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo("今天吃什么", "今天吃什么")
-        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
         # 处理消息
@@ -1904,7 +1956,7 @@ async def WhoAskPants(websocket, group_id: int):
 class GroupFriendBadTasteApplication(GroupMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo("群友的恶趣味", "群友的恶趣味", False)
-        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
         # 处理消息
@@ -2310,7 +2362,7 @@ from tools.tools import FindNum
 class KohlrabiApplication(GroupMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo("大头菜贸易", "大头菜贸易")
-        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
         # 处理消息
@@ -2362,7 +2414,14 @@ class KohlrabiApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
-        return HasKeyWords(message.plainTextMessage, [[load_setting("bot_name", "乐可")]]) and (HasKeyWords(message.plainTextMessage, ["买入"]) or HasAllKeyWords(message.plainTextMessage, ["大头菜", "价格"]) or HasKeyWords(message.plainTextMessage, ["梭哈"] or HasKeyWords(message.plainTextMessage, ["卖出", "全部"])))  # type: ignore
+        return HasKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可")]
+        ) and (
+            HasKeyWords(message.plainTextMessage, ["买入"])
+            or HasAllKeyWords(message.plainTextMessage, ["大头菜", "价格"])
+            or HasKeyWords(message.plainTextMessage, ["梭哈"])
+            or HasKeyWords(message.plainTextMessage, ["卖出", "全部"])
+        )
 
 
 # 午时已到
@@ -2667,7 +2726,7 @@ async def russian(websocket, message: str, user_id: int, group_id: int):
 class LunchTimeApplication(GroupMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo("午时已到", "午时已到")
-        super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
         # 处理消息
@@ -3081,7 +3140,7 @@ class DrawLotteryApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
-        return HasKeyWords(
+        return HasAllKeyWords(
             message.plainTextMessage, [load_setting("bot_name", "乐可"), "抽签"]
         )
 
@@ -3102,7 +3161,7 @@ class PointHelpApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
-        return HasKeyWords(
+        return HasAllKeyWords(
             message.plainTextMessage, [load_setting("bot_name", "乐可"), "积分帮助"]
         )
 

@@ -1,7 +1,7 @@
 import sqlite3
 
 
-def GetGroupName(group_id: int) -> int:
+def GetGroupName(group_id: int) -> str:
     """获取群聊名称
 
     Args:
@@ -18,9 +18,9 @@ def GetGroupName(group_id: int) -> int:
     )
     data = cur.fetchall()
     if len(data) == 0:
-        return group_id
+        return str(group_id)
     else:
-        return int(data[0][0])
+        return str(data[0][0])
 
 
 def GetAllGroupMemberId(groupId: int) -> list:
@@ -41,6 +41,7 @@ def GetAllGroupMemberId(groupId: int) -> list:
     data = cur.fetchall()
     conn.close()
     return [item[0] for item in data]
+
 
 def GetAllGroupId() -> list:
     """获取所有群聊ID
