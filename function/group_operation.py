@@ -40,12 +40,12 @@ async def DeleteEssenceMsg(websocket, message_id: int):
     }
     await websocket.send(json.dumps(payload))
 
-
+from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
 def GetGroupMessageSenderId(messageId: int) -> int:
     payload = {
         "message_id": messageId,
     }
-    response = requests.post("http://localhost:27433/get_msg", json=payload)
+    response = requests.post(f"http://localhost:{GetNCHSPort()}/get_msg", json=payload)
     data = response.json()
     return data["sender"]["user_id"]
 

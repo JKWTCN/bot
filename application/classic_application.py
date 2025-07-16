@@ -110,10 +110,10 @@ from function.GroupConfig import get_config, manage_config
 from function.database_group import GetGroupName
 from function.group_operation import kick_member
 
-
+from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
 # 发送获取群名单
 def get_group_list(websocket):
-    url = "http://localhost:27433/get_group_list"
+    url = f"http://localhost:{GetNCHSPort()}/get_group_list"
     resp = requests.post(url)
     data = resp.json()
     return data["data"]
@@ -123,7 +123,7 @@ def get_group_list(websocket):
 def update_group_member_list(websocket, group_id: int):
     import json
 
-    url = "http://localhost:27433/get_group_member_list"
+    url = f"http://localhost:{GetNCHSPort()}/get_group_member_list"
     payload = {"group_id": group_id}
     resp = requests.post(url)
     data = resp.json()

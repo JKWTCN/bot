@@ -11,7 +11,7 @@ from function.say import SayRaw, ReplySay
 from function.database_message import GetChatContext
 from function.database_group import GetGroupName
 
-
+from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
 async def miaomiaoTranslation(websocket, user_id: int, group_id: int, message_id: int):
     """喵喵翻译功能
 
@@ -21,8 +21,7 @@ async def miaomiaoTranslation(websocket, user_id: int, group_id: int, message_id
         group_id (int): _description_
         message_id (int): _description_
     """
-    port = "11434"
-    url = f"http://localhost:{port}/api/chat"
+    url = f"http://localhost:{GetOllamaPort()}/api/chat"
     model = "qwen3:8b"
     headers = {"Content-Type": "application/json"}
 

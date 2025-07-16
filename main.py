@@ -75,10 +75,12 @@ async def pro(websocket):
 
 schedule = Schedule()
 
+from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
+
 
 async def main():
     initApplications()
-    async with serve(pro, "localhost", 27434) as server:
+    async with serve(pro, "localhost", GetNCWCPort()) as server:
         await server.serve_forever()
 
 

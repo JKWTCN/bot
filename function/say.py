@@ -33,6 +33,9 @@ async def SayImgReply(
     await websocket.send(json.dumps(payload))
 
 
+from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
+
+
 def SayGroupReturnMessageId(groupId: int, text: str):
     """发送群消息并返回消息ID
 
@@ -47,7 +50,9 @@ def SayGroupReturnMessageId(groupId: int, text: str):
         "group_id": groupId,
         "message": [{"type": "text", "data": {"text": text}}],
     }
-    response = requests.post("http://localhost:27433/send_group_msg", json=payload)
+    response = requests.post(
+        f"http://localhost:{GetNCHSPort()}/send_group_msg", json=payload
+    )
     data = response.json()
     return data["data"]["message_id"]
 
@@ -198,8 +203,7 @@ async def delete_msg(websocket, message_id: int):
 
 def chatNoContext(texts):
     """只处理单句"""
-    port = "11434"
-    url = f"http://localhost:{port}/api/chat"
+    url = f"http://localhost:{GetOllamaPort()}/api/chat"
     model = "qwen3:8b"
     headers = {"Content-Type": "application/json"}
 

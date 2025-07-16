@@ -13,7 +13,7 @@ from function.database_message import GetChatContext
 from function.database_group import GetGroupName
 from tools.tools import load_setting
 
-
+from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
 async def chat(websocket, user_id: int, group_id: int, message_id: int, text: str):
     """ai聊天功能回复
     Args:
@@ -23,8 +23,7 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
         message_id (int): 消息id
         text (str): 传入信息,在ai回复后追加在后面
     """
-    port = "11434"
-    url = f"http://localhost:{port}/api/chat"
+    url = f"http://localhost:{GetOllamaPort()}/api/chat"
     model = "qwen3:8b"  # 模型名称
     headers = {"Content-Type": "application/json"}
 

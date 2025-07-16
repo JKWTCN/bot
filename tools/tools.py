@@ -264,13 +264,17 @@ def get_now_week() -> int:
     return int(time.strftime("%W"))
 
 
-def GetNowDay() -> int:
-    """获取当前日期的天数"""
-    return int(time.strftime("%d"))
-
-
 def GetLogTime() -> int:
     return int(time.strftime("%Y%m%d"))
+
+
+def GetNowDay() -> int:
+    """获取当前日期的天数"""
+    nowDay = int(time.strftime("%Y%m%d"))
+    if nowDay <= 250716:
+        return int(time.strftime("%d"))
+    else:
+        return nowDay
 
 
 def GetNowMonth() -> int:
@@ -404,4 +408,22 @@ def GetDirSizeByUnit(path="."):
                 return (round(MBX / 1024, 2), "GB")
 
 
-# ShowSystemInfoTableByBase64()
+def GetNCWCPort():
+    """
+    获取NapCat WClient端口
+    """
+    return load_setting("napcat_wclient_port", 27431)
+
+
+def GetNCHSPort():
+    """
+    获取NapCat HServer端口
+    """
+    return load_setting("napcat_hserver_port", 27433)
+
+
+def GetOllamaPort():
+    """
+    获取Ollama端口
+    """
+    return load_setting("ollama_port", 11434)

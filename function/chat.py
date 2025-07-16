@@ -2,11 +2,12 @@ import logging
 import re
 import requests
 
+from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
+
 
 def chatNoContext(texts):
     """只处理单句"""
-    port = "11434"
-    url = f"http://localhost:{port}/api/chat"
+    url = f"http://localhost:{GetOllamaPort()}/api/chat"
     model = "qwen3:8b"
     headers = {"Content-Type": "application/json"}
 
@@ -67,8 +68,7 @@ def chatNoContext(texts):
 
 def PrivateChatNoContext(texts):
     """只处理单句"""
-    port = "11434"
-    url = f"http://localhost:{port}/api/chat"
+    url = f"http://localhost:{GetOllamaPort()}/api/chat"
     model = "qwen3:8b"
     headers = {"Content-Type": "application/json"}
 
