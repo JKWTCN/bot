@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import traceback
 from data.message.message_info import MessageInfo
 import schedule.application_list as application_list
@@ -44,6 +45,7 @@ class Schedule:
                     if not i.canContinue:
                         return
             except Exception as e:
+                logging.error(f"应用{i.applicationInfo.name}出错: {e},line:{traceback.extract_tb(e.__traceback__)[0][1]}")
                 print(
                     f"应用{i.applicationInfo.name}出错: {e},line:{traceback.extract_tb(e.__traceback__)[0][1]}"
                 )

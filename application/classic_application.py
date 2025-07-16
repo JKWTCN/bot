@@ -2759,8 +2759,6 @@ class MemeStatisticsApplication(GroupMessageApplication):
 
 
 # todo 个人统计应用
-
-
 class PersonalStatisticsApplication(GroupMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo("个人统计", "统计个人库存")
@@ -3198,7 +3196,7 @@ class DefenseApplication(GroupMessageApplication):
 from tools.tools import GetSleepSeconds
 
 
-class IWantToSleep(GroupMessageApplication):
+class IWantToSleepApplication(GroupMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo("反击", "反击", False)
         super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
@@ -3673,47 +3671,47 @@ class LuckDogApplication(GroupMessageApplication):
         ) and HasKeyWords(message.plainTextMessage, ["运势"])
 
 
-# 签到应用
-async def DailyCheckIn(websocket, user_id: int, group_id: int):
-    sender_name = get_user_name(user_id, group_id)
-    result = check_in(user_id, group_id)
-    if result[0] == 1:
-        payload = {
-            "action": "send_msg_async",
-            "params": {
-                "group_id": group_id,
-                "message": "{},签到成功,您当前的积分为:{}。".format(
-                    sender_name, result[1]
-                ),
-            },
-        }
-    else:
-        payload = {
-            "action": "send_msg_async",
-            "params": {
-                "group_id": group_id,
-                "message": "{},你今天已经签过到了,明天再来吧!您当前的积分为:{}。".format(
-                    sender_name, result[1]
-                ),
-            },
-        }
-    await websocket.send(json.dumps(payload))
+# # 签到应用
+# async def DailyCheckIn(websocket, user_id: int, group_id: int):
+#     sender_name = get_user_name(user_id, group_id)
+#     result = check_in(user_id, group_id)
+#     if result[0] == 1:
+#         payload = {
+#             "action": "send_msg_async",
+#             "params": {
+#                 "group_id": group_id,
+#                 "message": "{},签到成功,您当前的积分为:{}。".format(
+#                     sender_name, result[1]
+#                 ),
+#             },
+#         }
+#     else:
+#         payload = {
+#             "action": "send_msg_async",
+#             "params": {
+#                 "group_id": group_id,
+#                 "message": "{},你今天已经签过到了,明天再来吧!您当前的积分为:{}。".format(
+#                     sender_name, result[1]
+#                 ),
+#             },
+#         }
+#     await websocket.send(json.dumps(payload))
 
 
-class DailyCheckInApplication(GroupMessageApplication):
-    def __init__(self):
-        applicationInfo = ApplicationInfo("签到", "签到")
-        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+# class DailyCheckInApplication(GroupMessageApplication):
+#     def __init__(self):
+#         applicationInfo = ApplicationInfo("签到", "签到")
+#         super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
-    async def process(self, message: GroupMessageInfo) -> None:
-        # 处理消息
-        await DailyCheckIn(message.websocket, message.senderId, message.groupId)
+#     async def process(self, message: GroupMessageInfo) -> None:
+#         # 处理消息
+#         await DailyCheckIn(message.websocket, message.senderId, message.groupId)
 
-    def judge(self, message: GroupMessageInfo) -> bool:
-        """判断是否触发应用"""
-        return HasKeyWords(
-            message.plainTextMessage, [load_setting("bot_name", "乐可")]
-        ) and HasKeyWords(message.plainTextMessage, ["签到"])
+#     def judge(self, message: GroupMessageInfo) -> bool:
+#         """判断是否触发应用"""
+#         return HasKeyWords(
+#             message.plainTextMessage, [load_setting("bot_name", "乐可")]
+#         ) and HasKeyWords(message.plainTextMessage, ["签到"])
 
 
 # 疯狂星期四应用
@@ -4300,7 +4298,7 @@ def GetLocalIP():
     return ip_addrs
 
 
-class GetSystemIPApplcation(GroupMessageApplication):
+class GetSystemIPApplication(GroupMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo("获取IP应用", "获取IP应用")
         super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
@@ -4321,7 +4319,7 @@ class GetSystemIPApplcation(GroupMessageApplication):
 
 
 # 讲冷笑话应用
-class JokeApplcation(GroupMessageApplication):
+class JokeApplication(GroupMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo("讲冷笑话应用", "讲冷笑话应用")
         super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
