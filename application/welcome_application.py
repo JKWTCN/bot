@@ -98,7 +98,9 @@ def create_vcode(user_id: int, group_id: int):
     chr_all = string.ascii_uppercase + string.digits
     chr_4 = "".join(random.sample(chr_all, 4))
     image = ImageCaptcha().generate_image(chr_4)
-    image.save("./vcode/{}_{}.jpg".format(user_id, group_id))
+    if not os.path.exists("vcode"):
+        os.makedirs("vcode")
+    image.save("vcode/{}_{}.jpg".format(user_id, group_id))
     cur.execute(
         "INSERT INTO vcode VALUES(?,?,?,?,?)",
         (
@@ -294,7 +296,7 @@ async def welcome_verify(websocket, user_id: int, group_id: int):
     (mod, times) = find_vcode(user_id, group_id)
     if not mod:
         create_vcode(user_id, group_id)
-    with open("./cache/vcode/{}_{}.jpg".format(user_id, group_id), "rb") as image_file:
+    with open("./vcode/{}_{}.jpg".format(user_id, group_id), "rb") as image_file:
         image_data = image_file.read()
     image_base64 = base64.b64encode(image_data)
 
@@ -346,7 +348,7 @@ class WelcomeApplication(NoticeMessageApplication):
         super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
 
     async def process(self, message: NoticeMessageInfo):
-        if BotIsAdmin(message.senderId):
+        if BotIsAdmin(message.groupId):
             await welcome_verify(message.websocket, message.senderId, message.groupId)
         elif message.groupId == load_setting("main_group_id", 0):
             await welcome_new(message.websocket, message.senderId, message.groupId)
@@ -384,7 +386,7 @@ class RefreshVcodeApplication(MetaMessageApplication):
 
     async def process(self, message: MetaMessageInfo):
         """处理元消息"""
-        for i in os.listdir("./cache/vcode"):
+        for i in os.listdir("./vcode"):
             user_id = int(i.split(".")[0].split("_")[0])
             group_id = int(i.split(".")[0].split("_")[1])
             if check_validation_timeout(
@@ -427,7 +429,7 @@ class VerifyApplication(GroupMessageApplication):
         applicationInfo = ApplicationInfo(
             "入群验证处理", "当为管理员的时候,新群友的入群验证处理"
         )
-        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 100, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo):
         """处理验证消息"""
@@ -435,9 +437,9 @@ class VerifyApplication(GroupMessageApplication):
         group_id = message.groupId
         websocket = message.websocket
         sender_name = get_user_name(user_id, group_id)
-        if "{}_{}.jpg".format(user_id, group_id) in os.listdir("./cache/vcode"):
+        if "{}_{}.jpg".format(user_id, group_id) in os.listdir("./vcode"):
             if "看不清" in message.plainTextMessage:
-                if "{}_{}.jpg".format(user_id, group_id) in os.listdir("./cache/vcode"):
+                if "{}_{}.jpg".format(user_id, group_id) in os.listdir("./vcode"):
                     update_vcode(user_id, group_id)
                     await welcome_verify(websocket, user_id, group_id)
 
@@ -477,7 +479,7 @@ class VerifyApplication(GroupMessageApplication):
         """判断是否触发应用"""
         user_id = message.senderId
         group_id = message.groupId
-        return "{}_{}.jpg".format(user_id, group_id) in os.listdir("./cache/vcode")
+        return "{}_{}.jpg".format(user_id, group_id) in os.listdir("vcode")
 
 
 from tools.tools import HasKeyWords
@@ -530,6 +532,6 @@ class ManualVerifyApplication(GroupMessageApplication):
         user_id = message.senderId
         group_id = message.groupId
         for user_id in message.atList:
-            if "{}_{}.jpg".format(user_id, group_id) in os.listdir("./cache/vcode"):
+            if "{}_{}.jpg".format(user_id, group_id) in os.listdir("./vcode"):
                 return True
         return False

@@ -40,7 +40,10 @@ async def DeleteEssenceMsg(websocket, message_id: int):
     }
     await websocket.send(json.dumps(payload))
 
+
 from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
+
+
 def GetGroupMessageSenderId(messageId: int) -> int:
     payload = {
         "message_id": messageId,
@@ -52,17 +55,16 @@ def GetGroupMessageSenderId(messageId: int) -> int:
 
 # 踢人
 async def kick_member(websocket, user_id: int, group_id: int):
-    # todo 测试完成后恢复此函数
-    # payload = {
-    #     "action": "set_group_kick",
-    #     "params": {
-    #         "user_id": user_id,
-    #         "group_id": group_id,
-    #     },
-    # }
-    # # print(payload)
-    # delete_user_info(user_id, group_id)
-    # await websocket.send(json.dumps(payload))
+    payload = {
+        "action": "set_group_kick",
+        "params": {
+            "user_id": user_id,
+            "group_id": group_id,
+        },
+    }
+    # print(payload)
+    delete_user_info(user_id, group_id)
+    await websocket.send(json.dumps(payload))
     logging.info(f"踢人: {user_id} from {group_id}")
     pass
 
