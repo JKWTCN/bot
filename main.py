@@ -1,3 +1,6 @@
+from datetime import datetime
+import logging
+import os
 import traceback
 import json
 import asyncio
@@ -78,7 +81,34 @@ schedule = Schedule()
 from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
 
 
+def setup_logging():
+    # 获取当前日期
+    now = datetime.now()
+
+    # 构建日志路径
+    log_dir = os.path.join(
+        "log", now.strftime("%Y"), now.strftime("%m")  # 四位年份  # 两位月份
+    )
+
+    # 创建目录（如果不存在）
+    os.makedirs(log_dir, exist_ok=True)
+
+    # 日志文件名（日期.log）
+    log_file = os.path.join(log_dir, f"{now.strftime('%d')}.log")
+
+    # 配置logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[
+            logging.FileHandler(log_file),
+            logging.StreamHandler(),  # 同时输出到控制台
+        ],
+    )
+
+
 async def main():
+    setup_logging()
     initApplications()
     async with serve(pro, "localhost", GetNCWCPort()) as server:
         await server.serve_forever()
