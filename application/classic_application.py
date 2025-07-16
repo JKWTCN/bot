@@ -4569,7 +4569,10 @@ class PokeCuteApplication(NoticeMessageApplication):
 
     def judge(self, message: NoticeMessageInfo) -> bool:
         """判断是否触发应用"""
-        return message.noticeEventType == NoticeType.GROUP_POKE
+        return (
+            message.noticeEventType == NoticeType.GROUP_POKE
+            and message.target_id == load_setting("bot_id", 0)
+        )
 
 
 from function.group_setting import LoadGroupSetting, DumpGroupSetting
