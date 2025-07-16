@@ -4481,7 +4481,9 @@ class SendLogApplication(PrivateMessageApplication):
 # Notice应用
 from data.application.notice_application import NoticeMessageApplication
 from data.message.notice_message_info import NoticeMessageInfo
-from data.enumerates import  NoticeType
+from data.enumerates import NoticeType
+
+
 # 拍一拍卖萌应用
 class PokeCuteApplication(NoticeMessageApplication):
     def __init__(self):
@@ -4489,7 +4491,6 @@ class PokeCuteApplication(NoticeMessageApplication):
         super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: NoticeMessageInfo) -> None:
-        # 在这里实现发送日志的逻辑
         list = ["res/cute3.gif", "res/cute4.gif", "res/cute5.gif", "res/cute6.gif"]
         path = random.choice(list)
         with open(path, "rb") as image_file:
@@ -4511,16 +4512,57 @@ class PokeCuteApplication(NoticeMessageApplication):
 
     def judge(self, message: NoticeMessageInfo) -> bool:
         """判断是否触发应用"""
-        return message.noticeEventType==NoticeType.GROUP_POKE and message.target_id==load_setting("bot_id", 0) 
+        return message.noticeEventType == NoticeType.GROUP_POKE
+
+
+from function.group_setting import LoadGroupSetting, DumpGroupSetting
+
+
+# 有人离开应用
+class GroupMemberDecreaseApplication(NoticeMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("离开欢送应用", "离开欢送应用", False)
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: NoticeMessageInfo) -> None:
+        sender_name = get_user_name(message.senderId, message.groupId)
+        group_name = GetGroupName(message.groupId)
+        # add_unwelcome(user_id, message["time"], group_id)
+        text = [
+            "十个小兵人，外出去吃饭；\n一个被呛死，还剩九个人。\n九个小兵人，熬夜熬得深；\n一个睡过头，还剩八个人。\n八个小兵人，动身去德文；\n一个要留下，还剩七个人。\n七个小兵人，一起去砍柴；\n一个砍自己，还剩六个人。\n六个小兵人，无聊玩蜂箱；\n一个被蛰死，还剩五个人。\n五个小兵人，喜欢学法律；\n一个当法官，还剩四个人。\n四个小兵人，下海去逞能；\n一个葬鱼腹，还剩三个人。\n三个小兵人，进了动物园；\n一个遭熊袭，还剩两个人。\n两个小兵人，外出晒太阳；\n一个被晒焦，还剩一个人。\n这个小兵人，孤单又影只；\n投缳上了吊，一个也没剩。",
+            "天要下雨，娘要嫁人，由他去吧。",
+            "祝他成功。",
+        ]
+        await SayGroup(
+            message.websocket,
+            message.groupId,
+            "{}({})离开了群{}({})。\n{}".format(
+                sender_name,
+                message.senderId,
+                group_name,
+                message.groupId,
+                random.choice(text),
+            ),
+        )
+        logging.info(
+            f"{sender_name}({message.senderId})离开了群{group_name}({message.groupId})"
+        )
+
+    def judge(self, message: NoticeMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return (
+            message.noticeEventType == NoticeType.GROUP_MEMBER_DELETE
+            and LoadGroupSetting("group_decrease_reminder", message.groupId, False)
+        )
 
 
 # 随机卖萌应用
 from function.database_group import GetAllGroupId
+
+
 class RandomCuteApplication(MetaMessageApplication):
     def __init__(self):
-        applicationInfo = ApplicationInfo(
-            "随机卖萌", "随机卖萌", False
-        )
+        applicationInfo = ApplicationInfo("随机卖萌", "随机卖萌", False)
         super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
 
     async def process(self, message: MetaMessageInfo):
@@ -4530,7 +4572,7 @@ class RandomCuteApplication(MetaMessageApplication):
         with open(path, "rb") as image_file:
             image_data = image_file.read()
         image_base64 = base64.b64encode(image_data)
-        groupId=random.choice(GetAllGroupId())
+        groupId = random.choice(GetAllGroupId())
         payload = {
             "action": "send_msg_async",
             "params": {
@@ -4544,9 +4586,10 @@ class RandomCuteApplication(MetaMessageApplication):
             },
         }
         await message.websocket.send(json.dumps(payload))
-        
+
     def judge(self, message: MetaMessageInfo) -> bool:
         """判断是否触发应用"""
         return (
-            message.metaEventType == MetaEventType.HEART_BEAT and random.random() < 0.001  # 每次心跳有0.1%的概率触发
+            message.metaEventType == MetaEventType.HEART_BEAT
+            and random.random() < 0.001  # 每次心跳有0.1%的概率触发
         )

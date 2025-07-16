@@ -37,6 +37,8 @@ class NoticeMessageInfo(MessageInfo):
                         self.noticeEventType = NoticeType.GROUP_LUCK_DOG
                     case "honor":
                         self.noticeEventType = NoticeType.GROUP_HONOR_CHANGE
+                    case "leave":
+                        self.noticeEventType = NoticeType.GROUP_MEMBER_DELETE
                     case _:
                         self.noticeEventType = NoticeType.UNKNOW
             case _:
