@@ -582,7 +582,7 @@ from tools.tools import FindNum
 class PointApplication(GroupMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo("积分抽奖和群低保", "参与积分抽奖")
-        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+        super().__init__(applicationInfo, 10, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
         # 处理消息
@@ -592,7 +592,7 @@ class PointApplication(GroupMessageApplication):
                 message.senderId,
                 message.groupId,
             )
-        elif HasAllKeyWords(message.plainTextMessage, ["抽奖", "连"]):
+        elif HasAllKeyWords(message.plainTextMessage, ["抽", "连"]):
             num = FindNum(message.plainTextMessage)
             if num > 1000:
                 num = 1000
@@ -620,5 +620,5 @@ class PointApplication(GroupMessageApplication):
             message.plainTextMessage, [load_setting("bot_name", "乐可")]
         ) and (
             HasAllKeyWords(message.plainTextMessage, ["低保"])
-            or HasAllKeyWords(message.plainTextMessage, ["抽奖", "连"])
+            or HasAllKeyWords(message.plainTextMessage, ["抽", "连"])
         )

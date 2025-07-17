@@ -284,11 +284,7 @@ def GetLogTime() -> int:
 
 def GetNowDay() -> int:
     """获取当前日期的天数"""
-    nowDay = int(time.strftime("%Y%m%d"))
-    if nowDay <= 250716:
-        return int(time.strftime("%d"))
-    else:
-        return nowDay
+    return int(time.strftime("%Y%m%d"))
 
 
 def GetNowMonth() -> int:

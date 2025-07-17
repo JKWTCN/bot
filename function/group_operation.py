@@ -49,8 +49,9 @@ def GetGroupMessageSenderId(messageId: int) -> int:
         "message_id": messageId,
     }
     response = requests.post(f"http://localhost:{GetNCHSPort()}/get_msg", json=payload)
+    print(response.text)
     data = response.json()
-    return data["sender"]["user_id"]
+    return data["data"]["sender"]["user_id"]
 
 
 # 踢人

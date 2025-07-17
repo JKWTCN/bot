@@ -175,6 +175,11 @@ def initApplications():
     # 随机卖萌应用
     RegisterApplication(classic_application.RandomCuteApplication())
 
+    from application.point_application import PointApplication
+
+    # 注册积分抽奖应用
+    RegisterApplication(PointApplication())
+
     from application.debug_application import DebugApplication
 
     # 注册调试应用

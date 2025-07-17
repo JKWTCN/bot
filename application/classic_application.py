@@ -4015,16 +4015,19 @@ class TimelyCheckTanosApplication(MetaMessageApplication):
                     i["groupId"],
                     f"{load_setting("bot_name", "乐可")}不是紫薯精喵。",
                 )
-                del i
+                thanos_queue.remove(i)
         if len(thanos_queue) == 0:
             await set_qq_avatar(message.websocket, "res/leike.jpg")
+            dump_setting("is_thanos", False)
         dump_setting("thanos_queue", thanos_queue)
+        
 
     def judge(self, message: MetaMessageInfo) -> bool:
         """判断是否触发应用"""
         return (
             len(load_setting("thanos_queue", [])) > 0
             and message.metaEventType == MetaEventType.HEART_BEAT
+            and load_setting("is_thanos", False)
         )
 
 
@@ -4053,9 +4056,12 @@ class ThanosApplication(GroupMessageApplication):
                     await kick_member(message.websocket, i, message.groupId)
             for i in thanos_queue:
                 if i["groupId"] == message.groupId:
-                    del i
+                    thanos_queue.remove(i)
                     break
             dump_setting("thanos_queue", thanos_queue)
+            if len(thanos_queue) == 0:
+                await set_qq_avatar(message.websocket, "res/leike.jpg")
+                dump_setting("is_thanos", False)
 
         elif HasKeyWords(message.plainTextMessage, ["取消"]) and load_setting(
             "is_thanos", False
@@ -4069,9 +4075,12 @@ class ThanosApplication(GroupMessageApplication):
             thanos_queue = load_setting("thanos_queue", [])
             for i in thanos_queue:
                 if i["groupId"] == message.groupId:
-                    del i
+                    thanos_queue.remove(i)
                     break
             dump_setting("thanos_queue", thanos_queue)
+            if len(thanos_queue) == 0:
+                await set_qq_avatar(message.websocket, "res/leike.jpg")
+                dump_setting("is_thanos", False)
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
