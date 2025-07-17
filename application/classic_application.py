@@ -4674,5 +4674,5 @@ class RandomCuteApplication(MetaMessageApplication):
         """判断是否触发应用"""
         return (
             message.metaEventType == MetaEventType.HEART_BEAT
-            and random.random() < 0.001  # 每次心跳有0.1%的概率触发
+            and random.random() < 0.0001  # 每次心跳有0.01%的概率触发
         )

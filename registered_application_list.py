@@ -185,7 +185,7 @@ def initApplications():
     # 注册调试应用
     RegisterApplication(DebugApplication())
 
-    if os.path.exists("private/private.py"):
+    if os.path.exists("private_application/private_application.py"):
         from private_application.private_application import initPrivateApplication
 
         initPrivateApplication()

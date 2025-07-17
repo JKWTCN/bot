@@ -377,6 +377,25 @@ def open_img_by_base64(path: str):
     return base64.b64encode(image_data)
 
 
+def IsSameDay(t1, t2, tz_count=28800):
+    if int((int(t1) + int(tz_count)) / 86400) == int((int(t2) + int(tz_count)) / 86400):
+        return True
+    else:
+        return False
+
+
+def IsToday(t1, tz_count=28800):
+    """
+    判断时间戳t1是否是今天
+    :param t1: 时间戳
+    :param tz_count: 时区偏移量，默认值为28800（8小时）
+    :return: 如果t1是今天，返回True，否则返回False
+    """
+    today = datetime.datetime.now().date()
+    t1_date = datetime.datetime.fromtimestamp(t1 + tz_count).date()
+    return today == t1_date
+
+
 def is_today(t1, t2, tz_count=28800):
     if int((int(t1) + int(tz_count)) / 86400) == int((int(t2) + int(tz_count)) / 86400):
         return True
