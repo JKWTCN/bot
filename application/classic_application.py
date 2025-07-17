@@ -4060,6 +4060,7 @@ class ThanosApplication(GroupMessageApplication):
             thanos_queue = load_setting("thanos_queue", [])
             thanos_queue.append({"groupId": message.groupId, "thanosTime": time.time()})
             dump_setting("thanos_queue", thanos_queue)
+            dump_setting("is_thanos", True)
         elif HasKeyWords(message.plainTextMessage, ["清楚明白"]) and load_setting(
             "is_thanos", False
         ):
@@ -4079,7 +4080,7 @@ class ThanosApplication(GroupMessageApplication):
         elif HasKeyWords(message.plainTextMessage, ["取消"]) and load_setting(
             "is_thanos", False
         ):
-            await set_qq_avatar(message.websocket, "res/leike.jpg")
+            # await set_qq_avatar(message.websocket, "res/leike.jpg")
             await SayGroup(
                 message.websocket,
                 message.groupId,
