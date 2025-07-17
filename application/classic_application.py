@@ -816,7 +816,7 @@ async def GiveGift(
         )
 
 
-# 艾特管理功能大合集
+# 艾特功能大合集
 from application.welcome_application import (
     find_vcode,
     verify,
@@ -826,10 +826,10 @@ from application.welcome_application import (
 
 
 class AtManagementApplication(GroupMessageApplication):
-    """艾特管理功能大合集"""
+    """艾特功能大合集"""
 
     def __init__(self):
-        applicationInfo = ApplicationInfo("艾特管理功能大合集", "提供一些艾特管理功能")
+        applicationInfo = ApplicationInfo("艾特功能大合集", "提供一些艾特功能")
         super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo):
@@ -841,182 +841,193 @@ class AtManagementApplication(GroupMessageApplication):
         for at_id in message.atList:
             rev_name = get_user_name(at_id, group_id)
             sender_name = get_user_name(user_id, group_id)
-            if BotIsAdmin(group_id):
-                if "解除禁言" in raw_message:
+            if (
+                "解除禁言" in raw_message
+                and BotIsAdmin(group_id)
+                and IsAdmin(user_id, group_id)
+            ):
+                logging.info(
+                    f"{group_id}:{sender_name}({user_id})解除禁言了{rev_name}({at_id})"
+                )
+                await ban_new(websocket, at_id, group_id, 0)
+
+            elif (
+                "禁言" in raw_message
+                and BotIsAdmin(group_id)
+                and IsAdmin(user_id, group_id)
+            ):
+                logging.info(
+                    f"{group_id}:{sender_name}({user_id})禁言了{rev_name}({at_id})"
+                )
+                await ban_new(websocket, at_id, group_id, 1800)
+
+            elif (
+                "说再见" in raw_message
+                and BotIsAdmin(group_id)
+                and IsAdmin(user_id, group_id)
+            ):
+                if not IsAdmin(user_id, group_id):
                     logging.info(
-                        f"{group_id}:{sender_name}({user_id})解除禁言了{rev_name}({at_id})"
+                        f"{group_id}:{sender_name}({user_id})踢出了{rev_name}({at_id})"
                     )
-                    await ban_new(websocket, at_id, group_id, 0)
+                    await kick_member(websocket, at_id, group_id)
 
-                elif "禁言" in raw_message:
-                    logging.info(
-                        f"{group_id}:{sender_name}({user_id})禁言了{rev_name}({at_id})"
-                    )
-                    await ban_new(websocket, at_id, group_id, 1800)
+            elif HasKeyWords(raw_message, ["晋升"]) and IsDeveloper(user_id):
+                set_level(
+                    at_id,
+                    group_id,
+                    get_level(at_id, group_id) + 1,
+                )
+                change_point(at_id, group_id, 0)
+                await SayGroup(
+                    websocket,
+                    group_id,
+                    f"晋升成功,{get_user_name(at_id,group_id)}({at_id})的等级提升为{get_level(at_id, group_id)}级,积分清零喵。",
+                )
 
-                elif "说再见" in raw_message:
-                    if not IsAdmin(user_id, group_id):
-                        logging.info(
-                            f"{group_id}:{sender_name}({user_id})踢出了{rev_name}({at_id})"
-                        )
-                        await kick_member(websocket, at_id, group_id)
+            elif HasKeyWords(raw_message, ["惩罚取消", "取消惩罚"]) and (
+                (user_id != at_id and IsAdmin(user_id, group_id))
+                or IsDeveloper(user_id)
+            ):
+                DelAtPunish(at_id, group_id)
+                logging.info(
+                    f"{group_id}:{sender_name}({user_id})取消了{rev_name}({at_id})的惩罚"
+                )
+                await SayGroup(
+                    websocket,
+                    group_id,
+                    f"{rev_name}({at_id})的惩罚被{sender_name}({user_id})取消了,快谢谢人家喵！",
+                )
+                await ban_new(websocket, at_id, group_id, 0)
 
-                elif HasKeyWords(raw_message, ["晋升"]) and IsDeveloper(user_id):
-                    set_level(
-                        at_id,
-                        group_id,
-                        get_level(at_id, group_id) + 1,
-                    )
-                    change_point(at_id, group_id, 0)
-                    await SayGroup(
-                        websocket,
-                        group_id,
-                        f"晋升成功,{get_user_name(at_id,group_id)}({at_id})的等级提升为{get_level(at_id, group_id)}级,积分清零喵。",
-                    )
+            elif HasKeyWords(raw_message, ["送你", "V你", "v你"]):
+                num = re.findall(r"\d+", raw_message)
+                if len(num) > 0:
+                    num = int(num[0])
+                else:
+                    num = 0
 
-                elif HasKeyWords(raw_message, ["惩罚取消", "取消惩罚"]) and (
-                    (user_id != at_id and IsAdmin(user_id, group_id))
-                    or IsDeveloper(user_id)
-                ):
-                    DelAtPunish(at_id, group_id)
-                    logging.info(
-                        f"{group_id}:{sender_name}({user_id})取消了{rev_name}({at_id})的惩罚"
-                    )
-                    await SayGroup(
-                        websocket,
-                        group_id,
-                        f"{rev_name}({at_id})的惩罚被{sender_name}({user_id})取消了,快谢谢人家喵！",
-                    )
-                    await ban_new(websocket, at_id, group_id, 0)
+                await GiveGift(websocket, user_id, group_id, at_id, num)
 
-                elif HasKeyWords(raw_message, ["送你", "V你", "v你"]):
-                    num = re.findall(r"\d+", raw_message)
-                    if len(num) >= 2:
-                        num = int(num[1])
-                    else:
-                        num = 0
-                    await GiveGift(websocket, user_id, group_id, at_id, num)
-
-                elif HasKeyWords(raw_message, ["你是GAY", "你是gay"]) and IsAdmin(
-                    user_id, group_id
-                ):
-                    # todo 修复bug
-                    # if at_id not in load_setting["boring"]:
-                    #     _setting = load_setting()
-                    #     _setting["boring"].append(at_id)
-                    #     dump_setting(_setting)
-                    # await say(
-                    #     websocket,
-                    #     group_id,
-                    #     f"{get_user_name(at_id, group_id)},GAY追杀令喵!!!!",
-                    # )
-                    pass
-                elif HasKeyWords(raw_message, ["你不是GAY", "你不是gay"]) and IsAdmin(
-                    user_id, group_id
-                ):
-                    _setting = load_setting("boring", [])
-                    while at_id in _setting:
-                        _setting.remove(at_id)
-                    dump_setting("boring", _setting)
-                    await SayGroup(
-                        websocket,
-                        group_id,
-                        f"{get_user_name(at_id, group_id)},GAY追杀令取消了喵。",
-                    )
-                elif HasKeyWords(raw_message, ["不要哈气"]) and IsAdmin(
-                    user_id, group_id
-                ):
-                    _setting = load_setting("huffing", [])
-                    while at_id in _setting:
-                        _setting.remove(at_id)
+            elif HasKeyWords(raw_message, ["你是GAY", "你是gay"]) and IsAdmin(
+                user_id, group_id
+            ):
+                # todo 修复bug
+                # if at_id not in load_setting["boring"]:
+                #     _setting = load_setting()
+                #     _setting["boring"].append(at_id)
+                #     dump_setting(_setting)
+                # await say(
+                #     websocket,
+                #     group_id,
+                #     f"{get_user_name(at_id, group_id)},GAY追杀令喵!!!!",
+                # )
+                pass
+            elif HasKeyWords(raw_message, ["你不是GAY", "你不是gay"]) and IsAdmin(
+                user_id, group_id
+            ):
+                _setting = load_setting("boring", [])
+                while at_id in _setting:
+                    _setting.remove(at_id)
+                dump_setting("boring", _setting)
+                await SayGroup(
+                    websocket,
+                    group_id,
+                    f"{get_user_name(at_id, group_id)},GAY追杀令取消了喵。",
+                )
+            elif HasKeyWords(raw_message, ["不要哈气"]) and IsAdmin(user_id, group_id):
+                _setting = load_setting("huffing", [])
+                while at_id in _setting:
+                    _setting.remove(at_id)
+                dump_setting("huffing", _setting)
+                await SayGroup(
+                    websocket,
+                    group_id,
+                    f"{get_user_name(at_id, group_id)},乐可停止追杀你了喵！",
+                )
+            elif HasKeyWords(raw_message, ["哈气"]) and IsAdmin(user_id, group_id):
+                _setting = load_setting("huffing", [])
+                if at_id not in _setting:
+                    _setting.append(at_id)
                     dump_setting("huffing", _setting)
-                    await SayGroup(
-                        websocket,
-                        group_id,
-                        f"{get_user_name(at_id, group_id)},乐可停止追杀你了喵！",
-                    )
-                elif HasKeyWords(raw_message, ["哈气"]) and IsAdmin(user_id, group_id):
-                    _setting = load_setting("huffing", [])
-                    if at_id not in _setting:
-                        _setting.append(at_id)
-                        dump_setting("huffing", _setting)
-                    await SayGroup(
-                        websocket,
-                        group_id,
-                        f"{get_user_name(at_id, group_id)},乐可要追杀你了喵！",
-                    )
-                elif HasKeyWords(
-                    raw_message,
-                    [
-                        "不要装",
-                    ],
-                ) and IsAdmin(user_id, group_id):
-                    _setting = load_setting("fly", [])
-                    if at_id not in _setting:
-                        _setting.append(at_id)
-                        dump_setting("fly", _setting)
-                    await SayGroup(
-                        websocket,
-                        group_id,
-                        f"{get_user_name(at_id, group_id)},不要再装了喵。",
-                    )
-                elif HasKeyWords(
-                    raw_message,
-                    [
-                        "可以装",
-                    ],
-                ) and IsAdmin(user_id, group_id):
-                    _setting = load_setting("fly", [])
-                    while at_id in _setting:
-                        _setting.remove(at_id)
+                await SayGroup(
+                    websocket,
+                    group_id,
+                    f"{get_user_name(at_id, group_id)},乐可要追杀你了喵！",
+                )
+            elif HasKeyWords(
+                raw_message,
+                [
+                    "不要装",
+                ],
+            ) and IsAdmin(user_id, group_id):
+                _setting = load_setting("fly", [])
+                if at_id not in _setting:
+                    _setting.append(at_id)
                     dump_setting("fly", _setting)
-                    await SayGroup(
-                        websocket,
-                        group_id,
-                        f"{get_user_name(at_id, group_id)},可以开始装了喵。",
-                    )
-                elif (
-                    HasKeyWords(raw_message, ["打他", "打它", "打她"])
-                    and (user_id != at_id or IsDeveloper(user_id))
-                    and IsAdmin(user_id, group_id)
-                ):
-                    AddAtPunishList(
+                await SayGroup(
+                    websocket,
+                    group_id,
+                    f"{get_user_name(at_id, group_id)},不要再装了喵。",
+                )
+            elif HasKeyWords(
+                raw_message,
+                [
+                    "可以装",
+                ],
+            ) and IsAdmin(user_id, group_id):
+                _setting = load_setting("fly", [])
+                while at_id in _setting:
+                    _setting.remove(at_id)
+                dump_setting("fly", _setting)
+                await SayGroup(
+                    websocket,
+                    group_id,
+                    f"{get_user_name(at_id, group_id)},可以开始装了喵。",
+                )
+            elif (
+                HasKeyWords(raw_message, ["打他", "打它", "打她"])
+                and (user_id != at_id or IsDeveloper(user_id))
+                and IsAdmin(user_id, group_id)
+            ):
+                AddAtPunishList(
+                    at_id,
+                    group_id,
+                    load_setting("defense_times", 100),
+                )
+                await SayGroup(
+                    websocket,
+                    group_id,
+                    f"{get_user_name(user_id, group_id)},乐可要开始打你了喵！",
+                )
+
+            elif (
+                HasKeyWords(raw_message, ["通过验证", "验证通过"])
+                and BotIsAdmin(group_id)
+                and IsAdmin(user_id, group_id)
+            ):
+                (mod, vcode_str) = find_vcode(at_id, group_id)
+                if mod:
+                    (mod, times) = verify(
                         at_id,
                         group_id,
-                        load_setting("defense_times", 100),
+                        vcode_str,
                     )
-                    await SayGroup(
-                        websocket,
-                        group_id,
-                        f"{get_user_name(user_id, group_id)},乐可要开始打你了喵！",
-                    )
-
-                elif HasKeyWords(raw_message, ["通过验证", "验证通过"]):
-
-                    (mod, vcode_str) = find_vcode(at_id, group_id)
                     if mod:
-                        (mod, times) = verify(
-                            at_id,
-                            group_id,
-                            vcode_str,
-                        )
-                        if mod:
-                            # 通过验证
-                            if BotIsAdmin(group_id):
-                                if group_id == load_setting("admin_group_main", 0):
-                                    await ban_new(
-                                        websocket,
-                                        at_id,
-                                        group_id,
-                                        60,
-                                    )
-                                    await welcome_new(websocket, at_id, group_id)
-                                else:
-                                    await welcom_new_no_admin(
-                                        websocket, at_id, group_id
-                                    )
+                        # 通过验证
+                        if BotIsAdmin(group_id):
+                            if group_id == load_setting("admin_group_main", 0):
+                                await ban_new(
+                                    websocket,
+                                    at_id,
+                                    group_id,
+                                    60,
+                                )
+                                await welcome_new(websocket, at_id, group_id)
                             else:
                                 await welcom_new_no_admin(websocket, at_id, group_id)
+                        else:
+                            await welcom_new_no_admin(websocket, at_id, group_id)
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
@@ -1047,6 +1058,9 @@ class AtManagementApplication(GroupMessageApplication):
                 "验证通过",
             ],
         )
+
+
+# 赠送积分应用
 
 
 from tools.tools import timestamp_to_date
@@ -4020,7 +4034,6 @@ class TimelyCheckTanosApplication(MetaMessageApplication):
             await set_qq_avatar(message.websocket, "res/leike.jpg")
             dump_setting("is_thanos", False)
         dump_setting("thanos_queue", thanos_queue)
-        
 
     def judge(self, message: MetaMessageInfo) -> bool:
         """判断是否触发应用"""
@@ -4580,7 +4593,7 @@ class PokeCuteApplication(NoticeMessageApplication):
         """判断是否触发应用"""
         return (
             message.noticeEventType == NoticeType.GROUP_POKE
-            and message.target_id == load_setting("bot_id", 0)
+            and message.target_id == load_setting("bot_id", message.botId)
         )
 
 
