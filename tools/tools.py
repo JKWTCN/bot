@@ -392,7 +392,7 @@ def IsToday(t1, tz_count=28800):
     :return: 如果t1是今天，返回True，否则返回False
     """
     today = datetime.datetime.now().date()
-    t1_date = datetime.datetime.fromtimestamp(t1 + tz_count).date()
+    t1_date = datetime.datetime.fromtimestamp(t1).date()
     return today == t1_date
 
 
