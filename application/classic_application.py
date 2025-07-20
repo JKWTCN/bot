@@ -527,7 +527,7 @@ class BoringFeatureCollectionManageApplication(GroupMessageApplication):
                 user_id, group_id
             ):
                 _setting = load_setting("boring", [])
-                while at_id in load_setting("boring", []):
+                if at_id in load_setting("boring", []):
                     _setting.remove(at_id)
                 dump_setting("boring", _setting)
                 await SayGroup(
@@ -537,7 +537,7 @@ class BoringFeatureCollectionManageApplication(GroupMessageApplication):
                 )
             elif HasKeyWords(raw_message, ["不要哈气"]) and IsAdmin(user_id, group_id):
                 _setting = load_setting("huffing", [])
-                while at_id in load_setting("huffing", []):
+                if at_id in load_setting("huffing", []):
                     _setting.remove(at_id)
                 dump_setting("huffing", _setting)
                 await SayGroup(
