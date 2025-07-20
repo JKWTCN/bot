@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import traceback
 
 import requests
@@ -31,13 +32,23 @@ class BiliBiliParsingApplication(GroupMessageApplication):
                                 qqdocurl = now_json["meta"]["detail_1"]["qqdocurl"]
                                 r = requests.get(qqdocurl)
                                 no_get_params_url = r.url.split("?")[0]
-                                logging.info(f"解析结果:{no_get_params_url}")
-                                await ReplySay(
-                                    message.websocket,
-                                    message.groupId,
-                                    message.messageId,
-                                    no_get_params_url,
-                                )
+                                if not os.path.exists("private_application/cookie.txt"):
+                                    logging.info(f"解析结果:{no_get_params_url}")
+                                    await ReplySay(
+                                        message.websocket,
+                                        message.groupId,
+                                        message.messageId,
+                                        no_get_params_url,
+                                    )
+                                else:
+                                    from you_get import common as you_get
+                                    import sys
+
+                                    sys.argv = ["you-get", no_get_params_url, "-i"]
+                                    you_get.main()
+
+                                    pass
+
             except Exception as e:
                 # 不需要解析
                 return
