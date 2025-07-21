@@ -189,3 +189,8 @@ def initApplications():
         from private_application.private_application import initPrivateApplication
 
         initPrivateApplication()
+
+    # 注册#命令
+    from application.hash_command_application import HashCommandApplication
+
+    RegisterApplication(HashCommandApplication())
