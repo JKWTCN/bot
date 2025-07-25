@@ -57,6 +57,68 @@ def SayGroupReturnMessageId(groupId: int, text: str):
     return data["data"]["message_id"]
 
 
+async def ReplySayTextImage(
+    websocket, group_id: int, message_id: int, text: str, image_path: str
+):
+    """引用回复
+
+    Args:
+        websocket (websocket): 回复的webstocket
+        group_id (int): 发言的群号
+        message_id (int): 引用回复的消息ID
+        image_path (str): 图片文件路径
+    """
+    with open(image_path, "rb") as image_file:
+        image_data = image_file.read()
+    image_base64 = base64.b64encode(image_data)
+    payload = {
+        "action": "send_group_msg",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "reply", "data": {"id": message_id}},
+                {
+                    "type": "text",
+                    "data": {"text": text},
+                },
+                {
+                    "type": "image",
+                    "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
+async def ReplySayImage(websocket, group_id: int, message_id: int, image_path: str):
+    """引用回复
+
+    Args:
+        websocket (websocket): 回复的webstocket
+        group_id (int): 发言的群号
+        message_id (int): 引用回复的消息ID
+        image_path (str): 图片文件路径
+    """
+    with open(image_path, "rb") as image_file:
+        image_data = image_file.read()
+    image_base64 = base64.b64encode(image_data)
+    payload = {
+        "action": "send_group_msg",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {"type": "reply", "data": {"id": message_id}},
+                {
+                    "type": "image",
+                    "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
 async def ReplySay(websocket, group_id: int, message_id: int, text: str):
     """引用回复
 
