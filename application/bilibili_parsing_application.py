@@ -5,6 +5,7 @@ import re
 import traceback
 import concurrent.futures
 from threading import Lock
+import asyncio
 
 import requests
 from data.application.group_message_application import GroupMessageApplication
@@ -419,6 +420,30 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
 
+async def download_stitched_image_async(
+    folder: str, bvurl: str, jpeg_quality=85
+) -> str:
+    """异步版本的 download_stitched_image"""
+    loop = asyncio.get_event_loop()
+
+    def _download_stitched_image():
+        return download_stitched_image(folder, bvurl, jpeg_quality)
+
+    # 在线程池中运行同步函数
+    return await loop.run_in_executor(None, _download_stitched_image)
+
+
+async def parse_bilibili_video_info_async(url: str) -> dict:
+    """异步版本的 parse_bilibili_video_info"""
+    loop = asyncio.get_event_loop()
+
+    def _parse_bilibili_video_info():
+        return parse_bilibili_video_info(url)
+
+    # 在线程池中运行同步函数
+    return await loop.run_in_executor(None, _parse_bilibili_video_info)
+
+
 def download_stitched_image(folder: str, bvurl: str, jpeg_quality=85) -> str:
     url = f"https://api.bilibili.com/x/player/videoshot?bvid={get_bvid(bvurl)}"
     response = requests.get(url, headers=headers)
@@ -494,11 +519,17 @@ class BiliBiliParsingApplication(GroupMessageApplication):
 
         uuid_str = str(uuid.uuid4())
         folder = f"downloads/{uuid_str}"
-        image_path = download_stitched_image(folder, no_get_params_url)
+
+        # 并发执行下载图片和解析视频信息
+        image_task = download_stitched_image_async(folder, no_get_params_url)
+        info_task = parse_bilibili_video_info_async(no_get_params_url)
+
+        # 等待两个任务完成
+        image_path, parsed_info = await asyncio.gather(image_task, info_task)
+
         display_text = ""
         if isCardMessage:
             display_text += f"{no_get_params_url}\n"
-        parsed_info = parse_bilibili_video_info(no_get_params_url)
         display_text += return_video_info_display(parsed_info)
         if image_path != "":
             if isCardMessage:
