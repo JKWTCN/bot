@@ -386,6 +386,80 @@ def return_video_info_display(video_info):
     return f"🎬:{video_info.get('title', '未知标题')}\n🎤:{video_info.get('author', '未知作者')}\n📝:{video_info.get('description', '未知简介')}\n📅:{video_info.get('upload_date', '未知上传时间')}\n🎥: {video_info.get('play_count', 0):,}\n💬: {video_info.get('danmu_count', 0):,}\n👍: {video_info.get('like_count', 0):,}\n🪙: {video_info.get('coin_count', 0):,}\n⭐: {video_info.get('collect_count', 0):,}\n🔗: {video_info.get('share_count', 0):,}\n"
 
 
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
+    "referer": "https://www.bilibili.com",
+}
+
+
+def download_image(args):
+    i, url, folder = args
+    url = "https:" + url if not url.startswith("https:") else url
+    try:
+        img_data = requests.get(url, headers=headers).content
+        with open(f"{folder}/image_{i}.jpg", "wb") as img_file:
+            img_file.write(img_data)
+        return f"图片 {i} 下载成功"
+    except Exception as e:
+        return f"图片 {i} 下载失败: {str(e)}"
+
+
+def get_bvid(url: str):
+    import re
+
+    pattern = r"(BV[a-zA-Z0-9]+)"
+    match = re.search(pattern, url)
+    return match.group(1) if match else None
+
+
+# print(get_bvid("https://www.bilibili.com/video/BV1ox4y1q7bP"))
+import os
+import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
+
+
+def download_stitched_image(folder: str, bvurl: str, jpeg_quality=85) -> str:
+    url = f"https://api.bilibili.com/x/player/videoshot?bvid={get_bvid(bvurl)}"
+    response = requests.get(url, headers=headers)
+    data = response.json()
+    image_urls = data.get("data", {}).get("image", [])
+    print(f"需要下载 {len(image_urls)} 张图片")
+    os.makedirs(folder, exist_ok=True)
+    # 使用线程池进行并发下载
+    start_time = time.time()
+    with ThreadPoolExecutor(max_workers=min(10, len(image_urls))) as executor:
+        futures = [
+            executor.submit(download_image, (i, url, folder))
+            for i, url in enumerate(image_urls)
+        ]
+        for future in as_completed(futures):
+            print(future.result())
+
+    print(f"下载完成，耗时: {time.time() - start_time:.2f} 秒")
+
+    # opencv拼接图片到一起,然后删除底部的黑底
+    import cv2
+    import numpy as np
+
+    images = []
+    for i in range(len(image_urls)):
+        img = cv2.imread(f"{folder}/image_{i}.jpg")
+        if img is not None:
+            images.append(img)
+
+    if images:
+        # 拼接图片
+        stitched = np.concatenate(images, axis=0)
+        # 删除底部黑边
+        stitched = stitched[stitched[:, :, 0].any(axis=1)]
+        # 设置JPEG质量为85（0-100之间，值越高质量越好，文件越大）
+        encode_params = [cv2.IMWRITE_JPEG_QUALITY, jpeg_quality]
+        cv2.imwrite(f"{folder}/stitched.jpg", stitched, encode_params)
+        return f"{folder}/stitched.jpg"
+    return ""
+
+
 class BiliBiliParsingApplication(GroupMessageApplication):
     def __init__(
         self,
@@ -419,44 +493,21 @@ class BiliBiliParsingApplication(GroupMessageApplication):
                 no_get_params_url = r.url.split("?")[0]
 
         uuid_str = str(uuid.uuid4())
-        input_video = download_bilibili_video(
-            url=no_get_params_url,
-            max_duration_min=30,
-            cookie_file="cookie.txt",
-            preferred_quality=1080,
-            save_path=f"downloads/{uuid_str}",
-        )
-        output_video = get_path_video(f"downloads/{uuid_str}")
-        if output_video is None:
-            print("错误：未找到下载的视频文件")
-            return
-
-        output_folder = f"downloads/{uuid_str}/output"
-        output_collage = f"downloads/{uuid_str}/collage.jpg"
-
-        # 提取帧
-        extract_frames(output_video, output_folder)
-
-        # 检查是否成功提取了帧
-        if not os.path.exists(output_folder) or not os.listdir(output_folder):
-            print("错误：没有成功提取到视频帧")
-            return
-
-        # 创建拼图
-        success = create_collage(output_folder, output_collage)
+        folder = f"downloads/{uuid_str}"
+        image_path = download_stitched_image(folder, no_get_params_url)
         display_text = ""
         if isCardMessage:
             display_text += f"{no_get_params_url}\n"
         parsed_info = parse_bilibili_video_info(no_get_params_url)
         display_text += return_video_info_display(parsed_info)
-        if success:
+        if image_path != "":
             if isCardMessage:
                 await ReplySayTextImage(
                     message.websocket,
                     message.groupId,
                     message.messageId,
                     display_text,
-                    output_collage,
+                    image_path,
                 )
             else:
                 # 如果不是卡片消息，直接发送图片
@@ -465,18 +516,69 @@ class BiliBiliParsingApplication(GroupMessageApplication):
                     message.groupId,
                     message.messageId,
                     display_text,
-                    output_collage,
+                    image_path,
                 )
         else:
-            print("创建拼接图失败")
-
+            # 图片解析不成功,直接发送文本
+            await ReplySay(
+                message.websocket,
+                message.groupId,
+                message.messageId,
+                display_text,
+            )
         # 清理临时文件
         import shutil
 
         try:
-            shutil.rmtree(f"downloads/{uuid_str}")
+            shutil.rmtree(folder)
         except Exception as e:
             print(f"清理临时文件失败: {e}")
+        # input_video = download_bilibili_video(
+        #     url=no_get_params_url,
+        #     max_duration_min=30,
+        #     cookie_file="cookie.txt",
+        #     preferred_quality=1080,
+        #     save_path=f"downloads/{uuid_str}",
+        # )
+        # output_video = get_path_video(f"downloads/{uuid_str}")
+        # if output_video is None:
+        #     print("错误：未找到下载的视频文件")
+        #     return
+
+        # output_folder = f"downloads/{uuid_str}/output"
+        # output_collage = f"downloads/{uuid_str}/collage.jpg"
+
+        # # 提取帧
+        # extract_frames(output_video, output_folder)
+
+        # # 检查是否成功提取了帧
+        # if not os.path.exists(output_folder) or not os.listdir(output_folder):
+        #     print("错误：没有成功提取到视频帧")
+        #     return
+
+        # # 创建拼图
+        # success = create_collage(output_folder, output_collage)
+
+        # if success:
+        #     if isCardMessage:
+        #         await ReplySayTextImage(
+        #             message.websocket,
+        #             message.groupId,
+        #             message.messageId,
+        #             display_text,
+        #             output_collage,
+        #         )
+        #     else:
+        #         # 如果不是卡片消息，直接发送图片
+        #         await ReplySayTextImage(
+        #             message.websocket,
+        #             message.groupId,
+        #             message.messageId,
+        #             display_text,
+        #             output_collage,
+        #         )
+        # else:
+        #     print("创建拼接图失败")
 
     def judge(self, message: GroupMessageInfo) -> bool:
         return LoadGroupSetting("bilibili_parsing", message.groupId, True) and (find_bilibili_url(f"{message.rawMessage}") != "" or HasAllKeyWords(f"{message.rawMessage}", ["QQ小程序", "哔哩哔哩"]))  # type: ignore

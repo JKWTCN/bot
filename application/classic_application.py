@@ -1589,7 +1589,7 @@ class GroupKotomitakoApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
-        return message.senderId in get_config("kotomitako", message.groupId) and BotIsAdmin(message.groupId) and HasChinese(message.plainTextMessage)  # type: ignore
+        return message.senderId in get_config("kotomitako", message.groupId) and BotIsAdmin(message.groupId) and HasChinese(message.plainTextMessage) and len(message.atList)==0 and message.replyMessageId==-1 # type: ignore
 
 
 # 猫娘群友
@@ -1626,7 +1626,7 @@ class GroupMiaoMiaoApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
-        return message.senderId in get_config("catgirl", message.groupId) and BotIsAdmin(message.groupId) and HasChinese(message.plainTextMessage) and "喵" not in message.plainTextMessage  # type: ignore
+        return message.senderId in get_config("catgirl", message.groupId) and BotIsAdmin(message.groupId) and HasChinese(message.plainTextMessage) and "喵" not in message.plainTextMessage and len(message.imageFileList) == 0 and len(message.atList) == 0 and message.replyMessageId == -1  # type: ignore
 
 
 from datetime import datetime
@@ -1677,7 +1677,8 @@ class GroupMiaoMiaoDayApplication(GroupMessageApplication):
         return (
             "喵" not in message.plainTextMessage
             and len(message.imageFileList) == 0
-            and len(message.imageFileList) == 0
+            and len(message.atList) == 0
+            and message.replyMessageId == -1
             and HasChinese(message.plainTextMessage)
             and datetime.now().day == get_config("cat_day_date", message.groupId)
             and BotIsAdmin(message.groupId)
