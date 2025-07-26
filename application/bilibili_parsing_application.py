@@ -383,7 +383,7 @@ def parse_bilibili_video_info(url) -> dict:
 
 
 def return_video_info_display(video_info):
-    return f"🎬:{video_info.get('title', '未知标题')}\n🎤:{video_info.get('author', '未知作者')}\n📝:{video_info.get('description', '未知简介')}\n📅:{video_info.get('upload_date', '未知上传时间')}\n🎥: {video_info.get('play_count', 0):,}\n💬: {video_info.get('danmu_count', 0):,}\n👍: {video_info.get('like_count', 0):,}\n💰: {video_info.get('coin_count', 0):,}\n⭐: {video_info.get('collect_count', 0):,}\n🔗: {video_info.get('share_count', 0):,}\n"
+    return f"🎬:{video_info.get('title', '未知标题')}\n🎤:{video_info.get('author', '未知作者')}\n📝:{video_info.get('description', '未知简介')}\n📅:{video_info.get('upload_date', '未知上传时间')}\n🎥: {video_info.get('play_count', 0):,}\n💬: {video_info.get('danmu_count', 0):,}\n👍: {video_info.get('like_count', 0):,}\n🪙: {video_info.get('coin_count', 0):,}\n⭐: {video_info.get('collect_count', 0):,}\n🔗: {video_info.get('share_count', 0):,}\n"
 
 
 class BiliBiliParsingApplication(GroupMessageApplication):
