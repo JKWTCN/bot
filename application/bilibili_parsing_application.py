@@ -476,11 +476,20 @@ def download_stitched_image(folder: str, bvurl: str, jpeg_quality=85) -> str:
     if images:
         # 拼接图片
         stitched = np.concatenate(images, axis=0)
-        # 删除底部黑边
-        stitched = stitched[stitched[:, :, 0].any(axis=1)]
+        # 删除所有黑边
+        # 转换为灰度图以便更好地检测黑边
+        gray = cv2.cvtColor(stitched, cv2.COLOR_BGR2GRAY)
+        # 找到非黑色像素的位置（阈值设为10以处理可能的噪声）
+        coords = cv2.findNonZero((gray > 10).astype(np.uint8))
+        if coords is not None:
+            # 获取边界框
+            x, y, w, h = cv2.boundingRect(coords)
+            # 裁剪图片，移除所有黑边
+            stitched = stitched[y : y + h, x : x + w]
         # 设置JPEG质量为85（0-100之间，值越高质量越好，文件越大）
         encode_params = [cv2.IMWRITE_JPEG_QUALITY, jpeg_quality]
         cv2.imwrite(f"{folder}/stitched.jpg", stitched, encode_params)
+        print(f"拼接图片保存到 {folder}/stitched.jpg")
         return f"{folder}/stitched.jpg"
     return ""
 
@@ -526,7 +535,7 @@ class BiliBiliParsingApplication(GroupMessageApplication):
 
         # 等待两个任务完成
         image_path, parsed_info = await asyncio.gather(image_task, info_task)
-
+        print("图片下载和视频信息解析完成")
         display_text = ""
         if isCardMessage:
             display_text += f"{no_get_params_url}\n"
