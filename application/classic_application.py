@@ -1589,7 +1589,7 @@ class GroupKotomitakoApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
-        return message.senderId in get_config("kotomitako", message.groupId) and BotIsAdmin(message.groupId) and HasChinese(message.plainTextMessage) and len(message.atList)==0 and message.replyMessageId==-1 # type: ignore
+        return message.senderId in get_config("kotomitako", message.groupId) and BotIsAdmin(message.groupId) and HasChinese(message.plainTextMessage) and len(message.atList) == 0 and message.replyMessageId == -1  # type: ignore
 
 
 # 猫娘群友
@@ -1814,11 +1814,8 @@ class FeaturesMenuApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
-        return HasKeyWords(
-            message.plainTextMessage,
-            ["功能菜单", "功能"],
-        ) and HasKeyWords(
-            message.plainTextMessage, [load_setting("bot_name", "乐可")]  # type: ignore
+        return HasAllKeyWords(
+            message.plainTextMessage, [f"{load_setting("bot_name", "乐可")},功能"]  # type: ignore
         )
 
 
@@ -4677,3 +4674,53 @@ class RandomCuteApplication(MetaMessageApplication):
             message.metaEventType == MetaEventType.HEART_BEAT
             and random.random() < 0.0001  # 每次心跳有0.01%的概率触发
         )
+
+
+from function.say import SayImage
+
+
+# 人呢呢了应用
+# 检测到此关键词发送人呢呢了精神图片
+class IWantPeopleApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("人呢呢了应用", "人呢呢了应用")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        await SayImage(
+            message.websocket,
+            message.groupId,
+            "res/renrenle.jpg",
+        )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasAllKeyWords(message.plainTextMessage, ["人呢呢"])
+
+
+# 帮你必应应用
+# 当检测到**是啥的时候,自动发送**的必应搜索链接
+class BingSearchApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("必应搜索应用", "必应搜索应用")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        search_term = re.search(r"\s*(.*)是(?:啥|什么)", message.plainTextMessage)
+        if search_term:
+            query = search_term.group(1)
+            # 使用urllib.parse.quote将文本转换为UTF-8 URL编码形式
+            import urllib.parse
+
+            encoded_query = urllib.parse.quote(query, safe="")
+            url = f"https://www.bing.com/search?q={encoded_query}"
+            await ReplySay(
+                message.websocket,
+                message.groupId,
+                message.messageId,
+                f"这是关于{query}的必应搜索结果喵,请看一看喵: {url}",
+            )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        return HasKeyWords(message.plainTextMessage, ["是啥","是什么"])

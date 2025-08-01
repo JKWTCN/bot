@@ -194,3 +194,8 @@ def initApplications():
     from application.hash_command_application import HashCommandApplication
 
     RegisterApplication(HashCommandApplication())
+
+    # 注册人呢呢精神应用
+    RegisterApplication(classic_application.IWantPeopleApplication())
+    # 注册Bing搜索应用
+    RegisterApplication(classic_application.BingSearchApplication())

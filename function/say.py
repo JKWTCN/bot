@@ -91,6 +91,33 @@ async def ReplySayTextImage(
     await websocket.send(json.dumps(payload))
 
 
+async def SayImage(websocket, group_id: int, image_path: str):
+    """引用回复
+
+    Args:
+        websocket (websocket): 回复的webstocket
+        group_id (int): 发言的群号
+        message_id (int): 引用回复的消息ID
+        image_path (str): 图片文件路径
+    """
+    with open(image_path, "rb") as image_file:
+        image_data = image_file.read()
+    image_base64 = base64.b64encode(image_data)
+    payload = {
+        "action": "send_group_msg",
+        "params": {
+            "group_id": group_id,
+            "message": [
+                {
+                    "type": "image",
+                    "data": {"file": "base64://" + image_base64.decode("utf-8")},
+                },
+            ],
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
 async def ReplySayImage(websocket, group_id: int, message_id: int, image_path: str):
     """引用回复
 
@@ -273,7 +300,7 @@ def chatNoContext(texts):
     base_messages = [
         {
             "role": "system",
-            "content": "你叫乐可,现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物,其行为似猫但类人.),与我对话每一句话后面都要加上'喵'",
+            "content": "你叫乐可,现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物,其行为似猫但类人.),与我对话每一句话后面都要加上'喵',且对话请尽量简短.",
         }
     ]
     for text in texts:
