@@ -358,8 +358,8 @@ class RandomWaterGroupPointsApplication(GroupMessageApplication):
         return BotIsAdmin(message.groupId) and random.random() < 0.02
 
 
-# todo 无聊功能合集
-# todo 哈气，装，打，GAY [AT管理]
+# 无聊功能合集
+# 哈气，装，打，GAY [AT管理]
 from tools.tools import HasKeyWords, HasAllKeyWords, HasBotName
 from function.datebase_user import IsDeveloper
 
@@ -913,16 +913,15 @@ class AtManagementApplication(GroupMessageApplication):
             elif HasKeyWords(raw_message, ["你是GAY", "你是gay"]) and IsAdmin(
                 user_id, group_id
             ):
-                # todo 修复bug
-                # if at_id not in load_setting["boring"]:
-                #     _setting = load_setting()
-                #     _setting["boring"].append(at_id)
-                #     dump_setting(_setting)
-                # await say(
-                #     websocket,
-                #     group_id,
-                #     f"{get_user_name(at_id, group_id)},GAY追杀令喵!!!!",
-                # )
+                _setting = load_setting("boring", [])
+                if at_id not in _setting:
+                    _setting.append(at_id)
+                    dump_setting("boring", _setting)                
+                await SayGroup(
+                    websocket,
+                    group_id,
+                    f"{get_user_name(at_id, group_id)},GAY追杀令喵!!!!",
+                )
                 pass
             elif HasKeyWords(raw_message, ["你不是GAY", "你不是gay"]) and IsAdmin(
                 user_id, group_id
@@ -2830,7 +2829,7 @@ class MemeStatisticsApplication(GroupMessageApplication):
         ) and HasAllKeyWords(message.plainTextMessage, ["统计", "梗图"])
 
 
-# todo 个人统计应用
+# TODO 个人统计应用
 class PersonalStatisticsApplication(GroupMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo("个人统计", "统计个人库存")
@@ -4685,7 +4684,7 @@ from function.say import SayImage
 # 检测到此关键词发送人呢呢了精神图片
 class IWantPeopleApplication(GroupMessageApplication):
     def __init__(self):
-        applicationInfo = ApplicationInfo("人呢呢了应用", "人呢呢了应用")
+        applicationInfo = ApplicationInfo("人呢呢了/傻子问题应用", "人呢呢了/傻子问题应用")
         super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
@@ -4697,7 +4696,7 @@ class IWantPeopleApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
-        return HasAllKeyWords(message.plainTextMessage, ["人呢呢"])
+        return HasKeyWords(message.plainTextMessage, ["人呢呢","傻子问题"])
 
 
 # 帮你必应应用
