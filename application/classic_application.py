@@ -181,6 +181,8 @@ class GreatPurgeApplication(MetaMessageApplication):
     async def process(self, message: MetaMessageInfo):
         """处理元消息"""
         if time.time() - load_setting("last_update_time", 0) > 300:
+            _setting = load_setting("group_list", [])
+            dump_setting("last_update_time", time.time())
             data = get_group_list(message.websocket)
             print("开始更新群列表")
             logging.info("开始更新群列表")
@@ -191,7 +193,6 @@ class GreatPurgeApplication(MetaMessageApplication):
                     group["member_count"],
                     group["max_member_count"],
                 )
-                _setting = load_setting("group_list", [])
                 if group["group_id"] not in _setting:
                     _setting.append(group["group_id"])
                     dump_setting("group_list", _setting)
@@ -261,7 +262,7 @@ class GreatPurgeApplication(MetaMessageApplication):
                                         message.websocket, user.user_id, user.group_id
                                     )
                 logging.info(f'更新群:{group["group_name"]}({group["group_id"]})完成。')
-            dump_setting("last_update_time", time.time())
+
             print("更新全部群列表完毕")
             logging.info("更新全部群列表完毕")
 
@@ -4672,7 +4673,7 @@ class RandomCuteApplication(MetaMessageApplication):
         """判断是否触发应用"""
         return (
             message.metaEventType == MetaEventType.HEART_BEAT
-            and random.random() < 0.0001  # 每次心跳有0.01%的概率触发
+            and random.random() < 0.0001/60  # 每次心跳有0.01%的概率触发;心跳:60s/times->1
         )
 
 
@@ -4723,4 +4724,4 @@ class BingSearchApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
-        return HasKeyWords(message.plainTextMessage, ["是啥","是什么"])
+        return HasKeyWords(message.plainTextMessage, ["是啥", "是什么"])
