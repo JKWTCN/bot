@@ -916,7 +916,7 @@ class AtManagementApplication(GroupMessageApplication):
                 _setting = load_setting("boring", [])
                 if at_id not in _setting:
                     _setting.append(at_id)
-                    dump_setting("boring", _setting)                
+                    dump_setting("boring", _setting)
                 await SayGroup(
                     websocket,
                     group_id,
@@ -1423,6 +1423,16 @@ class CommentDriftBottleApplication(GroupMessageApplication):
 from function.group_operation import GetGroupMessageSenderId
 
 
+# 返回text里面有多少个好字
+def findGoodNums(text: str) -> int:
+    return text.count("好")
+
+
+# 返回text里面有多少个坏字
+def findBadNums(text: str) -> int:
+    return text.count("坏")
+
+
 # 特殊回复应用
 class SpicalReplyApplication(GroupMessageApplication):
     def __init__(self):
@@ -1434,25 +1444,35 @@ class SpicalReplyApplication(GroupMessageApplication):
         sender_id = GetGroupMessageSenderId(message.replyMessageId)
         now_point = find_point(sender_id)
         if message.plainTextMessage.startswith("好好好"):
-            change_point(sender_id, message.groupId, now_point + 100)
+            good_nums = findGoodNums(message.plainTextMessage)
+            if good_nums <= 3:
+                changed_point = 100
+            else:
+                changed_point = 100 * (good_nums - 3)
+            change_point(sender_id, message.groupId, now_point + changed_point)
             sender_name = get_user_name(sender_id, message.groupId)
             await ReplySay(
                 message.websocket,
                 message.groupId,
                 message.replyMessageId,
                 "{},受到☁️赞扬,积分:{}->{}".format(
-                    sender_name, now_point, now_point + 100
+                    sender_name, now_point, now_point + now_point + changed_point
                 ),
             )
         elif message.plainTextMessage.startswith("坏坏坏"):
-            change_point(sender_id, message.groupId, now_point - 100)
+            bad_nums = findBadNums(message.plainTextMessage)
+            if bad_nums <= 3:
+                changed_point = 100
+            else:
+                changed_point = 100 * (bad_nums - 3)
+            change_point(sender_id, message.groupId, now_point - changed_point)
             sender_name = get_user_name(sender_id, message.groupId)
             await ReplySay(
                 message.websocket,
                 message.groupId,
                 message.replyMessageId,
                 "{},不要搬💩了喵,积分:{}->{}".format(
-                    sender_name, now_point, now_point - 100
+                    sender_name, now_point, now_point - changed_point
                 ),
             )
 
@@ -4684,7 +4704,9 @@ from function.say import SayImage
 # 检测到此关键词发送人呢呢了精神图片
 class IWantPeopleApplication(GroupMessageApplication):
     def __init__(self):
-        applicationInfo = ApplicationInfo("人呢呢了/傻子问题应用", "人呢呢了/傻子问题应用")
+        applicationInfo = ApplicationInfo(
+            "人呢呢了/傻子问题应用", "人呢呢了/傻子问题应用"
+        )
         super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
@@ -4696,7 +4718,7 @@ class IWantPeopleApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
-        return HasKeyWords(message.plainTextMessage, ["人呢呢","傻子问题"])
+        return HasKeyWords(message.plainTextMessage, ["人呢呢", "傻子问题"])
 
 
 # 帮你必应应用
