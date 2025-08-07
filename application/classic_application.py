@@ -1448,7 +1448,7 @@ class SpicalReplyApplication(GroupMessageApplication):
             if good_nums <= 3:
                 changed_point = 100
             else:
-                changed_point = 100 * (good_nums - 3)
+                changed_point = 100 * good_nums
             change_point(sender_id, message.groupId, now_point + changed_point)
             sender_name = get_user_name(sender_id, message.groupId)
             await ReplySay(
@@ -1464,7 +1464,7 @@ class SpicalReplyApplication(GroupMessageApplication):
             if bad_nums <= 3:
                 changed_point = 100
             else:
-                changed_point = 100 * (bad_nums - 3)
+                changed_point = 100 * bad_nums
             change_point(sender_id, message.groupId, now_point - changed_point)
             sender_name = get_user_name(sender_id, message.groupId)
             await ReplySay(
