@@ -199,3 +199,7 @@ def initApplications():
     RegisterApplication(classic_application.IWantPeopleApplication())
     # 注册Bing搜索应用
     RegisterApplication(classic_application.BingSearchApplication())
+    # 注册群签到应用
+    from application.group_sign_application import GroupSignApplication
+
+    RegisterApplication(GroupSignApplication())

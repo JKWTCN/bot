@@ -41,6 +41,17 @@ async def DeleteEssenceMsg(websocket, message_id: int):
     await websocket.send(json.dumps(payload))
 
 
+# 群签到
+async def GroupSign(websocket, groupId: int):
+    payload = {
+        "action": "set_group_sign",
+        "params": {
+            "group_id": groupId,
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
 from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
 
 
