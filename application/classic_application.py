@@ -1456,7 +1456,7 @@ class SpicalReplyApplication(GroupMessageApplication):
                 message.groupId,
                 message.replyMessageId,
                 "{},受到☁️赞扬,积分:{}->{}".format(
-                    sender_name, now_point, now_point + now_point + changed_point
+                    sender_name, now_point, now_point + changed_point
                 ),
             )
         elif message.plainTextMessage.startswith("坏坏坏"):
