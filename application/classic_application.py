@@ -1646,7 +1646,7 @@ class GroupMiaoMiaoApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
-        return message.senderId in get_config("catgirl", message.groupId) and BotIsAdmin(message.groupId) and HasChinese(message.plainTextMessage) and "喵" not in message.plainTextMessage and len(message.imageFileList) == 0 and len(message.atList) == 0 and message.replyMessageId == -1  # type: ignore
+        return message.senderId in get_config("catgirl", message.groupId) and BotIsAdmin(message.groupId) and HasChinese(message.plainTextMessage) and "喵" not in message.plainTextMessage and len(message.imageFileList) == 0 and len(message.atList) == 0 and message.replyMessageId == -1 and   len(message.plainTextMessage)<50 # type: ignore
 
 
 from datetime import datetime
