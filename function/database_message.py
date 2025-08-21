@@ -6,8 +6,6 @@ from function.say import ReplySay
 from function.GroupConfig import get_config
 
 
-
-
 def incWhoAtMe(user_id: int, ated_id: int):
     """增加艾特信息"""
     conn = sqlite3.connect("bot.db")
@@ -42,7 +40,7 @@ def getWhoAtMe(user_id: int, ated_id: int):
         return data[0][0]
 
 
-def GetChatContext(user_id: int, group_id: int, limit: int = 5) -> list:
+def GetChatContext(user_id: int, group_id: int, limit: int = 10) -> list:
     """从数据库中获取最近的聊天记录作为上下文"""
     conn = sqlite3.connect("bot.db")
     cursor = conn.cursor()

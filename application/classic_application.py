@@ -127,7 +127,7 @@ def update_group_member_list(websocket, group_id: int):
 
     url = f"http://localhost:{GetNCHSPort()}/get_group_member_list"
     payload = {"group_id": group_id}
-    resp = requests.post(url)
+    resp = requests.post(url, json=payload)
     data = resp.json()
     return data["data"]
 
@@ -165,7 +165,8 @@ def update_group_info(
 
 
 class GreatPurgeApplication(MetaMessageApplication):
-    """定时刷新群成员数据库应用类
+    """
+    定时刷新群成员数据库应用类
     该类用于定时刷新群成员数据库
     该类继承自MetaMessageApplication基类,并实现了处理元消息的抽象方法.
     """
@@ -196,71 +197,71 @@ class GreatPurgeApplication(MetaMessageApplication):
                 if group["group_id"] not in _setting:
                     _setting.append(group["group_id"])
                     dump_setting("group_list", _setting)
-                    new_data = update_group_member_list(
-                        message.websocket, group["group_id"]
+                new_data = update_group_member_list(
+                    message.websocket, group["group_id"]
+                )
+                if new_data is None:
+                    logging.error(
+                        f"更新群成员列表失败,群:{group['group_name']}({group['group_id']})"
                     )
-                    if new_data is None:
-                        logging.error(
-                            f"更新群成员列表失败,群:{group['group_name']}({group['group_id']})"
-                        )
-                        continue
-                    for group_member in new_data:
-                        user = Group_member()
-                        user.init_by_dict(group_member)
-                        updata_user_info(user)
-                        group_id = user.group_id
-                        name = get_user_name(user.user_id, user.group_id)
-                        if get_config("kick_time_sec", user.group_id) != -1:
-                            timeout = get_config("kick_time_sec", user.group_id)
-                            if (
-                                int(time.time()) - user.last_sent_time > timeout  # type: ignore
-                                and BotIsAdmin(user.group_id)
-                                and timeout != -1
-                                and timeout >= 30 * 24 * 3600  # type: ignore
-                            ):
-                                if not IsAdmin(user.user_id, user.group_id):
-                                    print(
-                                        "{}({})因{}个月未活跃被请出群聊{}({}),最后发言时间:{}".format(
-                                            name,
-                                            user.user_id,
-                                            timeout / 2592000,  # type: ignore
-                                            GetGroupName(user.group_id),
-                                            user.group_id,
-                                            time.strftime(
-                                                "%Y-%m-%d %H:%M:%S",
-                                                time.localtime(user.last_sent_time),
-                                            ),
-                                        )
-                                    )
-                                    logging.info(
-                                        "{}({})因{}个月未活跃被请出群聊{}({}),最后发言时间:{}".format(
-                                            name,
-                                            user.user_id,
-                                            timeout / 2592000,  # type: ignore
-                                            GetGroupName(user.group_id),
-                                            user.group_id,
-                                            time.strftime(
-                                                "%Y-%m-%d %H:%M:%S",
-                                                time.localtime(user.last_sent_time),
-                                            ),
-                                        )
-                                    )
-                                    await SayGroup(
-                                        message.websocket,
+                    continue
+                for group_member in new_data:
+                    user = Group_member()
+                    user.init_by_dict(group_member)
+                    updata_user_info(user)
+                    group_id = user.group_id
+                    name = get_user_name(user.user_id, user.group_id)
+                    if get_config("kick_time_sec", user.group_id) != -1:
+                        timeout = get_config("kick_time_sec", user.group_id)
+                        if (
+                            int(time.time()) - user.last_sent_time > timeout  # type: ignore
+                            and BotIsAdmin(user.group_id)
+                            and timeout != -1
+                            and timeout >= 30 * 24 * 3600  # type: ignore
+                        ):
+                            if not IsAdmin(user.user_id, user.group_id):
+                                print(
+                                    "{}({})因{}个月未活跃被请出群聊{}({}),最后发言时间:{}".format(
+                                        name,
+                                        user.user_id,
+                                        timeout / 2592000,  # type: ignore
+                                        GetGroupName(user.group_id),
                                         user.group_id,
-                                        "{}({})，乐可要踢掉你了喵！\n原因:{}个月未活跃。\n最后发言时间为:{}".format(
-                                            name,
-                                            user.user_id,
-                                            timeout / 2592000,  # type: ignore
-                                            time.strftime(
-                                                "%Y-%m-%d %H:%M:%S",
-                                                time.localtime(user.last_sent_time),
-                                            ),
+                                        time.strftime(
+                                            "%Y-%m-%d %H:%M:%S",
+                                            time.localtime(user.last_sent_time),
                                         ),
                                     )
-                                    await kick_member(
-                                        message.websocket, user.user_id, user.group_id
+                                )
+                                logging.info(
+                                    "{}({})因{}个月未活跃被请出群聊{}({}),最后发言时间:{}".format(
+                                        name,
+                                        user.user_id,
+                                        timeout / 2592000,  # type: ignore
+                                        GetGroupName(user.group_id),
+                                        user.group_id,
+                                        time.strftime(
+                                            "%Y-%m-%d %H:%M:%S",
+                                            time.localtime(user.last_sent_time),
+                                        ),
                                     )
+                                )
+                                await SayGroup(
+                                    message.websocket,
+                                    user.group_id,
+                                    "{}({})，乐可要踢掉你了喵！\n原因:{}个月未活跃。\n最后发言时间为:{}".format(
+                                        name,
+                                        user.user_id,
+                                        timeout / 2592000,  # type: ignore
+                                        time.strftime(
+                                            "%Y-%m-%d %H:%M:%S",
+                                            time.localtime(user.last_sent_time),
+                                        ),
+                                    ),
+                                )
+                                await kick_member(
+                                    message.websocket, user.user_id, user.group_id
+                                )
                 logging.info(f'更新群:{group["group_name"]}({group["group_id"]})完成。')
 
             print("更新全部群列表完毕")
@@ -1646,7 +1647,7 @@ class GroupMiaoMiaoApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
-        return message.senderId in get_config("catgirl", message.groupId) and BotIsAdmin(message.groupId) and HasChinese(message.plainTextMessage) and "喵" not in message.plainTextMessage and len(message.imageFileList) == 0 and len(message.atList) == 0 and message.replyMessageId == -1 and   len(message.plainTextMessage)<50 # type: ignore
+        return message.senderId in get_config("catgirl", message.groupId) and BotIsAdmin(message.groupId) and HasChinese(message.plainTextMessage) and "喵" not in message.plainTextMessage and len(message.imageFileList) == 0 and len(message.atList) == 0 and message.replyMessageId == -1 and len(message.plainTextMessage) < 50  # type: ignore
 
 
 from datetime import datetime
