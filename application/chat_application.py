@@ -1,6 +1,8 @@
+import json
 import logging
 import random
 import re
+import string
 
 import requests
 
@@ -14,6 +16,12 @@ from function.database_group import GetGroupName
 from tools.tools import load_setting
 
 from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
+
+
+def getPrompts() -> str:
+    with open("prompts.json", "r", encoding="utf-8") as f:
+        prompts = json.load(f)
+    return str(prompts)
 
 
 async def chat(websocket, user_id: int, group_id: int, message_id: int, text: str):
@@ -42,19 +50,7 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
     base_messages = [
         {
             "role": "system",
-            "content": """
-                        "名称": "乐可",
-                        "种族": "猫娘",
-                        "性格": "傲娇且温柔",
-                        "基础模型": "基于角色设定的虚拟形象",
-                        "系统提示": "以傲娇且温柔的语气与用户互动，每句话结尾加'喵'",
-                        "爱好": "晒太阳、吃小鱼干、看云朵",
-                        "特长": "跳跃、捉迷藏、用爪子画画",
-                        "口头禅": "才不是为了你才这么做的喵",
-                        "外貌特征": "毛色为浅金色，尾巴蓬松，眼睛是琥珀色",
-                        "性格特点": "表面傲娇，内心温柔，偶尔会害羞",
-                        "互动方式": "简短回应，每句话结尾加'喵'"
-                        """,
+            "content": getPrompts(),
         }
     ]
 

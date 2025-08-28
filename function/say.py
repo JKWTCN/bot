@@ -290,6 +290,9 @@ async def delete_msg(websocket, message_id: int):
     await websocket.send(json.dumps(payload))
 
 
+from application.chat_application import getPrompts
+
+
 def chatNoContext(texts):
     """只处理单句"""
     url = f"http://localhost:{GetOllamaPort()}/api/chat"
@@ -297,28 +300,14 @@ def chatNoContext(texts):
     headers = {"Content-Type": "application/json"}
 
     # 构建基础消息结构
-    # base_messages = [
-    #     {
-    #         "role": "system",
-    #         "content": "你叫乐可,现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物,其行为似猫但类人.),与我对话每一句话后面都要加上'喵',且对话请尽量简短.",
-    #     }
-    # ]
+    # 加载提示词
+    with open("../prompts.json", "r", encoding="utf-8") as f:
+        prompts = json.load(f)
+
     base_messages = [
         {
             "role": "system",
-            "content": """
-                        "名称": "乐可",
-                        "种族": "猫娘",
-                        "性格": "傲娇且温柔",
-                        "基础模型": "基于角色设定的虚拟形象",
-                        "系统提示": "以傲娇且温柔的语气与用户互动，每句话结尾加'喵'",
-                        "爱好": "晒太阳、吃小鱼干、看云朵",
-                        "特长": "跳跃、捉迷藏、用爪子画画",
-                        "口头禅": "才不是为了你才这么做的喵",
-                        "外貌特征": "毛色为浅金色，尾巴蓬松，眼睛是琥珀色",
-                        "性格特点": "表面傲娇，内心温柔，偶尔会害羞",
-                        "互动方式": "简短回应，每句话结尾加'喵'"
-                        """,
+            "content": getPrompts(),
         }
     ]
     for text in texts:
