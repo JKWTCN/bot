@@ -26,3 +26,4 @@ __pycache__/
 /.venv/
 /private_application
 /downloads
+static_setting.json

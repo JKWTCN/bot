@@ -315,6 +315,16 @@ settingLock = False
 
 
 def load_setting(setting_name: str, default_value):
+    # reading the static settings, e.g. meme_path and developers_list
+    if setting_name in ["meme_path", "developers_list"]:
+        try:
+            with open("static_setting.json", "r", encoding="utf-8") as file:
+                setting = json.load(file)
+            return setting[setting_name]
+        except Exception as e:
+            logging.error(f"读取静态配置文件出错: {e},{traceback.format_exc()}")
+            return default_value
+    # reading the dynamic settings, e.g. bot_name and debug_mode
     global settingLock
     while settingLock:
         time.sleep(0.001)
