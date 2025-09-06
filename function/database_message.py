@@ -45,12 +45,12 @@ def GetChatContext(user_id: int, group_id: int, limit: int = 10) -> list:
     conn = sqlite3.connect("bot.db")
     cursor = conn.cursor()
 
-    # 获取最近的几条聊天记录(包括用户和机器人的消息)
+    # 获取最近的几条聊天记录,并且时间限定在最近30分钟内;
     cursor.execute(
         """
         SELECT sender_nickname, raw_message 
-        FROM group_message 
-        WHERE group_id = ? AND user_id = ? 
+        FROM group_message s
+        WHERE group_id = ? AND user_id = ? AND time >= strftime('%s','now','-30 minutes')
         ORDER BY time DESC 
         LIMIT ?
     """,
