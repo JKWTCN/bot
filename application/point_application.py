@@ -274,7 +274,7 @@ async def luck_choice_mut_super_rich(
             {
                 "type": "text",
                 "data": {
-                    "text": "{},抽奖失败喵，至少要5积分喵。您当前积分为：{}。\n".format(
+                    "text": "{},抽奖失败喵，至少要5积分喵。您当前积分为：{}。".format(
                         sender_name, start_point
                     )
                 },
@@ -478,7 +478,7 @@ async def luck_choice_mut(
             {
                 "type": "text",
                 "data": {
-                    "text": "{},抽奖失败喵，至少要5积分喵。您当前积分为：{}。\n".format(
+                    "text": "{},抽奖失败喵，至少要5积分喵。您当前积分为：{}。".format(
                         sender_name, start_point
                     )
                 },
