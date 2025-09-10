@@ -203,3 +203,13 @@ def initApplications():
     from application.group_sign_application import GroupSignApplication
 
     RegisterApplication(GroupSignApplication())
+    
+    # 注册积分银行应用
+    from application.bank_application import BankApplication
+
+    RegisterApplication(BankApplication())
+    
+    # 注册银行利息自动更新应用
+    from application.bank_interest_application import BankInterestApplication
+
+    RegisterApplication(BankInterestApplication())
