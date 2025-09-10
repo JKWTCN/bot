@@ -6,6 +6,8 @@ import base64
 import json
 import traceback
 
+from matplotlib.font_manager import fontManager
+
 
 # 获取本机局域网IP
 def GetLocalIP():
@@ -153,9 +155,7 @@ def ShowSystemInfoTableByBase64():
     import psutil
     import platform
 
-    plt.rcParams["font.sans-serif"] = ["AR PL UKai CN"]
-    # plt.rcParams["font.sans-serif"] = ["Unifont"]  # 设置字体
-    # plt.rcParams["font.sans-serif"] = ["SimHei"]  # 设置字体
+    plt.rcParams["font.sans-serif"] = load_static_setting("font", ["Unifont"])
     plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
     data = {"项目": [], "值": []}
     if platform.system() == "Linux":
@@ -312,6 +312,17 @@ def check_all_miao(text):
 
 
 settingLock = False
+
+
+def load_static_setting(setting_name: str, default_value):
+    # reading the static settings, e.g. meme_path and developers_list
+    try:
+        with open("static_setting.json", "r", encoding="utf-8") as file:
+            setting = json.load(file)
+        return setting[setting_name]
+    except Exception as e:
+        logging.error(f"读取静态配置文件出错: {e},{traceback.format_exc()}")
+        return default_value
 
 
 def load_setting(setting_name: str, default_value):
@@ -485,3 +496,8 @@ def GetOllamaPort():
     获取Ollama端口
     """
     return load_setting("ollama_port", 11434)
+
+
+def find_fonts():
+    all_fonts = [f.name for f in fontManager.ttflist]
+    return all_fonts

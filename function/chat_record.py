@@ -6,12 +6,14 @@ from plottable import Table
 import pandas as pd
 import json
 
+from tools.tools import load_static_setting
+
 
 # 群友水群次数表格
 def ShowTableByBase64(data):
-    plt.rcParams["font.sans-serif"] = ["AR PL UKai CN"]
-    # plt.rcParams["font.sans-serif"] = ["Unifont"]  # 设置字体
-    # plt.rcParams["font.sans-serif"] = ["SimHei"]  # 设置字体
+    plt.rcParams["font.sans-serif"] = load_static_setting(
+        "font", ["Unifont"]
+    )  # 设置字体
     plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
     table = pd.DataFrame(data)
     fig, ax = plt.subplots()
@@ -194,4 +196,3 @@ def AddChatRecord(user_id: int, group_id: int):
     conn.commit()
     conn.close()
     return (all_num, today_num)
-

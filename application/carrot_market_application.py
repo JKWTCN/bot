@@ -14,6 +14,7 @@ from matplotlib import pyplot as plt
 import pandas as pd
 from plottable import Table
 
+from tools.tools import load_static_setting
 
 def create_table(db_path: str = "bot.db") -> None:
     """
@@ -443,8 +444,8 @@ def ShowStockMarketByBase64(data):
     """
     显示股票市场信息表格
     """
-    plt.rcParams["font.sans-serif"] = ["AR PL UKai CN"]
-    # plt.rcParams["font.sans-serif"] = ["Unifont"]  # 设置字体
+    plt.rcParams["font.sans-serif"] = load_static_setting("font", ["Unifont"])
+    # 设置字体
     # plt.rcParams["font.sans-serif"] = ["SimHei"]  # 设置字体
     plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
     table = pd.DataFrame(data)

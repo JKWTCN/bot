@@ -186,7 +186,7 @@ class GreatPurgeApplication(MetaMessageApplication):
             dump_setting("last_update_time", time.time())
             data = get_group_list(message.websocket)
             print("开始更新群列表")
-            logging.info("开始更新群列表")
+            # logging.info("开始更新群列表")
             for group in data:
                 update_group_info(
                     group["group_id"],
@@ -262,10 +262,10 @@ class GreatPurgeApplication(MetaMessageApplication):
                                 await kick_member(
                                     message.websocket, user.user_id, user.group_id
                                 )
-                logging.info(f'更新群:{group["group_name"]}({group["group_id"]})完成。')
+                # logging.info(f'更新群:{group["group_name"]}({group["group_id"]})完成。')
 
             print("更新全部群列表完毕")
-            logging.info("更新全部群列表完毕")
+            # logging.info("更新全部群列表完毕")
 
     def judge(self, message: MetaMessageInfo) -> bool:
         """判断是否触发应用"""
@@ -2872,12 +2872,14 @@ import matplotlib.pyplot as plt
 from plottable import Table
 import pandas as pd
 
+from tools.tools import load_static_setting
+
 
 # 群友水群次数表格
 def ShowTableByBase64(data):
-    plt.rcParams["font.sans-serif"] = ["AR PL UKai CN"]
-    # plt.rcParams["font.sans-serif"] = ["Unifont"]  # 设置字体
-    # plt.rcParams["font.sans-serif"] = ["SimHei"]  # 设置字体
+    plt.rcParams["font.sans-serif"] = load_static_setting(
+        "font", ["Unifont"]
+    )  # 设置字体
     plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
     table = pd.DataFrame(data)
     fig, ax = plt.subplots()
@@ -3008,12 +3010,14 @@ def find_points_ranking():
 from function.group_operation import IsInGroup
 from function.datebase_user import get_user_info
 
+from tools.tools import load_static_setting
+
 
 # 群友积分统计表格
 def ShowRankingByBase64(data):
-    plt.rcParams["font.sans-serif"] = ["AR PL UKai CN"]
-    # plt.rcParams["font.sans-serif"] = ["Unifont"]  # 设置字体
-    # plt.rcParams["font.sans-serif"] = ["SimHei"]  # 设置字体
+    plt.rcParams["font.sans-serif"] = load_static_setting(
+        "font", ["Unifont"]
+    )  # 设置字体
     plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
     table = pd.DataFrame(data)
     fig, ax = plt.subplots()
@@ -4259,6 +4263,8 @@ class AnswerBookApplication(GroupMessageApplication):
 
 # 获取系统状态应用
 
+from tools.tools import load_static_setting
+
 
 # 获取系统状态
 def ShowSystemInfoTableByBase64():
@@ -4269,9 +4275,9 @@ def ShowSystemInfoTableByBase64():
     import psutil
     import platform
 
-    plt.rcParams["font.sans-serif"] = ["AR PL UKai CN"]
-    # plt.rcParams["font.sans-serif"] = ["Unifont"]  # 设置字体
-    # plt.rcParams["font.sans-serif"] = ["SimHei"]  # 设置字体
+    plt.rcParams["font.sans-serif"] = load_static_setting(
+        "font", ["Unifont"]
+    )  # 设置字体
     plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
     data = {"项目": [], "值": []}
     if platform.system() == "Linux":
