@@ -219,6 +219,61 @@ def should_calculate_interest():
     return not is_today(current_time, last_calculation_time)
 
 
+# 检查并扣除借款
+def check_and_deduct_loan(user_id: int, group_id: int, point: int) -> int:
+    """
+    检查用户是否有借款，如果有则从积分中扣除
+    
+    Args:
+        user_id: 用户ID
+        group_id: 群组ID
+        point: 当前积分
+        
+    Returns:
+        扣除借款后的积分
+    """
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    
+    try:
+        # 查询用户是否有借款
+        cur.execute("SELECT amount FROM loan WHERE user_id=? AND group_id=?", (user_id, group_id))
+        loan_data = cur.fetchall()
+        
+        if len(loan_data) > 0:
+            loan_amount = loan_data[0][0]
+            
+            if loan_amount > 0:
+                # 计算扣除借款后的积分
+                if point >= loan_amount:
+                    # 积分足够还清借款
+                    final_point = point - loan_amount
+                    # 清除借款记录
+                    cur.execute("DELETE FROM loan WHERE user_id=? AND group_id=?", (user_id, group_id))
+                    conn.commit()
+                    logging.info(f"用户{user_id}在群{group_id}还清了{loan_amount}积分的借款")
+                else:
+                    # 积分不足以还清借款，部分扣除
+                    final_point = 0
+                    # 更新借款金额
+                    remaining_loan = loan_amount - point
+                    cur.execute("UPDATE loan SET amount=? WHERE user_id=? AND group_id=?",
+                               (remaining_loan, user_id, group_id))
+                    conn.commit()
+                    logging.info(f"用户{user_id}在群{group_id}部分还款{point}积分，剩余借款{remaining_loan}积分")
+                
+                return final_point
+        
+        # 没有借款，返回原积分
+        return point
+        
+    except Exception as e:
+        logging.error(f"检查并扣除借款时发生错误: {e}")
+        return point
+    finally:
+        conn.close()
+
+
 class BankApplication(GroupMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo("积分银行", "存入积分获取每日利息")
