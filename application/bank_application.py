@@ -305,7 +305,7 @@ class BankApplication(GroupMessageApplication):
                 message.websocket,
                 message.groupId,
                 message.messageId,
-                f"成功从银行取出{amount}积分喵！当前银行余额：{new_bank_balance}"
+                f"成功从银行取出{amount}积分喵！当前银行余额：{new_bank_balance} 喵."
             )
         
         # 处理查询银行余额
