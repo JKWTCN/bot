@@ -247,7 +247,7 @@ class BankApplication(GroupMessageApplication):
                     message.websocket,
                     message.groupId,
                     message.messageId,
-                    f"你的积分不足喵！当前积分：{current_points}"
+                    f"你的积分不足喵！当前积分：{current_points} 喵."
                 )
                 return
             
@@ -287,7 +287,7 @@ class BankApplication(GroupMessageApplication):
                     message.websocket,
                     message.groupId,
                     message.messageId,
-                    f"银行余额不足喵！当前银行余额：{bank_balance}"
+                    f"银行余额不足喵！当前银行余额：{bank_balance} 喵."
                 )
                 return
             
@@ -328,7 +328,7 @@ class BankApplication(GroupMessageApplication):
                     message.websocket,
                     message.groupId,
                     message.messageId,
-                    f"成功领取{interest}积分利息喵！当前银行余额：{bank_balance}"
+                    f"成功领取{interest}积分利息喵！当前银行余额：{bank_balance} 喵."
                 )
             else:
                 await ReplySay(

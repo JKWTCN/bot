@@ -37,4 +37,5 @@ class BankInterestApplication(MetaMessageApplication):
             update_last_interest_calculation_time()
             self.last_interest_date = datetime.now().date()
         else:
-            logging.info("今天已经计算过银行利息，跳过")
+            # logging.info("今天已经计算过银行利息，跳过")
+            pass
