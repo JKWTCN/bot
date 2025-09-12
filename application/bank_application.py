@@ -35,6 +35,17 @@ def create_bank_table():
     )
     """)
     
+    # 创建每日取出积分记录表
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS daily_withdraw_record (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        date INTEGER NOT NULL,
+        amount INTEGER NOT NULL,
+        UNIQUE(user_id, date)
+    )
+    """)
+    
     # 检查是否有记录，如果没有则插入一条
     cur.execute("SELECT COUNT(*) FROM bank_interest_record")
     count = cur.fetchone()[0]
@@ -205,6 +216,54 @@ def update_last_interest_calculation_time():
     return current_time
 
 
+# 获取用户今日已取出的积分总额
+def get_daily_withdraw_amount(user_id: int) -> int:
+    """获取用户今日已取出的积分总额"""
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    
+    # 获取今日日期（时间戳）
+    today = GetNowDay()
+    
+    # 查询用户今日取出的积分总额
+    cur.execute("SELECT amount FROM daily_withdraw_record WHERE user_id=? AND date=?", (user_id, today))
+    data = cur.fetchone()
+    
+    conn.close()
+    
+    if data:
+        return data[0]
+    else:
+        return 0
+
+
+# 更新用户每日取出积分记录
+def update_daily_withdraw_record(user_id: int, amount: int):
+    """更新用户每日取出积分记录"""
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    
+    # 获取今日日期（时间戳）
+    today = GetNowDay()
+    
+    # 检查是否已有今日记录
+    cur.execute("SELECT amount FROM daily_withdraw_record WHERE user_id=? AND date=?", (user_id, today))
+    data = cur.fetchone()
+    
+    if data:
+        # 更新现有记录
+        new_amount = data[0] + amount
+        cur.execute("UPDATE daily_withdraw_record SET amount=? WHERE user_id=? AND date=?",
+                   (new_amount, user_id, today))
+    else:
+        # 插入新记录
+        cur.execute("INSERT INTO daily_withdraw_record (user_id, date, amount) VALUES (?, ?, ?)",
+                   (user_id, today, amount))
+    
+    conn.commit()
+    conn.close()
+
+
 # 检查是否需要计算利息
 def should_calculate_interest():
     last_calculation_time = get_last_interest_calculation_time()
@@ -346,12 +405,33 @@ class BankApplication(GroupMessageApplication):
                 )
                 return
             
+            # 检查每日取出限制
+            daily_limit = load_setting("daily_point_limit",2000)
+            
+            if daily_limit != -1:  # -1表示不限制
+                # 获取用户今日已取出的积分总额
+                daily_withdrawn = get_daily_withdraw_amount(message.senderId)
+                
+                # 检查是否超出每日限制
+                if daily_withdrawn + amount > daily_limit:
+                    await ReplySay(
+                        message.websocket,
+                        message.groupId,
+                        message.messageId,
+                        f"超出每日取出限制喵！今日已取出{daily_withdrawn}积分，每日最多可取出{daily_limit}积分喵."
+                    )
+                    return
+            
             # 从银行取出
             update_bank_balance(message.senderId, -amount, "withdraw")
             
             # 添加到用户积分
             current_points = find_point(message.senderId)
             change_point(message.senderId, message.groupId, current_points + amount)
+            
+            # 更新每日取出记录
+            if daily_limit != -1:  # 只在有限制时更新记录
+                update_daily_withdraw_record(message.senderId, amount)
             
             # 获取新的银行余额
             new_bank_balance = get_bank_balance(message.senderId)

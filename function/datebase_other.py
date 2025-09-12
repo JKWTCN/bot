@@ -28,15 +28,15 @@ def change_point(user_id: int, group_id: int, point: int):
     current_point = find_point(user_id)
     
     # 检查积分是否增加
-    if point > current_point:
-        # 积分增加，检查是否有借款需要扣除
-        from application.bank_application import check_and_deduct_loan
-        final_point = check_and_deduct_loan(user_id, group_id, point)
+    # if point > current_point:
+    #     # 积分增加，检查是否有借款需要扣除
+    #     from application.bank_application import check_and_deduct_loan
+    #     final_point = check_and_deduct_loan(user_id, group_id, point)
         
-        # 如果积分被借款扣除，更新point值
-        if final_point != point:
-            point = final_point
-            logging.info(f"用户{user_id}的积分被借款扣除，剩余积分：{point}")
+    #     # 如果积分被借款扣除，更新point值
+    #     if final_point != point:
+    #         point = final_point
+    #         logging.info(f"用户{user_id}的积分被借款扣除，剩余积分：{point}")
     
     point = round(point, 3)
     try:
