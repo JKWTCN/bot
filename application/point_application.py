@@ -5,6 +5,7 @@ import time
 import matplotlib.pyplot as plt
 import base64
 
+from application.bank_application import get_bank_balance, update_bank_balance
 from data.application.group_message_application import GroupMessageApplication
 from data.enumerates import ApplicationCostType
 from function.datebase_other import change_point, find_point
@@ -180,6 +181,8 @@ async def luck_choice_mut_super_rich(
                         luck_list[8] = luck_list[8] + 1
                         if GetMyKohlrabi(user_id, group_id) != 0:
                             ChangeMyKohlrabi(user_id, group_id, 0)
+                        if get_bank_balance(user_id) != 0:
+                            update_bank_balance(user_id, -get_bank_balance(user_id), "withdraw")
                 x.append(i + 1)
                 y.append(now_point)
                 update_value(
@@ -201,7 +204,7 @@ async def luck_choice_mut_super_rich(
                         {
                             "type": "text",
                             "data": {
-                                "text": "{},抽奖统计如下：\n10倍奖:{}次\n8倍奖:{}次\n4倍奖:{}次\n2倍奖:{}次\n不变奖:{}次\n除2奖:{}次\n除4奖:{}次\n除8奖:{}次\n积分清零奖:{}次\n积分总额:{}->{}\n".format(
+                                "text": "{},抽奖统计如下：\n10倍奖:{}次\n8倍奖:{}次\n4倍奖:{}次\n2倍奖:{}次\n不变奖:{}次\n除2奖:{}次\n除4奖:{}次\n除8奖:{}次\n一无所有奖:{}次\n积分总额:{}->{}\n".format(
                                     sender_name,
                                     luck_list[0],
                                     luck_list[1],
@@ -244,7 +247,7 @@ async def luck_choice_mut_super_rich(
             {
                 "type": "text",
                 "data": {
-                    "text": "{},抽奖统计如下：\n10倍奖:{}次\n8倍奖:{}次\n4倍奖:{}次\n2倍奖:{}次\n不变奖:{}次\n除2奖:{}次\n除4奖:{}次\n除8奖:{}次\n积分清零奖:{}次\n积分总额:{}->{}\n".format(
+                    "text": "{},抽奖统计如下：\n10倍奖:{}次\n8倍奖:{}次\n4倍奖:{}次\n2倍奖:{}次\n不变奖:{}次\n除2奖:{}次\n除4奖:{}次\n除8奖:{}次\n一无所有奖:{}次\n积分总额:{}->{}\n".format(
                         sender_name,
                         luck_list[0],
                         luck_list[1],
@@ -368,6 +371,8 @@ async def luck_choice_mut(
                         now_point = 0
                         if GetMyKohlrabi(user_id, group_id) != 0:
                             ChangeMyKohlrabi(user_id, group_id, 0)
+                        if get_bank_balance(user_id) != 0:
+                            update_bank_balance(user_id, -get_bank_balance(user_id), "withdraw")
                 x.append(i + 1)
                 y.append(now_point)
                 now_point = int(now_point)
@@ -378,7 +383,7 @@ async def luck_choice_mut(
                         {
                             "type": "text",
                             "data": {
-                                "text": "{},抽奖统计如下：\n200积分奖:{}次\n100积分奖:{}次\n50积分奖:{}次\n10积分奖:{}次\n-10积分奖:{}次\n-20积分奖:{}次\n双倍积分奖:{}次\n折半积分奖:{}次\n十倍积分奖:{}次\n积分清零奖:{}次\n积分总额:{}->{}\n".format(
+                                "text": "{},抽奖统计如下：\n200积分奖:{}次\n100积分奖:{}次\n50积分奖:{}次\n10积分奖:{}次\n-10积分奖:{}次\n-20积分奖:{}次\n双倍积分奖:{}次\n折半积分奖:{}次\n十倍积分奖:{}次\n一无所有奖:{}次\n积分总额:{}->{}\n".format(
                                     sender_name,
                                     luck_list[0],
                                     luck_list[1],
@@ -434,7 +439,7 @@ async def luck_choice_mut(
             {
                 "type": "text",
                 "data": {
-                    "text": "{},抽奖统计如下：\n200积分奖:{}次\n100积分奖:{}次\n50积分奖:{}次\n10积分奖:{}次\n-10积分奖:{}次\n-20积分奖:{}次\n双倍积分奖:{}次\n折半积分奖:{}次\n十倍积分奖:{}次\n积分清零奖:{}次\n积分总额:{}->{}\n乐可:这次运气不错喵。".format(
+                    "text": "{},抽奖统计如下：\n200积分奖:{}次\n100积分奖:{}次\n50积分奖:{}次\n10积分奖:{}次\n-10积分奖:{}次\n-20积分奖:{}次\n双倍积分奖:{}次\n折半积分奖:{}次\n十倍积分奖:{}次\n一无所有奖:{}次\n积分总额:{}->{}\n乐可:这次运气不错喵。".format(
                         sender_name,
                         luck_list[0],
                         luck_list[1],
