@@ -4736,21 +4736,25 @@ class BingSearchApplication(GroupMessageApplication):
         super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
-        search_term = re.search(r"\s*(.*)是(?:啥|什么)", message.plainTextMessage)
+        search_term = re.search(r"\s*(.+?)是(?:啥|什么)", message.plainTextMessage)
         if search_term:
-            query = search_term.group(1)
-            # 使用urllib.parse.quote将文本转换为UTF-8 URL编码形式
-            import urllib.parse
+            query = search_term.group(1).strip()
+            # 确保搜索词不为空且长度合理
+            if query and len(query) >= 1:
+                # 使用urllib.parse.quote将文本转换为UTF-8 URL编码形式
+                import urllib.parse
 
-            encoded_query = urllib.parse.quote(query, safe="")
-            url = f"https://www.bing.com/search?q={encoded_query}"
-            await ReplySay(
-                message.websocket,
-                message.groupId,
-                message.messageId,
-                f"这是关于{query}的必应搜索结果喵,请看一看喵: {url}",
-            )
+                encoded_query = urllib.parse.quote(query, safe="")
+                url = f"https://www.bing.com/search?q={encoded_query}"
+                await ReplySay(
+                    message.websocket,
+                    message.groupId,
+                    message.messageId,
+                    f"这是关于{query}的必应搜索结果喵,请看一看喵: {url}",
+                )
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
-        return HasKeyWords(message.plainTextMessage, ["是啥", "是什么"])
+        # 使用更精确的正则表达式确保有实际搜索内容
+        pattern = r"(.+?)是(?:啥|什么)"
+        return bool(re.search(pattern, message.plainTextMessage))
