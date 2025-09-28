@@ -26,6 +26,14 @@ class MetaMessageApplication(Application):
         self.applicationType = ApplicationType.META
 
     @abstractmethod
+    def judge(self, message: MetaMessageInfo):
+        """判断是否触发应用
+
+        Args:
+            message (MessageInfo): 要判断的消息
+        """
+
+    @abstractmethod
     async def process(self, message: MetaMessageInfo):
         """处理消息
 
