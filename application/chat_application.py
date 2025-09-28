@@ -124,7 +124,7 @@ class GroupChatApplication(GroupMessageApplication):
         """百分之5概率触发回复或者带名字回复"""
         if (
             load_setting("bot_name", "乐可") in message.plainTextMessage
-            or random.random() < 0.05
+            or random.random() < 0.05 or load_setting("bot_id", 0) in message.atList
         ):
             return True
         return False

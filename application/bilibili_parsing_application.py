@@ -503,6 +503,7 @@ class BiliBiliParsingApplication(GroupMessageApplication):
 
     async def process(self, message: GroupMessageInfo):
         isCardMessage = False
+        display_text = ""
         # 检查是否是卡片消息
         for k in message.rawMessage["message"]:
             try:
@@ -525,6 +526,7 @@ class BiliBiliParsingApplication(GroupMessageApplication):
             if "b23" in no_get_params_url:
                 r = requests.get(no_get_params_url)
                 no_get_params_url = r.url.split("?")[0]
+                display_text += f"{no_get_params_url}\n"
 
         uuid_str = str(uuid.uuid4())
         folder = f"downloads/{uuid_str}"
@@ -536,7 +538,7 @@ class BiliBiliParsingApplication(GroupMessageApplication):
         # 等待两个任务完成
         image_path, parsed_info = await asyncio.gather(image_task, info_task)
         print("图片下载和视频信息解析完成")
-        display_text = ""
+        
         if isCardMessage:
             display_text += f"{no_get_params_url}\n"
         display_text += return_video_info_display(parsed_info)
