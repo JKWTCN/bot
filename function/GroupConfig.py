@@ -36,6 +36,7 @@ default_configs = {
     "image_parsing": False,  # 是否解析图片
     "dont_at_me": False,  # @我是否要惩罚
     "hate_at_list": [],  # 不想被艾特的群友
+    "level_limit": -1,  # 入群等级最低等级限制
 }
 
 intOptionType = [
@@ -49,6 +50,7 @@ intOptionType = [
     "kick_time_sec",
     "sensitive_ban_sec",
     "hate_at_list",
+    "level_limit"
 ]
 stringOptionType = ["sensitive_words"]
 boolOptionType = [

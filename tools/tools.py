@@ -602,3 +602,54 @@ def GetOllamaPort():
 def find_fonts():
     all_fonts = [f.name for f in fontManager.ttflist]
     return all_fonts
+
+# 获取用户等级
+def get_user_level(user_id: int) -> int:
+    data={
+        "user_id":user_id
+    }
+    import requests
+    response = requests.post(f"http://localhost:{GetNCHSPort()}/get_stranger_info", json=data)
+    # print(response.json())
+    response=response.json()
+    # print(response["data"]["qqLevel"])
+    # print(response["data"]["isHideQQLevel"])
+    logging.info("尝试获取用户信息:{}".format(response))
+    if "isHideQQLevel" in response["data"]:
+        if response["data"]["isHideQQLevel"]:
+            return -1
+    return response["data"]["qqLevel"]
+
+# 获取用户昵称
+def get_person_name(user_id: int) -> str:
+    data={
+        "user_id":user_id
+    }
+    import requests
+    response = requests.post(f"http://localhost:{GetNCHSPort()}/get_stranger_info", json=data)
+    # print(response.json())
+    response=response.json()
+    # print(response["data"]["qqLevel"])
+    # print(response["data"]["isHideQQLevel"])
+    logging.info("尝试获取用户信息:{}".format(response))
+    if response["data"]["nick"]:
+        return response["data"]["nick"]
+    else:
+        return  "{}".format(user_id)
+
+#  获取用户注册时间
+def get_user_reg_time(user_id: int) -> int:
+    data={
+        "user_id":user_id
+    }
+    import requests
+    response = requests.post(f"http://localhost:{GetNCHSPort()}/get_stranger_info", json=data)
+    # print(response.json())
+    response=response.json()
+    # print(response["data"]["regTime"])
+    # print(response["data"]["isHideQQLevel"])
+    logging.info("尝试获取用户信息:{}".format(response))
+    if "regTime" in response["data"]:
+        return response["data"]["regTime"]
+    else:
+        return -1

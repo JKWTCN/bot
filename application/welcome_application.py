@@ -13,7 +13,7 @@ from data.enumerates import ApplicationCostType, NoticeType
 from function.say import ReplySay
 import logging
 from function.datebase_user import BotIsAdmin
-from tools.tools import load_setting
+from tools.tools import load_setting,get_user_level,get_person_name
 from function.GroupConfig import get_config
 from captcha.image import ImageCaptcha
 
@@ -348,14 +348,24 @@ class WelcomeApplication(NoticeMessageApplication):
         super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
 
     async def process(self, message: NoticeMessageInfo):
-        if BotIsAdmin(message.groupId):
-            await welcome_verify(message.websocket, message.senderId, message.groupId)
-        elif message.groupId == load_setting("main_group_id", 0):
-            await welcome_new(message.websocket, message.senderId, message.groupId)
+        level=get_user_level(message.senderId)
+        if get_config("level_limit", message.groupId)!=-1 and level<=get_config("level_limit", message.groupId) and level!=-1:
+            if(BotIsAdmin(message.groupId)):
+                await kick_member(message.websocket,message.senderId,message.groupId)
+                await SayGroup(message.websocket,message.groupId,f"用户{get_person_name(message.senderId)}的等级为{level},未达到入群等级限制{get_config('level_limit', message.groupId)},已自动踢出喵！")
+            else:
+                await SayGroup(message.websocket,message.groupId,f"用户{get_person_name(message.senderId)}的等级为{level},未达到入群等级限制{get_config('level_limit', message.groupId)},可能是广告号,建议管理员手动踢出喵！")
         else:
-            await welcom_new_no_admin(
-                message.websocket, message.senderId, message.groupId
-            )
+            if BotIsAdmin(message.groupId):
+                await welcome_verify(message.websocket, message.senderId, message.groupId)
+            elif message.groupId == load_setting("main_group_id", 0):
+                await welcome_new(message.websocket, message.senderId, message.groupId)
+            else:
+                await welcom_new_no_admin(
+                    message.websocket, message.senderId, message.groupId
+                )
+        
+        
 
     def judge(self, message: NoticeMessageInfo):
         """判断是否触发应用
