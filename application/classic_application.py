@@ -219,7 +219,7 @@ class GreatPurgeApplication(MetaMessageApplication):
                             and timeout != -1
                             and timeout >= 30 * 24 * 3600  # type: ignore
                         ):
-                            if not IsAdmin(user.user_id, user.group_id):
+                            if user.user_id!=0 and not IsAdmin(user.user_id, user.group_id):
                                 print(
                                     "{}({})因{}个月未活跃被请出群聊{}({}),最后发言时间:{}".format(
                                         name,

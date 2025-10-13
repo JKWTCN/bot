@@ -75,6 +75,7 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
 
     try:
         print(data)
+        logging.info(data)
         response = requests.post(url, json=data, headers=headers, timeout=300)
         res = response.json()
 
@@ -124,7 +125,8 @@ class GroupChatApplication(GroupMessageApplication):
         """百分之5概率触发回复或者带名字回复"""
         if (
             load_setting("bot_name", "乐可") in message.plainTextMessage
-            or random.random() < 0.05 or load_setting("bot_id", 0) in message.atList
+            or random.random() < 0.05
+            or load_setting("bot_id", 0) in message.atList
         ):
             return True
         return False
