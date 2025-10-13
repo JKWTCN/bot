@@ -13,6 +13,7 @@ from schedule.register import RegisterApplication
 import application
 import application.classic_application as classic_application
 import application.cold_group_king as cold_group_king
+import application.weather_application as weather_application
 
 
 def initApplications():
@@ -213,3 +214,4 @@ def initApplications():
     from application.bank_interest_application import BankInterestApplication
 
     RegisterApplication(BankInterestApplication())
+    RegisterApplication(weather_application.WeatherApplication())

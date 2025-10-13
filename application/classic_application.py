@@ -4757,4 +4757,4 @@ class BingSearchApplication(GroupMessageApplication):
         """判断是否触发应用"""
         # 使用更精确的正则表达式确保有实际搜索内容
         pattern = r"(.+?)是(?:啥|什么)"
-        return bool(re.search(pattern, message.plainTextMessage)) and LoadGroupSetting("bing_search", message.groupId, False)
+        return bool(re.search(pattern, message.plainTextMessage)) and get_config("bing_search", message.groupId)
