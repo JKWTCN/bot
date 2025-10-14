@@ -6,7 +6,7 @@ from data.message.group_message_info import GroupMessageInfo
 from function.say import ReplySay
 import requests
 from pypinyin import lazy_pinyin
-from tools.tools import load_setting,load_static_setting
+from tools.tools import load_setting,load_static_setting,translationToEnglish
 import logging
 
 
@@ -61,7 +61,8 @@ class WeatherApplication(GroupMessageApplication):
         city_raw = extract_city_robust(message.plainTextMessage)
         city = city_raw
         if is_chinese(city):
-            city = chinese_to_pinyin(city)
+            # city = chinese_to_pinyin(city)
+            city= translationToEnglish(city)
         weather_info = get_weather(city,city_raw)
         await ReplySay(message.websocket, message.groupId, message.messageId,weather_info)
 
