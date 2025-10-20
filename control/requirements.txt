@@ -9,4 +9,6 @@ requests_html
 lxml_html_clean
 yagmail
 psutil
+opencv-python
 netifaces2
+pypinyin

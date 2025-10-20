@@ -116,7 +116,7 @@ def setup_logging():
 async def main():
     setup_logging()
     initApplications()
-    async with serve(pro, "localhost", GetNCWCPort()) as server:
+    async with serve(pro, "0.0.0.0", GetNCWCPort()) as server:
         await server.serve_forever()
 
 

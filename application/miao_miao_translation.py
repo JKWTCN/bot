@@ -67,9 +67,9 @@ async def miaomiaoTranslation(websocket, user_id: int, group_id: int, message_id
     if model == "qwen3:8b":
         for msg in data["messages"]:
             if msg["role"] == "system":
-                msg["content"] = "/nothink " + msg["content"]
+                msg["content"] = msg["content"]
             elif msg["role"] == "user":
-                msg["content"] = "/nothink " + msg["content"]
+                msg["content"] = msg["content"]
 
     try:
         print(data)
