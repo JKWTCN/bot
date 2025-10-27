@@ -27,3 +27,4 @@ __pycache__/
 /private_application
 /downloads
 static_setting.json
+.DS_Store
