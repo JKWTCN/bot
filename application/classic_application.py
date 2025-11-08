@@ -219,7 +219,9 @@ class GreatPurgeApplication(MetaMessageApplication):
                             and timeout != -1
                             and timeout >= 30 * 24 * 3600  # type: ignore
                         ):
-                            if user.user_id!=0 and not IsAdmin(user.user_id, user.group_id):
+                            if user.user_id != 0 and not IsAdmin(
+                                user.user_id, user.group_id
+                            ):
                                 print(
                                     "{}({})因{}个月未活跃被请出群聊{}({}),最后发言时间:{}".format(
                                         name,
@@ -1282,6 +1284,7 @@ async def WriteBottlesComment(
             (replyId, groupId),
         )
     uuid = cur.fetchone()
+    uuid=uuid[0]
     dump_comment(uuid, userId, groupId, plainMessage)
     return uuid
 
@@ -1415,8 +1418,9 @@ class CommentDriftBottleApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
+
         return (
-            IsComment(message.senderId, message.groupId, message.messageId)
+            IsComment(message.senderId, message.groupId, message.replyMessageId)
             and message.replyMessageId != -1
         )
 
@@ -4757,4 +4761,6 @@ class BingSearchApplication(GroupMessageApplication):
         """判断是否触发应用"""
         # 使用更精确的正则表达式确保有实际搜索内容
         pattern = r"(.+?)是(?:啥|什么)"
-        return bool(re.search(pattern, message.plainTextMessage)) and get_config("bing_search", message.groupId)
+        return bool(re.search(pattern, message.plainTextMessage)) and get_config(
+            "bing_search", message.groupId
+        )
