@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import re
 import sqlite3
@@ -82,9 +83,9 @@ def write_message(message: dict, text_messgae: str):
         sender_name = sender["card"]
         if len(sender["card"]) == 0:
             sender_name = sender["nickname"]
-
+        md5_hash = hashlib.md5(text_messgae.encode("utf-8")).hexdigest()
         cur.execute(
-            "INSERT INTO group_message VALUES(?,?,?,?,?,?,?,?)",
+            "INSERT INTO group_message VALUES(?,?,?,?,?,?,?,?,?)",
             (
                 message["time"],
                 message["user_id"],
@@ -94,6 +95,7 @@ def write_message(message: dict, text_messgae: str):
                 message["self_id"],
                 message["sub_type"],
                 message["message_id"],
+                md5_hash,
             ),
         )
         conn.commit()
@@ -163,3 +165,37 @@ async def getImageInfo(
         # 确保连接被关闭
         if conn:
             conn.close()
+
+
+def calculate_md5(text):
+    md5_hash = hashlib.md5(text.encode("utf-8")).hexdigest()
+    return md5_hash
+
+
+def get_md5_info(user_id: int, group_id: int, raw_message: str):
+    md5_hash = calculate_md5(raw_message)
+    # print(f"Calculated MD5: {md5_hash}")
+    conn = sqlite3.connect("bot.db")
+    cursor = conn.cursor()
+    # 查找数据库 group_message 表中对应该 md5 出现的次数
+    cursor.execute(
+        "SELECT COUNT(*) FROM group_message WHERE group_id = ? AND md5 = ?",
+        (group_id, md5_hash),
+    )
+    md5_all_count = cursor.fetchone()[0]
+    # 查找数据库 group_message 表中满足 user_id md5 出现的次数
+    cursor.execute(
+        "SELECT COUNT(*) FROM group_message WHERE user_id = ? AND group_id = ? AND md5 = ?",
+        (user_id, group_id, md5_hash),
+    )
+    md5_user_count = cursor.fetchone()[0]
+    # 查找数据库 group_message 表中倒数第二次该 md5 的 message_id 和 time
+    cursor.execute(
+        "SELECT message_id, time FROM group_message WHERE group_id = ? AND md5 = ? ORDER BY rowid DESC LIMIT 1 OFFSET 1",
+        (group_id, md5_hash),
+    )
+    last_message = cursor.fetchone()
+    last_message_id = last_message[0] if last_message else None
+    last_message_time = last_message[1] if last_message else None
+    conn.close()
+    return md5_all_count, md5_user_count, last_message_id, last_message_time

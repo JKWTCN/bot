@@ -23,6 +23,7 @@ class GroupMessageInfo(MessageInfo):
         self.fileList = []
         self.faceList = []
         self.readMessage = ""
+        self.isPainTextMessage = True
         try:
             super().__init__(websocket, rawMessage)
             self.messageType = MessageType.GROUP_MESSAGE
@@ -34,7 +35,9 @@ class GroupMessageInfo(MessageInfo):
                     case "image":
                         self.imageFileList.append(i["data"]["file"])
                         self.readMessage += f"[图片]"
+                        self.isPainTextMessage = False
                     case "file":
+                        self.isPainTextMessage = False
                         pass
                     case "reply":
                         self.replyMessageId = int(i["data"]["id"])
@@ -48,5 +51,7 @@ class GroupMessageInfo(MessageInfo):
                     case "face":
                         self.faceList.append(i["data"]["id"])
                         self.readMessage += f"[表情:{i['data']['raw']['faceText']}]"
+                    case _:
+                        self.isPainTextMessage = False
         except Exception as e:
             print(f"初始化出错: {e},line:{traceback.extract_tb(e.__traceback__)[0][1]}")

@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import sqlite3
 from tools.tools import GetNowDay
 import matplotlib.pyplot as plt

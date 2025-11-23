@@ -204,14 +204,19 @@ def initApplications():
     from application.group_sign_application import GroupSignApplication
 
     RegisterApplication(GroupSignApplication())
-    
+
     # 注册积分银行应用
     from application.bank_application import BankApplication
 
     RegisterApplication(BankApplication())
-    
+
     # 注册银行利息自动更新应用
     from application.bank_interest_application import BankInterestApplication
 
     RegisterApplication(BankInterestApplication())
     RegisterApplication(weather_application.WeatherApplication())
+
+    # 注册复读检查应用
+    from application.repeat_machine_application import RepeatMachineApplication
+
+    RegisterApplication(RepeatMachineApplication())
