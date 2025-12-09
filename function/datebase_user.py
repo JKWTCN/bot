@@ -156,10 +156,12 @@ def get_user_name(user_id: int, group_id: int):
         else:
             return user.nickname
     else:
-        return str(user_id)
+        return get_person_name(user_id)
+    # else:
+    #     return str(user_id)
 
 
-from tools.tools import load_setting
+from tools.tools import get_person_name, load_setting
 
 
 def IsAdmin(user_id: int, group_id: int):

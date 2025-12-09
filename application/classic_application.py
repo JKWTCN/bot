@@ -226,7 +226,7 @@ class GreatPurgeApplication(MetaMessageApplication):
                                     "{}({})因{}个月未活跃被请出群聊{}({}),最后发言时间:{}".format(
                                         name,
                                         user.user_id,
-                                        timeout / 2592000,  # type: ignore
+                                        round(timeout / 2592000, 2),  # type: ignore
                                         GetGroupName(user.group_id),
                                         user.group_id,
                                         time.strftime(
@@ -239,7 +239,7 @@ class GreatPurgeApplication(MetaMessageApplication):
                                     "{}({})因{}个月未活跃被请出群聊{}({}),最后发言时间:{}".format(
                                         name,
                                         user.user_id,
-                                        timeout / 2592000,  # type: ignore
+                                        round(timeout / 2592000, 2),  # type: ignore
                                         GetGroupName(user.group_id),
                                         user.group_id,
                                         time.strftime(
@@ -254,7 +254,7 @@ class GreatPurgeApplication(MetaMessageApplication):
                                     "{}({})，乐可要踢掉你了喵！\n原因:{}个月未活跃。\n最后发言时间为:{}".format(
                                         name,
                                         user.user_id,
-                                        timeout / 2592000,  # type: ignore
+                                        round(timeout / 2592000, 2),  # type: ignore
                                         time.strftime(
                                             "%Y-%m-%d %H:%M:%S",
                                             time.localtime(user.last_sent_time),
@@ -1284,7 +1284,7 @@ async def WriteBottlesComment(
             (replyId, groupId),
         )
     uuid = cur.fetchone()
-    uuid=uuid[0]
+    uuid = uuid[0]
     dump_comment(uuid, userId, groupId, plainMessage)
     return uuid
 
