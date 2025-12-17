@@ -21,10 +21,11 @@ Class/__pycache__/User_point.cpython-312.pyc
 /venv/
 /groups/*
 /test/
-__pycache__/
+__pycache__
 /cache/*
 /.venv/
 /private_application
 /downloads
 static_setting.json
 .DS_Store
+*.db

@@ -41,8 +41,12 @@ async def echo(websocket, message):
                             if len(groupMessageInfo.imageFileList) != 0 and get_config(
                                 "image_parsing", groupMessageInfo.groupId
                             ):
-                                # TODO image-image移植
-                                pass
+                                # 处理图片消息
+                                from function.image_processor import process_image_message
+                                text_message = process_image_message(message, websocket)
+                                if text_message is not None:
+                                    # 立即处理的情况（已缓存或未开启解析）
+                                    write_message(message, text_message)
 
                             else:
                                 write_message(message, groupMessageInfo.readMessage)
@@ -116,6 +120,11 @@ def setup_logging():
 async def main():
     setup_logging()
     initApplications()
+    # 初始化图片处理数据库
+    from function.image_processor import init_database
+    init_database()
+
+
     async with serve(pro, "0.0.0.0", GetNCWCPort()) as server:
         await server.serve_forever()
 

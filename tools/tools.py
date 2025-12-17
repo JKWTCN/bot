@@ -8,7 +8,8 @@ import traceback
 
 from matplotlib.font_manager import fontManager
 import re
-import requests 
+import requests
+
 
 # 获取本机局域网IP
 def GetLocalIP():
@@ -480,13 +481,21 @@ async def red_qq_avatar(websocket):
     await set_qq_avatar(websocket, "res/leike_red.jpg")
 
 
-async def nomoral_qq_avatar(
+async def set_qq_avatar(websocket, file_dir: str):
+    payload = {
+        "action": "set_qq_avatar",
+        "params": {"file": "base64://" + open_img_by_base64(file_dir).decode("utf-8")},
+    }
+    await websocket.send(json.dumps(payload))
+
+
+async def set_normal_qq_avatar(
     websocket,
 ):
-    await set_qq_avatar(websocket, "res/leike.jpg")
-
-
-async def set_qq_avatar(websocket, file_dir: str):
+    file_dir = "res/leike.jpg"
+    if GetNowMonth() == 12:
+        file_dir = "res/leike_christmas.png"
+    # 如果是 12 月
     payload = {
         "action": "set_qq_avatar",
         "params": {"file": "base64://" + open_img_by_base64(file_dir).decode("utf-8")},
@@ -604,15 +613,17 @@ def find_fonts():
     all_fonts = [f.name for f in fontManager.ttflist]
     return all_fonts
 
+
 # 获取用户等级
 def get_user_level(user_id: int) -> int:
-    data={
-        "user_id":user_id
-    }
+    data = {"user_id": user_id}
     import requests
-    response = requests.post(f"http://localhost:{GetNCHSPort()}/get_stranger_info", json=data)
+
+    response = requests.post(
+        f"http://localhost:{GetNCHSPort()}/get_stranger_info", json=data
+    )
     # print(response.json())
-    response=response.json()
+    response = response.json()
     # print(response["data"]["qqLevel"])
     # print(response["data"]["isHideQQLevel"])
     logging.info("尝试获取用户信息:{}".format(response))
@@ -621,32 +632,36 @@ def get_user_level(user_id: int) -> int:
             return -1
     return response["data"]["qqLevel"]
 
+
 # 获取用户昵称
 def get_person_name(user_id: int) -> str:
-    data={
-        "user_id":user_id
-    }
+    data = {"user_id": user_id}
     import requests
-    response = requests.post(f"http://localhost:{GetNCHSPort()}/get_stranger_info", json=data)
+
+    response = requests.post(
+        f"http://localhost:{GetNCHSPort()}/get_stranger_info", json=data
+    )
     # print(response.json())
-    response=response.json()
+    response = response.json()
     # print(response["data"]["qqLevel"])
     # print(response["data"]["isHideQQLevel"])
     logging.info("尝试获取用户信息:{}".format(response))
     if response["data"]["nick"]:
         return response["data"]["nick"]
     else:
-        return  "{}".format(user_id)
+        return "{}".format(user_id)
+
 
 #  获取用户注册时间
 def get_user_reg_time(user_id: int) -> int:
-    data={
-        "user_id":user_id
-    }
+    data = {"user_id": user_id}
     import requests
-    response = requests.post(f"http://localhost:{GetNCHSPort()}/get_stranger_info", json=data)
+
+    response = requests.post(
+        f"http://localhost:{GetNCHSPort()}/get_stranger_info", json=data
+    )
     # print(response.json())
-    response=response.json()
+    response = response.json()
     # print(response["data"]["regTime"])
     # print(response["data"]["isHideQQLevel"])
     logging.info("尝试获取用户信息:{}".format(response))
@@ -654,7 +669,6 @@ def get_user_reg_time(user_id: int) -> int:
         return response["data"]["regTime"]
     else:
         return -1
-
 
 
 def translationToEnglish(word):
@@ -668,20 +682,20 @@ def translationToEnglish(word):
         }
     ]
     data = {
-        "model":"qwen3:0.6b", 
+        "model": "qwen3:0.6b",
         "options": {"temperature": 1.0},
         "stream": False,
         "messages": base_messages,
     }
     response = requests.post(url, json=data, headers=headers, timeout=300)
     res = response.json()
-    data=res["message"]["content"]
+    data = res["message"]["content"]
     match = re.findall(
-                r"<think>([\s\S]*)</think>([\s\S]*)",
-                res["message"]["content"],
-            )
+        r"<think>([\s\S]*)</think>([\s\S]*)",
+        res["message"]["content"],
+    )
     re_text = match[0][1]
-     # 清理回复中的换行符
+    # 清理回复中的换行符
     while "\n" in re_text:
         re_text = re_text.replace("\n", "")
     return re_text

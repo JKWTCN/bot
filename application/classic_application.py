@@ -846,7 +846,7 @@ class AtManagementApplication(GroupMessageApplication):
             rev_name = get_user_name(at_id, group_id)
             sender_name = get_user_name(user_id, group_id)
             if (
-                "解除禁言" in raw_message
+                ("解除禁言" in raw_message or "取消禁言" in raw_message)
                 and BotIsAdmin(group_id)
                 and IsAdmin(user_id, group_id)
             ):
@@ -1038,6 +1038,7 @@ class AtManagementApplication(GroupMessageApplication):
             message.plainTextMessage,
             [
                 "解除禁言",
+                "取消禁言",
                 "禁言",
                 "说再见",
                 "晋升",
