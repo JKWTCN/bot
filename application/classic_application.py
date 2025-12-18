@@ -1,5 +1,6 @@
+# Standard library imports
 import base64
-from datetime import datetime
+from datetime import datetime, date
 import glob
 import json
 import logging
@@ -8,18 +9,60 @@ import re
 import sqlite3
 import time
 import uuid
+from random import choice
 
+# Third-party imports
 import requests
+from plottable import Table
+
+# Local imports - Data classes
 from data.message.group_message_info import GroupMessageInfo
+from data.message.meta_message_info import MetaMessageInfo
+from data.message.message_info import MessageInfo
+from data.message.private_message_info import PrivateMesssageInfo
+from data.message.notice_message_info import NoticeMessageInfo
 from data.application.application_info import ApplicationInfo
 from data.application.group_message_application import GroupMessageApplication
-from data.enumerates import ApplicationCostType
+from data.application.meta_application import MetaMessageApplication
+from data.application.private_message_application import PrivateMessageApplication
+from data.application.notice_application import NoticeMessageApplication
+from data.enumerates import ApplicationCostType, MessageType, MetaEventType, NoticeType
 
-from data.message.message_info import MessageInfo
-from function.say import SayGroup, ReplySay
-from function.datebase_user import IsAdmin, get_user_name
-from function.GroupConfig import manage_config, GroupConfigError
+# Local imports - Functions
+from function.say import (
+    SayGroup, ReplySay, SayImage, SayAndAt, SayGroupReturnMessageId,
+    SayImgReply, SayPrivte
+)
+from function.datebase_user import (
+    IsAdmin, get_user_name, Group_member, BotIsAdmin, updata_user_info,
+    IsDeveloper, get_user_info
+)
+from function.GroupConfig import manage_config, GroupConfigError, get_config
 from function.ranking import update_value, Ranking
+from function.database_group import GetGroupName, GetAllGroupId, GetAllGroupMemberId
+from function.group_operation import (
+    kick_member, ban_new, GetGroupMessageSenderId,
+    SetEssenceMsg, DeleteEssenceMsg, IsInGroup
+)
+from function.datebase_other import find_point, change_point
+from function.group_setting import LoadGroupSetting, DumpGroupSetting
+from function.chat import PrivateChatNoContext
+
+# Local imports - Tools
+from tools.tools import (
+    load_setting, dump_setting, GetNCWCPort, GetNCHSPort, GetOllamaPort,
+    GetNowDay, HasKeyWords, HasAllKeyWords, HasBotName, set_normal_qq_avatar, timestamp_to_date,
+    HasChinese, FindNum, GetDirSizeByUnit, load_static_setting,
+    GetSleepSeconds, HasNoneKeyWords, GetLogTime
+)
+
+# Welcome application imports
+from application.welcome_application import (
+    find_vcode,
+    verify,
+    welcome_new,
+    welcom_new_no_admin,
+)
 
 
 # 群签到功能
@@ -101,16 +144,6 @@ class CheckInApplication(GroupMessageApplication):
 
 
 # 大清洗功能
-from data.message.meta_message_info import MetaMessageInfo
-from data.application.meta_application import MetaMessageApplication
-from data.enumerates import MessageType, MetaEventType
-from tools.tools import load_setting, dump_setting
-from function.datebase_user import Group_member, BotIsAdmin, updata_user_info
-from function.GroupConfig import get_config, manage_config
-from function.database_group import GetGroupName
-from function.group_operation import kick_member
-
-from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
 
 
 # 发送获取群名单
@@ -123,7 +156,6 @@ def get_group_list(websocket):
 
 # 发送更新群成员名单
 def update_group_member_list(websocket, group_id: int):
-    import json
 
     url = f"http://localhost:{GetNCHSPort()}/get_group_member_list"
     payload = {"group_id": group_id}
@@ -278,8 +310,6 @@ class GreatPurgeApplication(MetaMessageApplication):
 
 
 # 管理员随机派发水群积分应用
-from function.datebase_other import find_point, change_point
-from tools.tools import GetNowDay
 
 
 # 发送水群积分
@@ -363,8 +393,6 @@ class RandomWaterGroupPointsApplication(GroupMessageApplication):
 
 # 无聊功能合集
 # 哈气，装，打，GAY [AT管理]
-from tools.tools import HasKeyWords, HasAllKeyWords, HasBotName
-from function.datebase_user import IsDeveloper
 
 
 # 删除特定惩罚
@@ -718,7 +746,6 @@ class BeTeasedApplication(GroupMessageApplication):
         )
 
 
-from function.group_operation import ban_new
 
 
 # 获取积分等级
@@ -770,7 +797,6 @@ def set_level(user_id: int, group_id: int, level: int):
     conn.close()
 
 
-from function.say import SayAndAt
 
 
 # 赠送积分
@@ -821,12 +847,6 @@ async def GiveGift(
 
 
 # 艾特功能大合集
-from application.welcome_application import (
-    find_vcode,
-    verify,
-    welcome_new,
-    welcom_new_no_admin,
-)
 
 
 class AtManagementApplication(GroupMessageApplication):
@@ -1067,8 +1087,6 @@ class AtManagementApplication(GroupMessageApplication):
 # 赠送积分应用
 
 
-from tools.tools import timestamp_to_date
-from function.say import SayGroupReturnMessageId
 
 # 丢漂流瓶
 
@@ -1426,7 +1444,6 @@ class CommentDriftBottleApplication(GroupMessageApplication):
         )
 
 
-from function.group_operation import GetGroupMessageSenderId
 
 
 # 返回text里面有多少个好字
@@ -1494,7 +1511,6 @@ class SpicalReplyApplication(GroupMessageApplication):
         )
 
 
-from function.group_operation import SetEssenceMsg, DeleteEssenceMsg
 
 
 # 加精/移除加精应用
@@ -1570,7 +1586,6 @@ class WhoLookYouApplication(GroupMessageApplication):
         )
 
 
-from tools.tools import HasChinese
 
 
 # 香香软软小南梁群友功能
@@ -1655,7 +1670,6 @@ class GroupMiaoMiaoApplication(GroupMessageApplication):
         return message.senderId in get_config("catgirl", message.groupId) and BotIsAdmin(message.groupId) and HasChinese(message.plainTextMessage) and "喵" not in message.plainTextMessage and len(message.imageFileList) == 0 and len(message.atList) == 0 and message.replyMessageId == -1 and len(message.plainTextMessage) < 50  # type: ignore
 
 
-from datetime import datetime
 
 
 # 喵喵日
@@ -1756,7 +1770,6 @@ class LeKeNotKeleApplication(GroupMessageApplication):
         return message.plainTextMessage.startswith("可乐")
 
 
-from function.say import SayImgReply
 
 
 # 早安应用
@@ -2012,7 +2025,6 @@ class GroupFriendBadTasteApplication(GroupMessageApplication):
 
 # 大头菜
 # B股股指
-import tushare as ts
 
 
 def GetBShock():
@@ -2022,8 +2034,6 @@ def GetBShock():
 
 
 def GetDogeCoinV2():
-    import re
-    from requests_html import HTMLSession
 
     try:
         s = HTMLSession()
@@ -2056,8 +2066,6 @@ def GetDogeCoinV2():
 
 # 狗狗币
 def GetDogeCoin():
-    import re
-    import requests
 
     try:
         r = requests.get("https://bitcompare.net/zh-cn/coins/dogecoin", timeout=60)
@@ -2147,7 +2155,6 @@ def ChangeMyKohlrabi(user_id: int, group_id: int, nums: int):
 
 # 梭哈
 async def ShowHand(websocket, user_id: int, group_id: int):
-    import math
 
     now_num = GetMyKohlrabi(user_id, group_id)
     now_point = find_point(user_id)
@@ -2394,7 +2401,6 @@ async def SellKohlrabi(websocket, user_id: int, group_id: int, num: int):
     await websocket.send(json.dumps(payload))
 
 
-from tools.tools import FindNum
 
 
 class KohlrabiApplication(GroupMessageApplication):
@@ -2413,7 +2419,6 @@ class KohlrabiApplication(GroupMessageApplication):
 
         elif "买入" in message.plainTextMessage:
             num = FindNum(message.plainTextMessage)
-            import math
 
             num = math.trunc(num)
             if num >= 1:
@@ -2439,7 +2444,6 @@ class KohlrabiApplication(GroupMessageApplication):
                 )
         else:
             num = FindNum(message.plainTextMessage)
-            import math
 
             num = math.trunc(num)
             if num >= 1:
@@ -2807,7 +2811,6 @@ class LunchTimeApplication(GroupMessageApplication):
 
 
 # 梗图统计
-from tools.tools import GetDirSizeByUnit
 
 
 async def MemeStatistics(websocket, group_id: int):
@@ -2873,11 +2876,7 @@ class PersonalStatisticsApplication(GroupMessageApplication):
 
 
 # 排名应用
-import matplotlib.pyplot as plt
-from plottable import Table
-import pandas as pd
 
-from tools.tools import load_static_setting
 
 
 # 群友水群次数表格
@@ -3012,10 +3011,7 @@ def find_points_ranking():
         return (True, points_list)
 
 
-from function.group_operation import IsInGroup
-from function.datebase_user import get_user_info
 
-from tools.tools import load_static_setting
 
 
 # 群友积分统计表格
@@ -3294,7 +3290,6 @@ class DefenseApplication(GroupMessageApplication):
 
 
 # 睡眠套餐应用
-from tools.tools import GetSleepSeconds
 
 
 class IWantToSleepApplication(GroupMessageApplication):
@@ -3556,7 +3551,6 @@ class GetWaiFuApplication(GroupMessageApplication):
 
 
 # 三次元美图应用
-from random import choice
 
 
 # 随机三次元美图
@@ -3722,7 +3716,6 @@ class RadomHttpCatApplication(GroupMessageApplication):
 
 
 # 运势应用
-from datetime import date
 
 
 # 运势
@@ -4027,7 +4020,6 @@ class LookWorldApplication(GroupMessageApplication):
 
 
 # 灭霸应用
-from function.database_group import GetAllGroupMemberId
 
 
 async def set_qq_avatar(websocket, file_dir: str):
@@ -4059,7 +4051,8 @@ class TimelyCheckTanosApplication(MetaMessageApplication):
                 )
                 thanos_queue.remove(i)
         if len(thanos_queue) == 0:
-            await set_qq_avatar(message.websocket, "res/leike.jpg")
+            # await set_qq_avatar(message.websocket, "res/leike.jpg")
+            await set_normal_qq_avatar(message.websocket)
             dump_setting("is_thanos", False)
         dump_setting("thanos_queue", thanos_queue)
 
@@ -4135,8 +4128,6 @@ class ThanosApplication(GroupMessageApplication):
 
 
 # 环境温度应用
-import re
-import subprocess
 
 
 class GetTemperatureApplication(GroupMessageApplication):
@@ -4268,17 +4259,10 @@ class AnswerBookApplication(GroupMessageApplication):
 
 # 获取系统状态应用
 
-from tools.tools import load_static_setting
 
 
 # 获取系统状态
 def ShowSystemInfoTableByBase64():
-    import matplotlib.pyplot as plt
-    from plottable import Table
-    import pandas as pd
-    import base64
-    import psutil
-    import platform
 
     plt.rcParams["font.sans-serif"] = load_static_setting(
         "font", ["Unifont"]
@@ -4394,7 +4378,6 @@ class GetSystemStatusApplication(GroupMessageApplication):
 
 # 获取本机局域网IP
 def GetLocalIP():
-    from netifaces import interfaces, ifaddresses, AF_INET
 
     ip_addrs = []
     for ifaceName in interfaces():
@@ -4448,7 +4431,6 @@ class JokeApplication(GroupMessageApplication):
 
 
 # 乐可可爱应用
-from tools.tools import HasNoneKeyWords
 
 
 class CuteApplication(GroupMessageApplication):
@@ -4485,13 +4467,9 @@ class CuteApplication(GroupMessageApplication):
 
 
 # 私聊功能
-from function.say import SayPrivte
-from data.application.private_message_application import PrivateMessageApplication
 
 
 # 私聊聊天功能
-from function.chat import PrivateChatNoContext
-from data.message.private_message_info import PrivateMesssageInfo
 
 
 class PrivateChatApplication(PrivateMessageApplication):
@@ -4540,8 +4518,6 @@ class StealthyPointsApplication(GroupMessageApplication):
 
 # 发送日志应用
 
-import yagmail
-from tools.tools import GetLogTime
 
 
 # 发送日志文件到邮箱
@@ -4589,9 +4565,6 @@ class SendLogApplication(PrivateMessageApplication):
 
 
 # Notice应用
-from data.application.notice_application import NoticeMessageApplication
-from data.message.notice_message_info import NoticeMessageInfo
-from data.enumerates import NoticeType
 
 
 # 拍一拍卖萌应用
@@ -4628,7 +4601,6 @@ class PokeCuteApplication(NoticeMessageApplication):
         )
 
 
-from function.group_setting import LoadGroupSetting, DumpGroupSetting
 
 
 # 有人离开应用
@@ -4670,7 +4642,6 @@ class GroupMemberDecreaseApplication(NoticeMessageApplication):
 
 
 # 随机卖萌应用
-from function.database_group import GetAllGroupId
 
 
 class RandomCuteApplication(MetaMessageApplication):
@@ -4709,9 +4680,6 @@ class RandomCuteApplication(MetaMessageApplication):
         )
 
 
-from function.say import SayImage
-
-
 # 人呢呢了应用
 # 检测到此关键词发送人呢呢了精神图片
 class IWantPeopleApplication(GroupMessageApplication):
@@ -4747,7 +4715,6 @@ class BingSearchApplication(GroupMessageApplication):
             # 确保搜索词不为空且长度合理
             if query and len(query) >= 1:
                 # 使用urllib.parse.quote将文本转换为UTF-8 URL编码形式
-                import urllib.parse
 
                 encoded_query = urllib.parse.quote(query, safe="")
                 url = f"https://www.bing.com/search?q={encoded_query}"
