@@ -26,7 +26,7 @@ class MetaMessageApplication(Application):
         self.applicationType = ApplicationType.META
 
     @abstractmethod
-    def judge(self, message: MetaMessageInfo):
+    def judge(self, message: MetaMessageInfo)->bool:
         """判断是否触发应用
 
         Args:

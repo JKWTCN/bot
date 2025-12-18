@@ -9,7 +9,7 @@ from data.application.notice_application import (
     NoticeMessageInfo,
 )
 from data.application.application_info import ApplicationInfo
-from data.enumerates import ApplicationCostType, NoticeType
+from data.enumerates import ApplicationCostType, MetaEventType, NoticeType
 from function.say import ReplySay
 import logging
 from function.datebase_user import BotIsAdmin
@@ -421,7 +421,8 @@ class RefreshVcodeApplication(MetaMessageApplication):
 
     def judge(self, message: MetaMessageInfo) -> bool:
         """判断是否触发应用"""
-        return True
+        # 验证码刷新应该只在心跳事件时触发，避免在连接/断开事件时执行
+        return message.metaEventType == MetaEventType.HEART_BEAT
 
 
 from data.application.group_message_application import GroupMessageApplication

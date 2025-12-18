@@ -3,7 +3,7 @@ from data.application.group_message_application import GroupMessageApplication
 from data.message.group_message_info import GroupMessageInfo
 from data.application.meta_application import MetaMessageApplication
 from data.application.application_info import ApplicationInfo
-from data.enumerates import ApplicationCostType
+from data.enumerates import ApplicationCostType, MetaEventType
 from data.message.meta_message_info import MetaMessageInfo
 from function.say import SayRaw, SayGroup
 import random
@@ -91,7 +91,7 @@ class ColdGroupKingChatApplication(MetaMessageApplication):
 
     def judge(self, message: MetaMessageInfo) -> bool:
         """判断是否满足触发条件"""
-        return True
+        return message.metaEventType == MetaEventType.HEART_BEAT
 
 
 class ColdGroupKingRefreshStatusApplication(GroupMessageApplication):
@@ -108,6 +108,7 @@ class ColdGroupKingRefreshStatusApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否满足触发条件"""
-        return True
+        # 只有在群内开启了冷群王功能时才执行状态刷新
+        return LoadGroupSetting("cold_king_switch", message.groupId, False)
 
 

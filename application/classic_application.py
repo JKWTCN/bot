@@ -687,7 +687,12 @@ class AtPunishApplication(MetaMessageApplication):
         super().__init__(applicationInfo, 50, True, ApplicationCostType.NORMAL)
 
     def judge(self, message: MessageInfo) -> bool:
-        return True
+        # AtPunishApplication 应该只处理心跳事件，而不是连接事件
+        # 检查是否为 MetaMessageInfo 且是心跳事件
+        from data.message.meta_message_info import MetaMessageInfo
+        if isinstance(message, MetaMessageInfo):
+            return message.metaEventType == MetaEventType.HEART_BEAT
+        return False
 
     async def process(self, message: MetaMessageInfo):
         await AtPunish(message.websocket)
@@ -4020,18 +4025,6 @@ class LookWorldApplication(GroupMessageApplication):
 
 
 # 灭霸应用
-
-
-async def set_qq_avatar(websocket, file_dir: str):
-    with open(file_dir, "rb") as image_file:
-        image_data = image_file.read()
-    payload = {
-        "action": "set_qq_avatar",
-        "params": {"file": "base64://" + base64.b64encode(image_data).decode("utf-8")},
-    }
-    await websocket.send(json.dumps(payload))
-
-
 class TimelyCheckTanosApplication(MetaMessageApplication):
     def __init__(self):
         applicationInfo = ApplicationInfo(
@@ -4487,7 +4480,8 @@ class PrivateChatApplication(PrivateMessageApplication):
 
     def judge(self, message: PrivateMesssageInfo) -> bool:
         """判断是否触发应用"""
-        return True
+        # 私聊应用处理所有文本消息，但忽略空消息
+        return message.isPainTextMessage and message.plainTextMessage.strip() != ""
 
 
 # 偷偷加积分应用
