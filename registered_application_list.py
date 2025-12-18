@@ -220,3 +220,6 @@ def initApplications():
     from application.repeat_machine_application import RepeatMachineApplication
 
     RegisterApplication(RepeatMachineApplication())
+    # 更换头像应用
+    from application.classic_application import ChangeAvatarApplication
+    RegisterApplication(ChangeAvatarApplication())

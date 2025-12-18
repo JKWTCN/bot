@@ -494,7 +494,7 @@ async def set_normal_qq_avatar(
 ):
     file_dir = "res/leike.jpg"
     if GetNowMonth() == 12:
-        file_dir = "res/leike_christmas.png"
+        file_dir = "res/leike_christmas.jpg"
     # 如果是 12 月
     payload = {
         "action": "set_qq_avatar",

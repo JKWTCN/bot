@@ -4051,7 +4051,6 @@ class TimelyCheckTanosApplication(MetaMessageApplication):
                 )
                 thanos_queue.remove(i)
         if len(thanos_queue) == 0:
-            # await set_qq_avatar(message.websocket, "res/leike.jpg")
             await set_normal_qq_avatar(message.websocket)
             dump_setting("is_thanos", False)
         dump_setting("thanos_queue", thanos_queue)
@@ -4095,13 +4094,13 @@ class ThanosApplication(GroupMessageApplication):
                     break
             dump_setting("thanos_queue", thanos_queue)
             if len(thanos_queue) == 0:
-                await set_qq_avatar(message.websocket, "res/leike.jpg")
+                await set_normal_qq_avatar(message.websocket)
                 dump_setting("is_thanos", False)
 
         elif HasKeyWords(message.plainTextMessage, ["取消"]) and load_setting(
             "is_thanos", False
         ):
-            # await set_qq_avatar(message.websocket, "res/leike.jpg")
+            # await set_normal_qq_avatar(message.websocket)
             await SayGroup(
                 message.websocket,
                 message.groupId,
@@ -4114,7 +4113,7 @@ class ThanosApplication(GroupMessageApplication):
                     break
             dump_setting("thanos_queue", thanos_queue)
             if len(thanos_queue) == 0:
-                await set_qq_avatar(message.websocket, "res/leike.jpg")
+                await set_normal_qq_avatar(message.websocket)
                 dump_setting("is_thanos", False)
 
     def judge(self, message: GroupMessageInfo) -> bool:
@@ -4732,3 +4731,24 @@ class BingSearchApplication(GroupMessageApplication):
         return bool(re.search(pattern, message.plainTextMessage)) and get_config(
             "bing_search", message.groupId
         )
+# 换头像应用
+class ChangeAvatarApplication(GroupMessageApplication):
+    def __init__(self):
+        applicationInfo = ApplicationInfo("换头像应用", "换头像应用")
+        super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        await set_normal_qq_avatar(message.websocket)
+        await SayGroup(
+            message.websocket,
+            message.groupId,
+            f"{get_user_name(message.senderId, message.groupId)},头像更换成功喵！",
+        )
+        
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """判断是否触发应用"""
+        # 使用更精确的正则表达式确保有实际搜索内容
+        return HasAllKeyWords(
+            message.plainTextMessage, [load_setting("bot_name", "乐可"), "更换头像"]
+        ) and message.senderId in load_setting("developers_list", [])
