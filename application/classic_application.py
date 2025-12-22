@@ -12,6 +12,8 @@ import uuid
 from random import choice
 
 # Third-party imports
+import matplotlib.pyplot as plt
+import pandas as pd
 import requests
 from plottable import Table
 

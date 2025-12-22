@@ -30,3 +30,4 @@ static_setting.json
 .DS_Store
 *.db
 images/*
+.claude

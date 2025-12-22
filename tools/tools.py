@@ -673,28 +673,30 @@ def get_user_reg_time(user_id: int) -> int:
 
 def translationToEnglish(word):
     """翻译中文成英文"""
-    url = f"http://localhost:{GetOllamaPort()}/api/chat"
-    headers = {"Content-Type": "application/json"}
-    base_messages = [
-        {
-            "role": "system",
-            "content": f"请帮我把{word}翻译成英文,只输出一个单词的翻译结果,谢谢.",
-        }
-    ]
-    data = {
-        "model": "qwen3:0.6b",
-        "options": {"temperature": 1.0},
-        "stream": False,
-        "messages": base_messages,
-    }
-    response = requests.post(url, json=data, headers=headers, timeout=300)
-    res = response.json()
-    data = res["message"]["content"]
+    try:
+        import ollama
+
+        # 使用ollama包调用
+        response = ollama.chat(
+            model='qwen3-vl:8b',
+            messages=[{
+                'role': 'system',
+                'content': f'请帮我把{word}翻译成英文,只输出一个单词的翻译结果,谢谢.'
+            }]
+        )
+
+        data = response['message']['content']
+    except Exception as e:
+        logging.error(f"翻译时出错: {str(e)}")
+        return word  # 返回原词作为fallback
     match = re.findall(
         r"<think>([\s\S]*)</think>([\s\S]*)",
-        res["message"]["content"],
+        data,
     )
-    re_text = match[0][1]
+    if match:
+        re_text = match[0][1]
+    else:
+        re_text = data.strip()
     # 清理回复中的换行符
     while "\n" in re_text:
         re_text = re_text.replace("\n", "")

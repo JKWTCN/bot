@@ -196,7 +196,7 @@ def image_to_base64(image_path: str) -> str:
 
 def describe_image(image_path: str, ollama_url: str = "http://localhost:11434") -> Tuple[bool, str]:
     """
-    使用Ollama的Gemma模型描述图片
+    使用Ollama的qwen3-vl:8b模型描述图片
 
     参数:
         image_path: 图片文件路径
@@ -205,33 +205,25 @@ def describe_image(image_path: str, ollama_url: str = "http://localhost:11434") 
     返回:
         (是否成功, 模型生成的图片描述或错误信息)
     """
-    # 将图片转换为base64
-    image_base64 = image_to_base64(image_path)
-    # 准备请求数据
-    data = {
-        "model": "gemma3:4b",
-        "prompt": "请描述一下子这张图片,不要有多余的话,简练一点.谢谢.",
-        "images": [image_base64],
-        "stream": False,
-    }
-
     try:
-        # 发送请求到Ollama API
-        response = requests.post(
-            f"{ollama_url}/api/generate",
-            json=data,
-            headers={"Content-Type": "application/json"},
-            timeout=300,  # 300秒超时
+        import ollama
+
+        # 使用ollama包调用，图像应该在消息的images字段中
+        response = ollama.chat(
+            model='qwen3-vl:8b',
+            messages=[{
+                'role': 'user',
+                'content': '请描述一下子这张图片,不要有多余的话,简练一点.谢谢.',
+                'images': [image_path]
+            }]
         )
-        response.raise_for_status()
 
-        # 解析响应
-        result = response.json()
-        return True, result.get("response", "")
+        description = response['message']['content']
+        return True, description
 
-    except requests.exceptions.RequestException as e:
-        logging.error(f"请求Ollama API时出错: {str(e)}")
-        return False, f"请求Ollama API时出错: {str(e)}"
+    except Exception as e:
+        logging.error(f"调用Ollama时出错: {str(e)}")
+        return False, f"调用Ollama时出错: {str(e)}"
 
 
 def process_image_message(message: dict, websocket) -> Optional[str]:

@@ -7,17 +7,9 @@ from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
 
 def chatNoContext(texts):
     """只处理单句"""
-    url = f"http://localhost:{GetOllamaPort()}/api/chat"
-    model = "qwen3:8b"
-    headers = {"Content-Type": "application/json"}
+    model = "qwen3-vl:8b"
 
     # 构建基础消息结构
-    # base_messages = [
-    #     {
-    #         "role": "system",
-    #         "content": "你叫乐可,现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物,其行为似猫但类人.),与我对话每一句话后面都要加上'喵',且对话请尽量简短.",
-    #     }
-    # ]
     from application.chat_application import getPrompts
 
     base_messages = [
@@ -34,36 +26,29 @@ def chatNoContext(texts):
             }
         )
 
-    data = {
-        "model": model,
-        "options": {"temperature": 1.0},
-        "stream": False,
-        "messages": base_messages,
-    }
-
-    # 特殊模型处理
-    if model == "qwen3:8b":
-        for msg in data["messages"]:
-            if msg["role"] == "system":
-                msg["content"] =  msg["content"]
-            elif msg["role"] == "user":
-                msg["content"] =  msg["content"]
-
     try:
-        print(data)
-        response = requests.post(url, json=data, headers=headers, timeout=300)
-        res = response.json()
+        import ollama
+
+        print(f"使用模型: {model}, 消息: {base_messages}")
+        response = ollama.chat(
+            model=model,
+            messages=base_messages,
+            options={'temperature': 1.0}
+        )
 
         if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
-            re_text = res["message"]["content"]
+            re_text = response['message']['content']
         else:
             match = re.findall(
                 r"<think>([\s\S]*)</think>([\s\S]*)",
-                res["message"]["content"],
+                response['message']['content'],
             )
-            re_text = match[0][1]
-    except:
-        logging.info("连接超时")
+            if match:
+                re_text = match[0][1]
+            else:
+                re_text = response['message']['content'].strip()
+    except Exception as e:
+        logging.error(f"调用Ollama时出错: {str(e)}")
         re_text = "呜呜不太理解呢喵."
 
     # 清理回复中的换行符
@@ -76,17 +61,9 @@ def chatNoContext(texts):
 
 def PrivateChatNoContext(texts):
     """只处理单句"""
-    url = f"http://localhost:{GetOllamaPort()}/api/chat"
-    model = "qwen3:8b"
-    headers = {"Content-Type": "application/json"}
+    model = "qwen3-vl:8b"
 
     # 构建基础消息结构
-    # base_messages = [
-    #     {
-    #         "role": "system",
-    #         "content": "你叫乐可,现在你将模仿一只傲娇并且温柔的猫娘(猫娘是一种拟人化的生物,其行为似猫但类人.),与我对话每一句话后面都要加上'喵',且对话请尽量简短.",
-    #     }
-    # ]
     from application.chat_application import getPrompts
 
     base_messages = [
@@ -103,36 +80,29 @@ def PrivateChatNoContext(texts):
             }
         )
 
-    data = {
-        "model": model,
-        "options": {"temperature": 1.0},
-        "stream": False,
-        "messages": base_messages,
-    }
-
-    # 特殊模型处理
-    if model == "qwen3:8b":
-        for msg in data["messages"]:
-            if msg["role"] == "system":
-                msg["content"] = msg["content"]
-            elif msg["role"] == "user":
-                msg["content"] =  msg["content"]
-
     try:
-        print(data)
-        response = requests.post(url, json=data, headers=headers, timeout=300)
-        res = response.json()
+        import ollama
+
+        print(f"使用模型: {model}, 消息: {base_messages}")
+        response = ollama.chat(
+            model=model,
+            messages=base_messages,
+            options={'temperature': 1.0}
+        )
 
         if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
-            re_text = res["message"]["content"]
+            re_text = response['message']['content']
         else:
             match = re.findall(
                 r"<think>([\s\S]*)</think>([\s\S]*)",
-                res["message"]["content"],
+                response['message']['content'],
             )
-            re_text = match[0][1]
-    except:
-        logging.info("连接超时")
+            if match:
+                re_text = match[0][1]
+            else:
+                re_text = response['message']['content'].strip()
+    except Exception as e:
+        logging.error(f"调用Ollama时出错: {str(e)}")
         re_text = "呜呜不太理解呢喵."
 
     # 清理回复中的换行符
