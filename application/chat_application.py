@@ -102,14 +102,11 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
         if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
             re_text = response['message']['content']
         else:
-            match = re.findall(
-                r"```([\s\S]*)```",
-                response['message']['content'],
-            )
-            if match:
-                re_text = match[0][1]
-            else:
-                re_text = response['message']['content'].strip()
+            # 对于需要思考的模型，需要提取最终回答（去除思考过程）
+            content = response['message']['content']
+
+            # 用正则匹配并去除思考内容（匹配 <think> 标签包裹的内容）
+            re_text = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()
     except Exception as e:
         logging.error(f"调用Ollama时出错: {str(e)}")
         re_text = "呜呜不太理解呢喵."
