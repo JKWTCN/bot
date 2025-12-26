@@ -1476,9 +1476,9 @@ class SpicalReplyApplication(GroupMessageApplication):
         if message.plainTextMessage.startswith("好好好"):
             good_nums = findGoodNums(message.plainTextMessage)
             if good_nums <= 3:
-                changed_point = 100
+                changed_point = 1000
             else:
-                changed_point = 100 * good_nums
+                changed_point = 1000 * good_nums
             change_point(sender_id, message.groupId, now_point + changed_point)
             sender_name = get_user_name(sender_id, message.groupId)
             await ReplySay(
@@ -1492,9 +1492,9 @@ class SpicalReplyApplication(GroupMessageApplication):
         elif message.plainTextMessage.startswith("坏坏坏"):
             bad_nums = findBadNums(message.plainTextMessage)
             if bad_nums <= 3:
-                changed_point = 100
+                changed_point = 1000
             else:
-                changed_point = 100 * bad_nums
+                changed_point = 1000 * bad_nums
             change_point(sender_id, message.groupId, now_point - changed_point)
             sender_name = get_user_name(sender_id, message.groupId)
             await ReplySay(

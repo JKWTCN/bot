@@ -1,5 +1,6 @@
 import os
 import application.GroupConfigApplication
+import application.at_random_group_friend
 import application.bilibili_parsing_application
 import application.carrot_market_application
 import application.chat_application
@@ -31,6 +32,8 @@ def initApplications():
     )
     # 注册讨厌艾特应用
     RegisterApplication(application.hate_at_application.HateAtApplication())
+    # 注册艾特随机群友应用
+    RegisterApplication(application.at_random_group_friend.AtRandomGroupFriendApplication())
     # 注册胡萝卜市场应用
     RegisterApplication(application.carrot_market_application.CarrotMarketApplication())
     # 注册群设置应用

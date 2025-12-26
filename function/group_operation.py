@@ -65,6 +65,39 @@ def GetGroupMessageSenderId(messageId: int) -> int:
     return data["data"]["sender"]["user_id"]
 
 
+def get_reply_image_url(message_id: int) -> str | None:
+    """获取引用消息中的图片URL
+
+    Args:
+        message_id: 消息ID
+
+    Returns:
+        图片URL,如果没有图片则返回None
+    """
+    payload = {
+        "message_id": message_id,
+    }
+    try:
+        response = requests.post(f"http://localhost:{GetNCHSPort()}/get_msg", json=payload)
+        data = response.json()
+
+        if data.get("status") != "ok":
+            return None
+
+        message_data = data.get("data", {})
+        message_content = message_data.get("message", [])
+
+        # 遍历消息内容,查找图片
+        for msg in message_content:
+            if msg.get("type") == "image":
+                return msg.get("data", {}).get("url")
+
+        return None
+    except Exception as e:
+        logging.error(f"获取历史消息图片失败: {e}")
+        return None
+
+
 # 踢人
 async def kick_member(websocket, user_id: int, group_id: int):
     payload = {
