@@ -55,30 +55,28 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
                 logging.error(f"下载引用图片失败: {e}")
                 image_path = None
 
-    # 如果有图片,使用视觉模型,不使用上下文和system prompt
+    # 获取上下文消息
+    context_messages = GetChatContext(user_id, group_id)
+
+    # 构建基础消息结构
+    messages = [
+        {
+            "role": "system",
+            "content": getPrompts(),
+        }
+    ]
+
+    # 添加上下文消息
+    if context_messages:
+        messages.extend(context_messages)
+
+    # 如果有图片,使用视觉模型
     if image_path:
         model = "qwen3-vl:8b"
-        # 有图片时,直接使用用户消息,不加其他内容
-        messages = [
-            {"role": "user", "content": text, "images": [image_path]}  # type: ignore
-        ]
+        # 有图片时,包含图片信息
+        messages.append({"role": "user", "content": text, "images": [image_path]})  # type: ignore
     else:
-        # 没有图片时,使用原来的逻辑
-        context_messages = GetChatContext(user_id, group_id)
-
-        # 构建基础消息结构
-        messages = [
-            {
-                "role": "system",
-                "content": getPrompts(),
-            }
-        ]
-
-        # 添加上下文消息
-        if context_messages:
-            messages.extend(context_messages)
-
-        # 添加当前消息
+        # 没有图片时,只添加文本消息
         messages.append({"role": "user", "content": text})
 
     try:
