@@ -27,7 +27,7 @@ def getPrompts() -> str:
 
 
 async def chat(websocket, user_id: int, group_id: int, message_id: int, text: str, reply_message_id: int = -1):
-    """ai聊天功能回复
+    """ai聊天功能回复 (增强版 - 集成智能模块)
     Args:
         websocket (_type_): 回复的websocket
         user_id (int): 用户的id
@@ -55,20 +55,63 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
                 logging.error(f"下载引用图片失败: {e}")
                 image_path = None
 
-    # 获取上下文消息
-    context_messages = GetChatContext(user_id, group_id)
+    # 初始化智能模块 (新增)
+    try:
+        from intelligence.profile.profile_manager import ProfileManager
+        from intelligence.context.context_manager import ContextManager
+        from intelligence.personalization.prompt_builder import PromptBuilder
 
-    # 构建基础消息结构
-    messages = [
-        {
-            "role": "system",
-            "content": getPrompts(),
-        }
-    ]
+        profile_manager = ProfileManager()
+        context_manager = ContextManager()
+        prompt_builder = PromptBuilder()
 
-    # 添加上下文消息
-    if context_messages:
-        messages.extend(context_messages)
+        # 1. 获取用户画像 (新增)
+        user_profile = profile_manager.get_or_create_profile(user_id)
+
+        # 2. 智能上下文获取 (替换GetChatContext)
+        context_result = await context_manager.get_smart_context(
+            user_id=user_id,
+            group_id=group_id,
+            user_profile=user_profile,
+            current_message=text
+        )
+
+        # 3. 构建个性化system prompt (替换原有getPrompts())
+        system_prompt = prompt_builder.build_personalized_prompt(
+            base_prompt=getPrompts(),
+            user_profile=user_profile,
+            memories=[],  # 暂未实现记忆系统
+            context_summary=context_result.get('summary') or None
+        )
+
+        # 4. 构建消息列表
+        messages = [{"role": "system", "content": system_prompt}]
+
+        # 添加智能上下文消息
+        if context_result['messages']:
+            messages.extend(context_result['messages'])
+
+        # 增加用户熟悉度
+        profile_manager.increment_familiarity(user_id, delta=0.01)
+
+    except Exception as e:
+        # 如果智能模块出错,回退到原有逻辑
+        logging.error(f"智能模块执行失败,回退到原有逻辑: {e}", exc_info=True)
+
+        # 获取上下文消息 (原有逻辑)
+        context_messages = GetChatContext(user_id, group_id)
+
+        # 构建基础消息结构
+        messages = [
+            {
+                "role": "system",
+                "content": getPrompts(),
+            }
+        ]
+
+        # 添加上下文消息
+        if context_messages:
+            messages.extend(context_messages)
 
     # 如果有图片,使用视觉模型
     if image_path:

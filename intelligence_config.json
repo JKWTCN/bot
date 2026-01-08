@@ -1,0 +1,29 @@
+{
+    "database": {
+        "path": "bot_intelligence.db"
+    },
+    "context_window": {
+        "base_size": 10,
+        "min_size": 5,
+        "max_size": 30
+    },
+    "weight_factors": {
+        "time_decay": {
+            "half_life_minutes": 30
+        },
+        "user_role": {
+            "current_user": 1.5,
+            "bot": 1.2,
+            "other": 1.0
+        }
+    },
+    "memory": {
+        "extraction_interval": 10,
+        "max_memories_per_user": 100,
+        "importance_threshold": 0.5
+    },
+    "personalization": {
+        "cache_ttl_seconds": 300,
+        "max_context_tokens": 2000
+    }
+}
