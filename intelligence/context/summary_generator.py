@@ -50,18 +50,23 @@ class SummaryGenerator:
             return None
 
         try:
+            logging.info(f"开始生成摘要: user_id={user_id}, group_id={group_id}, msg_count={len(messages)}")
+
             # 使用LLM生成摘要
             summary_text = self._generate_with_llm(messages)
 
             if not summary_text:
+                logging.warning(f"摘要生成失败(LLM返回空): user_id={user_id}")
                 return None
+
+            logging.info(f"LLM摘要成功: user_id={user_id}, summary={summary_text[:50]}")
 
             # 提取关键话题和实体
             key_topics = self._extract_topics(messages)
             key_entities = self._extract_entities(messages)
 
             # 存储摘要
-            self._store_summary(
+            success = self._store_summary(
                 user_id=user_id,
                 group_id=group_id,
                 summary_text=summary_text,
@@ -70,8 +75,12 @@ class SummaryGenerator:
                 messages=messages
             )
 
-            logging.info(f"生成对话摘要: user={user_id}, group={group_id}")
-            return summary_text
+            if success:
+                logging.info(f"摘要存储成功: user_id={user_id}, summary_id=...")
+            else:
+                logging.error(f"摘要存储失败: user_id={user_id}")
+
+            return summary_text if success else None
 
         except Exception as e:
             logging.error(f"摘要生成失败: {e}", exc_info=True)
@@ -115,7 +124,7 @@ class SummaryGenerator:
         使用LLM生成摘要
 
         Args:
-            messages: 消息列表
+            messages: 消息列表 (已经是role/content格式)
 
         Returns:
             摘要文本
@@ -123,11 +132,18 @@ class SummaryGenerator:
         try:
             import ollama
 
-            # 构建对话文本
+            # 构建对话文本 - 消息已经是role/content格式
             conversation_text = "\n".join([
-                f"{msg.get('sender_nickname', '用户')}: {msg.get('raw_message', '')}"
+                msg.get('content', '')
                 for msg in messages[-10:]  # 只摘要最近10条
+                if msg.get('content', '').strip()  # 跳过空消息
             ])
+
+            if not conversation_text.strip():
+                logging.warning("对话内容为空,跳过摘要生成")
+                return None
+
+            logging.info(f"准备调用LLM生成摘要,对话长度: {len(conversation_text)}")
 
             prompt = f"""请简要总结以下对话的核心内容,不超过50字:
 
@@ -142,14 +158,20 @@ class SummaryGenerator:
             )
 
             summary = response['message']['content'].strip()
+
+            if not summary:
+                logging.warning("LLM返回空摘要")
+                return None
+
             # 限制长度
             if len(summary) > 200:
                 summary = summary[:200]
 
+            logging.info(f"LLM生成的摘要: {summary}")
             return summary
 
         except Exception as e:
-            logging.error(f"LLM摘要生成失败: {e}")
+            logging.error(f"LLM摘要生成失败: {e}", exc_info=True)
             return None
 
     def _extract_topics(self, messages: List[Dict]) -> List[str]:
@@ -157,7 +179,7 @@ class SummaryGenerator:
         提取关键话题
 
         Args:
-            messages: 消息列表
+            messages: 消息列表 (role/content格式)
 
         Returns:
             话题列表
@@ -167,7 +189,7 @@ class SummaryGenerator:
         keywords = ['编程', '游戏', '学习', '工作', '音乐', '电影', '运动', '美食', '旅行']
 
         for msg in messages:
-            content = msg.get('raw_message', '')
+            content = msg.get('content', '')
             for keyword in keywords:
                 if keyword in content:
                     topics.add(keyword)
@@ -179,7 +201,7 @@ class SummaryGenerator:
         提取关键实体
 
         Args:
-            messages: 消息列表
+            messages: 消息列表 (role/content格式)
 
         Returns:
             实体列表
@@ -189,7 +211,7 @@ class SummaryGenerator:
 
         # 提取时间相关
         for msg in messages:
-            content = msg.get('raw_message', '')
+            content = msg.get('content', '')
             if '明天' in content or '今天' in content or '晚上' in content:
                 entities.append('时间约定')
                 break

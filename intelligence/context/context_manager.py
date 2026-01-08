@@ -201,9 +201,9 @@ class ContextManager:
                 role = 'user'
                 content = msg['raw_message']
             else:
-                # 其他用户的消息:添加昵称前缀,让LLM知道是别人说的
+                # 其他用户的消息:添加user_id前缀,更准确的标识
                 role = 'user'
-                content = f"[{sender_nickname}]: {msg['raw_message']}"
+                content = f"[用户{msg_user_id}]: {msg['raw_message']}"
 
             # 估算token数 (中文约1.5字符=1token)
             msg_tokens = len(content) * 1.5
