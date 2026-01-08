@@ -50,6 +50,9 @@ class ContextManager:
             - total_weight: 总权重
         """
         try:
+            # 获取bot名称
+            bot_name = self._get_bot_name()
+
             # 1. 动态计算上下文窗口大小
             window_size = self.window_adjuster.calculate_window_size(
                 user_profile=user_profile,
@@ -72,14 +75,17 @@ class ContextManager:
             weighted_messages = self.weight_calculator.calculate_weights(
                 messages=messages,
                 user_profile=user_profile,
-                current_message=current_message
+                current_message=current_message,
+                bot_name=bot_name
             )
 
             # 4. 根据权重筛选和排序
             max_tokens = self._get_max_context_tokens()
             selected_messages = self._select_messages_by_weight(
                 weighted_messages,
-                max_tokens=max_tokens
+                max_tokens=max_tokens,
+                user_id=user_id,
+                bot_name=bot_name
             )
 
             total_weight = sum(m['weight'] for m in weighted_messages)
@@ -153,17 +159,28 @@ class ContextManager:
         finally:
             conn.close()
 
-    def _select_messages_by_weight(self, weighted_messages: List[Dict], max_tokens: int) -> List[Dict]:
+    def _select_messages_by_weight(
+        self,
+        weighted_messages: List[Dict],
+        max_tokens: int,
+        user_id: int,
+        bot_name: str
+    ) -> List[Dict]:
         """
-        根据权重选择消息
+        根据权重选择消息,并正确区分消息角色
 
         Args:
             weighted_messages: 带权重的消息列表
             max_tokens: 最大token数
+            user_id: 当前用户ID
+            bot_name: bot名称
 
         Returns:
-            选中的消息列表
+            选中的消息列表,只包含当前用户和bot的消息
         """
+        # 获取bot的user_id
+        bot_user_id = self._get_bot_user_id()
+
         # 按权重排序
         sorted_messages = sorted(weighted_messages, key=lambda x: x['weight'], reverse=True)
 
@@ -171,12 +188,26 @@ class ContextManager:
         total_tokens = 0
 
         for msg in sorted_messages:
+            # 只保留当前用户和bot的消息,过滤掉其他用户的消息
+            msg_user_id = msg.get('user_id')
+
+            # 判断消息角色
+            if msg_user_id == bot_user_id:
+                # bot的消息
+                role = 'assistant'
+            elif msg_user_id == user_id:
+                # 当前用户的消息
+                role = 'user'
+            else:
+                # 其他用户的消息,跳过
+                continue
+
             # 估算token数 (中文约1.5字符=1token)
             msg_tokens = len(msg['raw_message']) * 1.5
 
             if total_tokens + msg_tokens <= max_tokens:
                 selected.append({
-                    'role': 'assistant' if '乐可' in msg['sender_nickname'] else 'user',
+                    'role': role,
                     'content': msg['raw_message']
                 })
                 total_tokens += msg_tokens
@@ -185,6 +216,28 @@ class ContextManager:
 
         # 按时间顺序返回
         return list(reversed(selected))
+
+    def _get_bot_user_id(self) -> int:
+        """获取bot的user_id"""
+        try:
+            import json
+            with open("static_setting.json", "r", encoding="utf-8") as f:
+                setting = json.load(f)
+            return setting.get("bot_id", 0)
+        except Exception as e:
+            logging.warning(f"获取bot_id失败: {e},返回0")
+            return 0
+
+    def _get_bot_name(self) -> str:
+        """获取bot名称"""
+        try:
+            import json
+            with open("static_setting.json", "r", encoding="utf-8") as f:
+                setting = json.load(f)
+            return setting.get("bot_name", "乐可")
+        except Exception as e:
+            logging.warning(f"获取bot名称失败: {e},使用默认名称'乐可'")
+            return "乐可"
 
     def _get_max_context_tokens(self) -> int:
         """获取最大上下文token数"""

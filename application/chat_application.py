@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -58,17 +59,35 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
     # 初始化智能模块 (新增)
     try:
         from intelligence.profile.profile_manager import ProfileManager
+        from intelligence.profile.profile_extractor import ProfileExtractor
         from intelligence.context.context_manager import ContextManager
+        from intelligence.context.summary_generator import SummaryGenerator
         from intelligence.personalization.prompt_builder import PromptBuilder
+        from intelligence.memory.memory_manager import MemoryManager
 
         profile_manager = ProfileManager()
+        profile_extractor = ProfileExtractor()
         context_manager = ContextManager()
+        summary_generator = SummaryGenerator()
         prompt_builder = PromptBuilder()
+        memory_manager = MemoryManager()
 
-        # 1. 获取用户画像 (新增)
+        # 1. 获取用户画像
         user_profile = profile_manager.get_or_create_profile(user_id)
 
-        # 2. 智能上下文获取 (替换GetChatContext)
+        # 2. 提取特征并更新画像(异步,不阻塞)
+        async def update_profile_async():
+            try:
+                features = profile_extractor.extract_from_message(text, user_id)
+                updates = profile_extractor.merge_with_existing_profile(user_profile, features)
+                if updates:
+                    profile_manager.update_profile(user_id, updates)
+            except Exception as e:
+                logging.error(f"异步更新画像失败: {e}")
+
+        asyncio.create_task(update_profile_async())
+
+        # 3. 智能上下文获取
         context_result = await context_manager.get_smart_context(
             user_id=user_id,
             group_id=group_id,
@@ -76,15 +95,50 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
             current_message=text
         )
 
-        # 3. 构建个性化system prompt (替换原有getPrompts())
+        # 4. 检索相关记忆
+        relevant_memories = memory_manager.retrieve_relevant_memories(
+            user_id=user_id,
+            current_message=text,
+            limit=5
+        )
+
+        # 5. 提取新记忆(异步)
+        async def extract_memory_async():
+            try:
+                memory_manager.extract_and_store_memory(
+                    user_id=user_id,
+                    message=text,
+                    context_type="group",
+                    context_id=group_id
+                )
+            except Exception as e:
+                logging.error(f"异步提取记忆失败: {e}")
+
+        asyncio.create_task(extract_memory_async())
+
+        # 6. 生成对话摘要(异步,只在长对话时触发)
+        async def generate_summary_async():
+            try:
+                if len(context_result.get('messages', [])) >= 8:
+                    summary_generator.generate_summary(
+                        user_id=user_id,
+                        group_id=group_id,
+                        messages=context_result['messages']
+                    )
+            except Exception as e:
+                logging.error(f"异步生成摘要失败: {e}")
+
+        asyncio.create_task(generate_summary_async())
+
+        # 7. 构建个性化system prompt
         system_prompt = prompt_builder.build_personalized_prompt(
             base_prompt=getPrompts(),
             user_profile=user_profile,
-            memories=[],  # 暂未实现记忆系统
-            context_summary=context_result.get('summary') or None
+            memories=relevant_memories,
+            context_summary=context_result.get('summary')
         )
 
-        # 4. 构建消息列表
+        # 8. 构建消息列表
         messages = [{"role": "system", "content": system_prompt}]
 
         # 添加智能上下文消息

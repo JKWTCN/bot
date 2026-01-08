@@ -49,7 +49,8 @@ class ContextWeightCalculator:
         self,
         messages: List[Dict],
         user_profile: Dict,
-        current_message: str
+        current_message: str,
+        bot_name: str = None
     ) -> List[Dict]:
         """
         计算消息重要性权重
@@ -58,10 +59,14 @@ class ContextWeightCalculator:
             messages: 原始消息列表
             user_profile: 用户画像
             current_message: 当前消息内容
+            bot_name: bot名称(可选,如果不提供则使用配置中的名称)
 
         Returns:
             带有权重的消息列表
         """
+        if bot_name:
+            self.bot_name = bot_name
+
         now = datetime.now().timestamp()
         weighted_messages = []
         current_user_id = user_profile.get('user_id', 0)
