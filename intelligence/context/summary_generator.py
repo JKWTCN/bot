@@ -42,7 +42,7 @@ class SummaryGenerator:
             摘要文本,如果不需要生成则返回None
         """
         if len(messages) < 5:
-            logging.debug("消息数量不足5条,跳过摘要生成")
+            logging.debug(f"消息数量不足5条,跳过摘要生成: 当前{len(messages)}条")
             return None
 
         # 检查是否需要生成摘要

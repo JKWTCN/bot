@@ -5,6 +5,7 @@ import os
 import random
 import re
 import string
+import threading
 import uuid
 
 import requests
@@ -75,17 +76,21 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
         # 1. 获取用户画像
         user_profile = profile_manager.get_or_create_profile(user_id)
 
-        # 2. 提取特征并更新画像(异步,不阻塞)
-        async def update_profile_async():
+        # 2. 提取特征并更新画像(后台线程,不阻塞)
+        def update_profile_thread():
             try:
+                logging.info(f"[后台] 开始更新画像: user_id={user_id}")
                 features = profile_extractor.extract_from_message(text, user_id)
                 updates = profile_extractor.merge_with_existing_profile(user_profile, features)
                 if updates:
                     profile_manager.update_profile(user_id, updates)
+                    logging.info(f"[后台] 画像更新成功: {list(updates.keys())}")
+                else:
+                    logging.info(f"[后台] 画像无需更新")
             except Exception as e:
-                logging.error(f"异步更新画像失败: {e}")
+                logging.error(f"后台更新画像失败: {e}", exc_info=True)
 
-        asyncio.create_task(update_profile_async())
+        threading.Thread(target=update_profile_thread, daemon=True).start()
 
         # 3. 智能上下文获取
         context_result = await context_manager.get_smart_context(
@@ -102,33 +107,40 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
             limit=5
         )
 
-        # 5. 提取新记忆(异步)
-        async def extract_memory_async():
+        # 5. 提取新记忆(后台线程)
+        def extract_memory_thread():
             try:
-                memory_manager.extract_and_store_memory(
+                logging.info(f"[后台] 开始提取记忆: user_id={user_id}, text={text[:30]}")
+                result = memory_manager.extract_and_store_memory(
                     user_id=user_id,
                     message=text,
                     context_type="group",
                     context_id=group_id
                 )
+                logging.info(f"[后台] 记忆提取结果: {result}")
             except Exception as e:
-                logging.error(f"异步提取记忆失败: {e}")
+                logging.error(f"后台提取记忆失败: {e}", exc_info=True)
 
-        asyncio.create_task(extract_memory_async())
+        threading.Thread(target=extract_memory_thread, daemon=True).start()
 
-        # 6. 生成对话摘要(异步,只在长对话时触发)
-        async def generate_summary_async():
+        # 6. 生成对话摘要(后台线程,只在长对话时触发)
+        def generate_summary_thread():
             try:
-                if len(context_result.get('messages', [])) >= 8:
-                    summary_generator.generate_summary(
+                msg_count = len(context_result.get('messages', []))
+                logging.info(f"[后台] 检查摘要生成: user_id={user_id}, msg_count={msg_count}")
+                if msg_count >= 8:
+                    summary = summary_generator.generate_summary(
                         user_id=user_id,
                         group_id=group_id,
                         messages=context_result['messages']
                     )
+                    logging.info(f"[后台] 摘要生成结果: {summary}")
+                else:
+                    logging.info(f"[后台] 消息数不足8条,跳过摘要生成")
             except Exception as e:
-                logging.error(f"异步生成摘要失败: {e}")
+                logging.error(f"后台生成摘要失败: {e}", exc_info=True)
 
-        asyncio.create_task(generate_summary_async())
+        threading.Thread(target=generate_summary_thread, daemon=True).start()
 
         # 7. 构建个性化system prompt
         system_prompt = prompt_builder.build_personalized_prompt(

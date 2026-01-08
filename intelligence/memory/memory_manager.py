@@ -43,11 +43,13 @@ class MemoryManager:
             是否成功提取和存储
         """
         try:
+            logging.info(f"开始提取记忆: user_id={user_id}, message={message[:30]}")
+
             # 使用LLM提取关键信息
             memories = self._extract_memories_with_llm(message, user_id)
 
             if not memories:
-                logging.debug(f"未从消息中提取到记忆: user_id={user_id}")
+                logging.info(f"未从消息中提取到记忆(消息内容不重要): user_id={user_id}")
                 return False
 
             # 存储记忆

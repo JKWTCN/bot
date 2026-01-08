@@ -176,7 +176,7 @@ class ContextManager:
             bot_name: bot名称
 
         Returns:
-            选中的消息列表,只包含当前用户和bot的消息
+            选中的消息列表,包含群组对话但区分角色
         """
         # 获取bot的user_id
         bot_user_id = self._get_bot_user_id()
@@ -188,27 +188,30 @@ class ContextManager:
         total_tokens = 0
 
         for msg in sorted_messages:
-            # 只保留当前用户和bot的消息,过滤掉其他用户的消息
             msg_user_id = msg.get('user_id')
+            sender_nickname = msg.get('sender_nickname', '')
 
             # 判断消息角色
             if msg_user_id == bot_user_id:
                 # bot的消息
                 role = 'assistant'
+                content = msg['raw_message']
             elif msg_user_id == user_id:
                 # 当前用户的消息
                 role = 'user'
+                content = msg['raw_message']
             else:
-                # 其他用户的消息,跳过
-                continue
+                # 其他用户的消息:添加昵称前缀,让LLM知道是别人说的
+                role = 'user'
+                content = f"[{sender_nickname}]: {msg['raw_message']}"
 
             # 估算token数 (中文约1.5字符=1token)
-            msg_tokens = len(msg['raw_message']) * 1.5
+            msg_tokens = len(content) * 1.5
 
             if total_tokens + msg_tokens <= max_tokens:
                 selected.append({
                     'role': role,
-                    'content': msg['raw_message']
+                    'content': content
                 })
                 total_tokens += msg_tokens
             else:
