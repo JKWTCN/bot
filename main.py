@@ -118,6 +118,11 @@ def setup_logging():
 
 
 async def main():
+    # 删除临时文件夹 images 内的所有文件
+    import shutil
+    if os.path.exists("images"):
+        shutil.rmtree("images")
+    os.makedirs("images", exist_ok=True)
     setup_logging()
     initApplications()
     # 初始化图片处理数据库

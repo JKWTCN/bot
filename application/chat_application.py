@@ -9,6 +9,7 @@ import threading
 import uuid
 
 import requests
+from typing import cast
 
 from data.application.group_message_application import GroupMessageApplication
 from data.application.application_info import ApplicationInfo
@@ -17,7 +18,7 @@ from data.message.group_message_info import GroupMessageInfo
 from function.say import SayRaw, ReplySay
 from function.database_message import GetChatContext
 from function.database_group import GetGroupName
-from tools.tools import load_setting
+from tools.tools import load_setting, load_static_setting
 
 from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
 
@@ -28,7 +29,14 @@ def getPrompts() -> str:
     return str(prompts)
 
 
-async def chat(websocket, user_id: int, group_id: int, message_id: int, text: str, reply_message_id: int = -1):
+async def chat(
+    websocket,
+    user_id: int,
+    group_id: int,
+    message_id: int,
+    text: str,
+    reply_message_id: int = -1,
+):
     """ai聊天功能回复 (增强版 - 集成智能模块)
     Args:
         websocket (_type_): 回复的websocket
@@ -44,10 +52,12 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
     # 检查是否引用了图片
     if reply_message_id != -1:
         from function.group_operation import get_reply_image_url
+
         image_url = get_reply_image_url(reply_message_id)
         if image_url:
             # 下载图片
             from function.image_processor import getImagePathByFile
+
             try:
                 # 使用UUID生成唯一文件名
                 file_name = f"reply_{message_id}_{uuid.uuid4().hex[:8]}.image"
@@ -81,7 +91,9 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
             try:
                 logging.info(f"[后台] 开始更新画像: user_id={user_id}")
                 features = profile_extractor.extract_from_message(text, user_id)
-                updates = profile_extractor.merge_with_existing_profile(user_profile, features)
+                updates = profile_extractor.merge_with_existing_profile(
+                    user_profile, features
+                )
                 if updates:
                     profile_manager.update_profile(user_id, updates)
                     logging.info(f"[后台] 画像更新成功: {list(updates.keys())}")
@@ -97,25 +109,25 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
             user_id=user_id,
             group_id=group_id,
             user_profile=user_profile,
-            current_message=text
+            current_message=text,
         )
 
         # 4. 检索相关记忆
         relevant_memories = memory_manager.retrieve_relevant_memories(
-            user_id=user_id,
-            current_message=text,
-            limit=5
+            user_id=user_id, current_message=text, limit=5
         )
 
         # 5. 提取新记忆(后台线程)
         def extract_memory_thread():
             try:
-                logging.info(f"[后台] 开始提取记忆: user_id={user_id}, text={text[:30]}")
+                logging.info(
+                    f"[后台] 开始提取记忆: user_id={user_id}, text={text[:30]}"
+                )
                 result = memory_manager.extract_and_store_memory(
                     user_id=user_id,
                     message=text,
                     context_type="group",
-                    context_id=group_id
+                    context_id=group_id,
                 )
                 logging.info(f"[后台] 记忆提取结果: {result}")
             except Exception as e:
@@ -126,13 +138,15 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
         # 6. 生成对话摘要(后台线程,只在长对话时触发)
         def generate_summary_thread():
             try:
-                msg_count = len(context_result.get('messages', []))
-                logging.info(f"[后台] 检查摘要生成: user_id={user_id}, msg_count={msg_count}")
+                msg_count = len(context_result.get("messages", []))
+                logging.info(
+                    f"[后台] 检查摘要生成: user_id={user_id}, msg_count={msg_count}"
+                )
                 if msg_count >= 8:
                     summary = summary_generator.generate_summary(
                         user_id=user_id,
                         group_id=group_id,
-                        messages=context_result['messages']
+                        messages=context_result["messages"],
                     )
                     logging.info(f"[后台] 摘要生成结果: {summary}")
                 else:
@@ -147,15 +161,15 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
             base_prompt=getPrompts(),
             user_profile=user_profile,
             memories=relevant_memories,
-            context_summary=context_result.get('summary')
+            context_summary=context_result.get("summary"),
         )
 
         # 8. 构建消息列表
         messages = [{"role": "system", "content": system_prompt}]
 
         # 添加智能上下文消息
-        if context_result['messages']:
-            messages.extend(context_result['messages'])
+        if context_result["messages"]:
+            messages.extend(context_result["messages"])
 
         # 增加用户熟悉度
         profile_manager.increment_familiarity(user_id, delta=0.01)
@@ -189,31 +203,62 @@ async def chat(websocket, user_id: int, group_id: int, message_id: int, text: st
         messages.append({"role": "user", "content": text})
 
     try:
-        import ollama
+        if load_setting("use_local_ai", True):
+            import ollama
 
-        print(f"使用模型: {model}, 消息: {messages}")
-        logging.info(f"使用模型: {model}, 消息: {messages}")
-        response = ollama.chat(
-            model=model,
-            messages=messages,
-            options={'temperature': 1.0}
-        )
-
-        # 记录日志
-        logging.info(
-            "(AI)乐可在{}({})说:{}".format(
-                GetGroupName(group_id), group_id, response['message']['content']
+            print(f"使用模型: {model}, 消息: {messages}")
+            logging.info(f"使用模型: {model}, 消息: {messages}")
+            response = ollama.chat(
+                model=model, messages=messages, options={"temperature": 0.2}
             )
-        )
+                    # 记录日志
+            logging.info(
+                "(AI)乐可在{}({})说:{}".format(
+                    GetGroupName(group_id), group_id, response["message"]["content"]
+                )
+            )
 
-        if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
-            re_text = response['message']['content']
+            if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
+                re_text = response["message"]["content"]
+            else:
+                # 对于需要思考的模型，需要提取最终回答（去除思考过程）
+                content = response["message"]["content"]
+
+                # 用正则匹配并去除思考内容（匹配 <think> 标签包裹的内容）
+                re_text = re.sub(r"<think>[\s\S]*?</think>", "", content).strip()
         else:
-            # 对于需要思考的模型，需要提取最终回答（去除思考过程）
-            content = response['message']['content']
-
-            # 用正则匹配并去除思考内容（匹配 <think> 标签包裹的内容）
-            re_text = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()
+            from openai import OpenAI
+            from openai.types.chat import ChatCompletionMessageParam
+            client = OpenAI(
+                base_url=load_static_setting("open_ai_base_url", ""),
+                api_key=load_static_setting("open_ai_api_key", ""),
+            )
+            print(f"使用模型: {load_static_setting("open_ai_model", "")}, 消息: {messages}")
+            logging.info(f"使用模型: {load_static_setting("open_ai_model", "")}, 消息: {messages}")
+            completion = client.chat.completions.create(
+                model=load_static_setting("open_ai_model", ""),
+                messages=cast(list[ChatCompletionMessageParam], messages),
+                temperature=0.2,
+                top_p=0.7,
+                max_tokens=8192,
+                extra_body={"chat_template_kwargs": {"thinking": True}},
+                stream=True,
+            )
+            think_content = ""
+            re_text = ""
+            for chunk in completion:
+                if not getattr(chunk, "choices", None):
+                    continue
+                reasoning = getattr(chunk.choices[0].delta, "reasoning_content", None)
+                if reasoning:
+                    think_content+=reasoning
+                if chunk.choices and chunk.choices[0].delta.content is not None:
+                    re_text= re_text + chunk.choices[0].delta.content
+            logging.info(
+                "(AI)乐可在{}({})说:{}".format(
+                    GetGroupName(group_id), group_id, re_text
+                )
+            )
     except Exception as e:
         logging.error(f"调用Ollama时出错: {str(e)}")
         re_text = "呜呜不太理解呢喵."
@@ -241,7 +286,12 @@ class GroupChatApplication(GroupMessageApplication):
 
     async def process(self, message: GroupMessageInfo):
         await chat(
-            message.websocket, message.senderId, message.groupId, message.messageId, message.plainTextMessage, message.replyMessageId
+            message.websocket,
+            message.senderId,
+            message.groupId,
+            message.messageId,
+            message.plainTextMessage,
+            message.replyMessageId,
         )
 
     def judge(self, message: GroupMessageInfo) -> bool:
