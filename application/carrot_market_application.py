@@ -507,6 +507,11 @@ async def showStockInfoMe(websocket, user_id: int, group_id: int, message_id: in
 
 from function.group_operation import ReplySay
 
+# 导入线程池包装器，避免数据库锁定
+from database.sync_wrapper import run_in_thread_sync
+
+
+
 
 class CarrotMarketApplication(GroupMessageApplication):
     def __init__(

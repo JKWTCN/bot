@@ -83,8 +83,7 @@ async def chat(
     try:
         from intelligence.profile.profile_manager_async import get_or_create_profile, update_profile
         from intelligence.context.context_manager_async import get_smart_context
-        from intelligence.memory.memory_manager_async import retrieve_relevant_memories
-        from intelligence.memory.smart_extractor import extract_and_store_memory_smart
+        from intelligence.memory.memory_manager_async import retrieve_relevant_memories, extract_and_store_memory_smart
 
         # 1. 获取用户画像 (异步)
         user_profile = await get_or_create_profile(user_id)
@@ -217,19 +216,14 @@ async def chat(
 
     try:
         if load_setting("use_local_ai", True):
-            # 使用线程池执行ollama调用，避免阻塞事件循环
             import ollama
 
             print(f"使用模型: {model}")
             logging.info(f"使用模型: {model}")
 
-            # 在线程池中运行同步的ollama调用
-            def _call_ollama():
-                return ollama.chat(
-                    model=model, messages=messages, options={"temperature": 0.2}
-                )
-
-            response = await asyncio.to_thread(_call_ollama)
+            response = ollama.chat(
+                model=model, messages=messages, options={"temperature": 0.2}
+            )
 
             logging.info(
                 "(AI)乐可在{}({})说:{}".format(
@@ -244,43 +238,37 @@ async def chat(
                 re_text = re.sub(r"<think>[\s\S]*?</think>", "", content).strip()
 
         else:
-            # OpenAI调用也使用线程池，避免阻塞
             from openai import OpenAI
             from openai.types.chat import ChatCompletionMessageParam
+
+            client = OpenAI(
+                base_url=load_static_setting("open_ai_base_url", ""),
+                api_key=load_static_setting("open_ai_api_key", ""),
+            )
 
             print(f"使用模型: {load_static_setting('open_ai_model', '')}")
             logging.info(f"使用模型: {load_static_setting('open_ai_model', '')}")
 
-            def _call_openai():
-                client = OpenAI(
-                    base_url=load_static_setting("open_ai_base_url", ""),
-                    api_key=load_static_setting("open_ai_api_key", ""),
-                )
+            completion = client.chat.completions.create(
+                model=load_static_setting("open_ai_model", ""),
+                messages=cast(list[ChatCompletionMessageParam], messages),
+                temperature=0.2,
+                top_p=0.7,
+                max_tokens=8192,
+                extra_body={"chat_template_kwargs": {"thinking": True}},
+                stream=True,
+            )
 
-                completion = client.chat.completions.create(
-                    model=load_static_setting("open_ai_model", ""),
-                    messages=cast(list[ChatCompletionMessageParam], messages),
-                    temperature=0.2,
-                    top_p=0.7,
-                    max_tokens=8192,
-                    extra_body={"chat_template_kwargs": {"thinking": True}},
-                    stream=True,
-                )
-
-                think_content = ""
-                re_text = ""
-                for chunk in completion:
-                    if not getattr(chunk, "choices", None):
-                        continue
-                    reasoning = getattr(chunk.choices[0].delta, "reasoning_content", None)
-                    if reasoning:
-                        think_content += reasoning
-                    if chunk.choices and chunk.choices[0].delta.content is not None:
-                        re_text = re_text + chunk.choices[0].delta.content
-
-                return re_text
-
-            re_text = await asyncio.to_thread(_call_openai)
+            think_content = ""
+            re_text = ""
+            for chunk in completion:
+                if not getattr(chunk, "choices", None):
+                    continue
+                reasoning = getattr(chunk.choices[0].delta, "reasoning_content", None)
+                if reasoning:
+                    think_content += reasoning
+                if chunk.choices and chunk.choices[0].delta.content is not None:
+                    re_text = re_text + chunk.choices[0].delta.content
 
             logging.info(
                 "(AI)乐可在{}({})说:{}".format(

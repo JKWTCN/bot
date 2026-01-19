@@ -93,7 +93,7 @@ async def welcom_new_no_admin(websocket, user_id: int, group_id: int):
 # 以下的验证应用
 # 创建验证码并写入数据库
 def create_vcode(user_id: int, group_id: int):
-    conn = sqlite3.connect("bot.db")
+    conn = sqlite3.connect("bot.db", timeout=30.0)
     cur = conn.cursor()
     chr_all = string.ascii_uppercase + string.digits
     chr_4 = "".join(random.sample(chr_all, 4))
@@ -118,7 +118,7 @@ def create_vcode(user_id: int, group_id: int):
 
 # 更新验证码
 def update_vcode(user_id: int, group_id: int):
-    conn = sqlite3.connect("bot.db")
+    conn = sqlite3.connect("bot.db", timeout=30.0)
     cur = conn.cursor()
     chr_all = string.ascii_uppercase + string.digits
     chr_4 = "".join(random.sample(chr_all, 4))
@@ -141,7 +141,7 @@ def update_vcode(user_id: int, group_id: int):
 
 # 根据user_id和group_id查找验证码
 def find_vcode(user_id: int, group_id: int) -> tuple[bool, str]:
-    conn = sqlite3.connect("bot.db")
+    conn = sqlite3.connect("bot.db", timeout=30.0)
     cur = conn.cursor()
     cur.execute(
         "SELECT text FROM vcode where user_id=? and group_id=?", (user_id, group_id)
@@ -155,7 +155,7 @@ def find_vcode(user_id: int, group_id: int) -> tuple[bool, str]:
 
 # 删除验证码
 def delete_vcode(user_id: int, group_id: int):
-    conn = sqlite3.connect("bot.db")
+    conn = sqlite3.connect("bot.db", timeout=30.0)
     cur = conn.cursor()
     cur.execute("delete FROM vcode where user_id=? and group_id=?", (user_id, group_id))
     conn.commit()
@@ -165,7 +165,7 @@ def delete_vcode(user_id: int, group_id: int):
 
 # 查找最后一次验证时间
 def find_last_time(user_id: int, group_id: int):
-    conn = sqlite3.connect("bot.db")
+    conn = sqlite3.connect("bot.db", timeout=30.0)
     cur = conn.cursor()
     cur.execute(
         "SELECT time FROM vcode where user_id=? and group_id=?", (user_id, group_id)
@@ -179,7 +179,7 @@ def find_last_time(user_id: int, group_id: int):
 
 # 更新最后一次的验证时间
 def updata_last_time(user_id: int, group_id: int):
-    conn = sqlite3.connect("bot.db")
+    conn = sqlite3.connect("bot.db", timeout=30.0)
     cur = conn.cursor()
     cur.execute(
         "UPDATE vcode SET time=? where user_id=? and group_id=?",
@@ -195,7 +195,7 @@ def updata_last_time(user_id: int, group_id: int):
 
 # 查找所有
 def find_all(user_id: int, group_id: int):
-    conn = sqlite3.connect("bot.db")
+    conn = sqlite3.connect("bot.db", timeout=30.0)
     cur = conn.cursor()
     cur.execute(
         "SELECT * FROM vcode where user_id=? and group_id=?",
@@ -215,7 +215,7 @@ def find_all(user_id: int, group_id: int):
 
 # 查找验证次数
 def find_times(user_id: int, group_id: int):
-    conn = sqlite3.connect("bot.db")
+    conn = sqlite3.connect("bot.db", timeout=30.0)
     cur = conn.cursor()
     cur.execute(
         "SELECT times FROM vcode where user_id=? and group_id=?", (user_id, group_id)
@@ -225,7 +225,7 @@ def find_times(user_id: int, group_id: int):
 
 # 更新验证次数
 def update_times(user_id: int, group_id: int, times: int):
-    conn = sqlite3.connect("bot.db")
+    conn = sqlite3.connect("bot.db", timeout=30.0)
     cur = conn.cursor()
     cur.execute(
         "UPDATE vcode SET time=?,times=? where user_id=? and group_id=?",
@@ -494,6 +494,11 @@ class VerifyApplication(GroupMessageApplication):
 
 
 from tools.tools import HasKeyWords
+
+# 导入线程池包装器，避免数据库锁定
+from database.sync_wrapper import run_in_thread_sync
+
+
 
 
 class ManualVerifyApplication(GroupMessageApplication):

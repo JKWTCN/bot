@@ -7,10 +7,13 @@ from data.message.group_message_info import GroupMessageInfo
 from function.say import SayAndAt
 from tools.tools import HasKeyWords, load_setting
 
+# 导入线程池包装器，避免数据库锁定
+from database.sync_wrapper import run_in_thread_sync
+
 
 def get_group_member_list(group_id: int) -> list[int]:
     """获取群成员ID列表"""
-    conn = sqlite3.connect("bot.db")
+    conn = sqlite3.connect("bot.db", timeout=30.0)
     cur = conn.cursor()
     cur.execute(
         "SELECT user_id FROM group_member_info WHERE group_id=?;",

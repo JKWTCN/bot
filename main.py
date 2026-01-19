@@ -118,20 +118,37 @@ def setup_logging():
 
 
 async def main():
-    # 删除临时文件夹 images 内的所有文件
+
+    # 删除临时文件夹
     import shutil
     if os.path.exists("images"):
         shutil.rmtree("images")
     os.makedirs("images", exist_ok=True)
+    if os.path.exists("downloads"):
+        shutil.rmtree("downloads")
+    os.makedirs("downloads", exist_ok=True)
     setup_logging()
+    from database.db_pool import init_pools, close_pools
+    await init_pools()
+
+    from config.config_cache import config_cache
+    # 预加载配置
+    _ = await config_cache.get("bot_config", lambda: json.load(open("static_setting.json", "r", encoding="utf-8")))
+    _ = await config_cache.get("intelligence_config", lambda: json.load(open("intelligence_config.json", "r", encoding="utf-8")))
+
+    from intelligence.memory.batch_processor import init_memory_batch_processor
+    await init_memory_batch_processor()
+
     initApplications()
     # 初始化图片处理数据库
     from function.image_processor import init_database
     init_database()
 
-
-    async with serve(pro, "0.0.0.0", GetNCWCPort()) as server:
-        await server.serve_forever()
+    try:
+        async with serve(pro, "0.0.0.0", GetNCWCPort()) as server:
+            await server.serve_forever()
+    finally:
+        await close_pools()
 
 
 asyncio.run(main())

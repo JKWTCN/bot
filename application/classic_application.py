@@ -10,6 +10,10 @@ import sqlite3
 import time
 import uuid
 from random import choice
+import asyncio
+
+# 使用异步数据库连接池
+from database.db_pool import bot_db_pool
 
 # Third-party imports
 import matplotlib.pyplot as plt
@@ -166,36 +170,29 @@ def update_group_member_list(websocket, group_id: int):
     return data["data"]
 
 
-# 更新群列表
-def update_group_info(
+# 更新群列表 (异步版本)
+async def update_group_info(
     group_id: int, group_name: str, member_count: int, max_member_count: int
 ):
-    conn = sqlite3.connect("bot.db")
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT * FROM group_info where group_id=?;",
-        (group_id,),
+    """更新群组信息 (使用异步连接池避免数据库锁定)"""
+    # 检查是否已存在
+    result = await bot_db_pool.fetchone(
+        "SELECT * FROM group_info WHERE group_id=?",
+        (group_id,)
     )
-    data = cur.fetchall()
-    if len(data) == 0:
-        cur.execute(
+
+    if result is None:
+        # 插入新记录
+        await bot_db_pool.execute(
             "INSERT INTO group_info (group_id,group_name,member_count,max_member_count)VALUES (?,?,?,?);",
             (group_id, group_name, member_count, max_member_count),
         )
-        conn.commit()
-        conn.close()
     else:
-        cur.execute(
+        # 更新现有记录
+        await bot_db_pool.execute(
             "UPDATE group_info SET group_name = ?,member_count=?,max_member_count=? WHERE group_id = ?;",
-            (
-                group_name,
-                member_count,
-                max_member_count,
-                group_id,
-            ),
+            (group_name, member_count, max_member_count, group_id),
         )
-        conn.commit()
-        conn.close()
 
 
 class GreatPurgeApplication(MetaMessageApplication):
@@ -222,7 +219,7 @@ class GreatPurgeApplication(MetaMessageApplication):
             print("开始更新群列表")
             # logging.info("开始更新群列表")
             for group in data:
-                update_group_info(
+                await update_group_info(
                     group["group_id"],
                     group["group_name"],
                     group["member_count"],

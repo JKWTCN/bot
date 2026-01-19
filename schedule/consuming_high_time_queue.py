@@ -1,52 +1,78 @@
-from enum import Enum
-import queue
-import threading
-import logging
+"""
+高耗时任务队列处理 (纯异步版本)
+性能优化: 移除threading，使用纯asyncio实现
+"""
 import asyncio
+import logging
 
 
-# class ConsumingTimeType(Enum):
-#     """高耗时任务类型"""
-
-#     CHAT = 1
-#     COLDREPLAY = 2
-#     REPLYIMAGEMESSAGE = 3
-#     SAYPRIVTECHATNOCONTEXT = 4
-#     MIAOMIAOTRANSLATION = 5
+# 全局任务队列
+consuming_time_process_queue: asyncio.Queue = None
 
 
 async def process_queue():
-    """处理队列中的任务"""
-    print("处理线程开始启动")
+    """
+    处理队列中的高耗时任务
+
+    使用 asyncio.Queue 而非 threading.Queue
+    使用协程而非线程
+    """
+    print("✓ 异步任务处理器已启动")
     while True:
         try:
-            task = consuming_time_process_queue.get()
-            if task is None:  # 用于停止线程的信号
+            # 从队列获取任务 (异步等待)
+            task_func = await consuming_time_process_queue.get()
+
+            if task_func is None:
                 continue
-            # websocket, param1, param2, param3, text, taskType = task
-            coro = task()
-            await coro
-            # print(f"开始启动耗时任务类型{taskType}")
+
+            # 执行任务
+            await task_func()
+
         except Exception as e:
             logging.error(f"处理队列任务时出错: {e}", exc_info=True)
+        finally:
+            # 标记任务完成
+            if consuming_time_process_queue:
+                consuming_time_process_queue.task_done()
 
 
-# 创建耗时任务队列和处理线程
-consuming_time_process_queue = queue.Queue()
+async def init_task_queue():
+    """初始化任务队列和处理器"""
+    global consuming_time_process_queue
+    consuming_time_process_queue = asyncio.Queue(maxsize=1000)
+
+    # 启动后台任务处理器
+    # 创建多个工作协程以提高并发处理能力
+    for i in range(3):  # 3个并发处理器
+        asyncio.create_task(process_queue())
+
+    print(f"✓ 异步任务队列已初始化 (maxsize=1000, workers=3)")
 
 
-# 启动处理线程
-def start_processing_loop(loop):
-    asyncio.set_event_loop(loop)
-    loop.run_forever()
+async def submit_high_time_task(task_func):
+    """
+    提交高耗时任务到队列
+
+    Args:
+        task_func: 异步函数(无参数)
+    """
+    if consuming_time_process_queue is None:
+        await init_task_queue()
+
+    try:
+        await asyncio.wait_for(
+            consuming_time_process_queue.put(task_func),
+            timeout=5.0
+        )
+    except asyncio.TimeoutError:
+        logging.error("任务队列已满，任务提交失败")
 
 
-# 创建新的事件循环
-processing_loop = asyncio.new_event_loop()
-processing_thread = threading.Thread(
-    target=start_processing_loop, args=(processing_loop,), daemon=True
-)
-processing_thread.start()
-
-# 启动处理协程
-asyncio.run_coroutine_threadsafe(process_queue(), processing_loop)
+# 兼容旧API的同步包装器
+def submit_high_time_task_sync(task_func):
+    """
+    同步代码提交任务的包装器
+    (建议在新代码中直接使用 await submit_high_time_task())
+    """
+    asyncio.create_task(task_func())

@@ -1,7 +1,8 @@
-import sqlite3
 import time
 import re
 import logging
+import asyncio
+import sqlite3
 
 from data.application.group_message_application import GroupMessageApplication
 from data.enumerates import ApplicationCostType
@@ -11,6 +12,9 @@ from data.message.group_message_info import GroupMessageInfo
 from function.say import ReplySay
 from tools.tools import load_setting, HasAllKeyWords, FindNum, is_today, GetNowDay
 from data.application.application_info import ApplicationInfo
+
+# 使用异步数据库连接池
+from database.db_pool import bot_db_pool
 
 
 # 创建银行账户表
@@ -148,71 +152,64 @@ def calculate_interest(user_id: int, interest_rate: float = 0.01) -> int:
     return 0
 
 
-# 批量计算所有用户的利息
-def calculate_all_interest():
-    conn = sqlite3.connect("bot.db")
-    cur = conn.cursor()
-    
-    # 获取所有用户
-    cur.execute("SELECT user_id FROM bank_account")
-    users = cur.fetchall()
-    
+# 批量计算所有用户的利息 (异步版本)
+async def calculate_all_interest():
+    async with bot_db_pool.acquire() as conn:
+        cur = await conn.execute("SELECT user_id FROM bank_account")
+        users = await cur.fetchall()
+
     interest_count = 0
     current_time = int(time.time())
-    
+
     for user in users:
         user_id = user[0]
-        
+
         # 获取账户信息
-        cur.execute("SELECT balance, last_interest_time FROM bank_account WHERE user_id=?", (user_id,))
-        data = cur.fetchall()
-        
-        if len(data) > 0:
-            balance, last_interest_time = data[0]
-            
+        result = await bot_db_pool.fetchone(
+            "SELECT balance, last_interest_time FROM bank_account WHERE user_id=?",
+            (user_id,)
+        )
+
+        if result:
+            balance, last_interest_time = result
+
             # 检查是否已经过了一天
             if current_time - last_interest_time >= 86400 and balance > 0:
                 # 计算利息
                 interest = int(balance * 0.01)  # 1%的利息
-                
+
                 if interest > 0:
                     # 更新余额和最后计息时间
                     new_balance = balance + interest
-                    cur.execute("UPDATE bank_account SET balance=?, last_interest_time=? WHERE user_id=?", 
-                               (new_balance, current_time, user_id))
+                    await bot_db_pool.execute(
+                        "UPDATE bank_account SET balance=?, last_interest_time=? WHERE user_id=?",
+                        (new_balance, current_time, user_id)
+                    )
                     interest_count += 1
-    
-    conn.commit()
-    conn.close()
-    
+
     if interest_count > 0:
         logging.info(f"已为{interest_count}位用户计算了利息")
-    
+
     return interest_count
 
 
-# 获取最后计算利息的时间
-def get_last_interest_calculation_time():
-    conn = sqlite3.connect("bot.db")
-    cur = conn.cursor()
-    cur.execute("SELECT last_calculation_time FROM bank_interest_record ORDER BY id DESC LIMIT 1")
-    data = cur.fetchone()
-    conn.close()
-    
-    if data:
-        return data[0]
-    else:
-        return 0
+# 获取最后计算利息的时间 (异步版本)
+async def get_last_interest_calculation_time():
+    result = await bot_db_pool.fetchone(
+        "SELECT last_calculation_time FROM bank_interest_record ORDER BY id DESC LIMIT 1"
+    )
+    if result:
+        return result[0]
+    return 0
 
 
-# 更新最后计算利息的时间
-def update_last_interest_calculation_time():
-    conn = sqlite3.connect("bot.db")
-    cur = conn.cursor()
+# 更新最后计算利息的时间 (异步版本)
+async def update_last_interest_calculation_time():
     current_time = int(time.time())
-    cur.execute("UPDATE bank_interest_record SET last_calculation_time=? WHERE id=1", (current_time,))
-    conn.commit()
-    conn.close()
+    await bot_db_pool.execute(
+        "UPDATE bank_interest_record SET last_calculation_time=? WHERE id=1",
+        (current_time,)
+    )
     return current_time
 
 
@@ -264,15 +261,15 @@ def update_daily_withdraw_record(user_id: int, amount: int):
     conn.close()
 
 
-# 检查是否需要计算利息
-def should_calculate_interest():
-    last_calculation_time = get_last_interest_calculation_time()
+# 检查是否需要计算利息 (异步版本)
+async def should_calculate_interest():
+    last_calculation_time = await get_last_interest_calculation_time()
     current_time = int(time.time())
-    
+
     # 如果从未计算过利息，则需要计算
     if last_calculation_time == 0:
         return True
-    
+
     # 检查是否在同一天
     from tools.tools import is_today
     return not is_today(current_time, last_calculation_time)

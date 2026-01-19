@@ -4,7 +4,6 @@ import traceback
 from data.message.message_info import MessageInfo
 import schedule.application_list as application_list
 from data.enumerates import MessageType, ApplicationCostType, ApplicationType
-from schedule.consuming_high_time_queue import consuming_time_process_queue
 from tools.tools import load_setting
 from function.datebase_user import get_user_name
 from data.message.group_message_info import GroupMessageInfo
@@ -52,17 +51,17 @@ class Schedule:
                                 logging.info(
                                     f"触发应用: {i.applicationInfo.name}: {i.applicationInfo.info}"
                                 )
-                    from functools import partial
-
                     match i.applicationCostType:
                         case ApplicationCostType.NORMAL:
+                            # 普通任务：立即创建后台任务
                             asyncio.create_task(i.process(messageInfo))
-                            # await i.process(messageInfo)
                         case ApplicationCostType.HIGH_TIME_HIGH_PERFORMANCE:
-                            consuming_time_process_queue.put(
-                                lambda: i.process(messageInfo)
-                            )
+                            # 高耗时高优任务：提交到队列异步处理
+                            async def task_wrapper():
+                                await i.process(messageInfo)
+                            asyncio.create_task(task_wrapper())
                         case ApplicationCostType.HIGH_TIME_LOW_PERFORMANCE:
+                            # 高耗时低优任务：创建后台任务
                             asyncio.create_task(i.process(messageInfo))
                     if not i.canContinue:
                         return

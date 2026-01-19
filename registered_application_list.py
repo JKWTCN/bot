@@ -64,8 +64,8 @@ def initApplications():
     # 注册被欺负应用
     RegisterApplication(classic_application.BeTeasedApplication())
     # 注册冷群王应用
-    RegisterApplication(cold_group_king.ColdGroupKingChatApplication())
-    RegisterApplication(cold_group_king.ColdGroupKingRefreshStatusApplication())
+    # RegisterApplication(cold_group_king.ColdGroupKingChatApplication())
+    # RegisterApplication(cold_group_king.ColdGroupKingRefreshStatusApplication())
     # 注册艾特管理功能大合集
     RegisterApplication(classic_application.AtManagementApplication())
     # 注册漂流瓶应用

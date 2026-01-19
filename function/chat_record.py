@@ -9,6 +9,9 @@ import json
 
 from tools.tools import load_static_setting
 
+# 导入线程池包装器，避免数据库锁定
+from database.sync_wrapper import run_in_thread_sync
+
 
 # 群友水群次数表格
 def ShowTableByBase64(data):
@@ -155,23 +158,10 @@ def GetChatRecord(user_id: int, group_id: int):
 
 # 统计水群次数
 def AddChatRecord(user_id: int, group_id: int):
-    conn = sqlite3.connect("bot.db")
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT all_num,today_num,today FROM ChatRecord where user_id=? and group_id=?;",
-        (
-            user_id,
-            group_id,
-        ),
-    )
-    data = cur.fetchall()
-    if len(data) == 0:
-        cur.execute(
-            "INSERT INTO ChatRecord (user_id,group_id,all_num,today_num,today)\
-                VALUES (?,?,?,?,?);",
-            (user_id, group_id, 0, 0, GetNowDay()),
-        )
-        conn.commit()
+    """增加聊天记录 (使用线程池避免数据库锁定)"""
+    def _add():
+        conn = sqlite3.connect("bot.db", timeout=30.0)
+        cur = conn.cursor()
         cur.execute(
             "SELECT all_num,today_num,today FROM ChatRecord where user_id=? and group_id=?;",
             (
@@ -180,20 +170,37 @@ def AddChatRecord(user_id: int, group_id: int):
             ),
         )
         data = cur.fetchall()
-    all_num = data[0][0]
-    today_num = data[0][1]
-    today = data[0][2]
-    all_num = all_num + 1
-    if today != GetNowDay():
-        today_num = 1
-        today = GetNowDay()
-    else:
-        today_num = today_num + 1
-    cur.execute(
-        "UPDATE ChatRecord SET all_num = ?,today_num = ?,today = ?\
-            WHERE user_id = ? AND group_id = ?;",
-        (all_num, today_num, today, user_id, group_id),
-    )
-    conn.commit()
-    conn.close()
-    return (all_num, today_num)
+        if len(data) == 0:
+            cur.execute(
+                "INSERT INTO ChatRecord (user_id,group_id,all_num,today_num,today)\
+                    VALUES (?,?,?,?,?);",
+                (user_id, group_id, 0, 0, GetNowDay()),
+            )
+            conn.commit()
+            cur.execute(
+                "SELECT all_num,today_num,today FROM ChatRecord where user_id=? and group_id=?;",
+                (
+                    user_id,
+                    group_id,
+                ),
+            )
+            data = cur.fetchall()
+        all_num = data[0][0]
+        today_num = data[0][1]
+        today = data[0][2]
+        all_num = all_num + 1
+        if today != GetNowDay():
+            today_num = 1
+            today = GetNowDay()
+        else:
+            today_num = today_num + 1
+        cur.execute(
+            "UPDATE ChatRecord SET all_num = ?,today_num = ?,today = ?\
+                WHERE user_id = ? AND group_id = ?;",
+            (all_num, today_num, today, user_id, group_id),
+        )
+        conn.commit()
+        conn.close()
+        return (all_num, today_num)
+
+    return run_in_thread_sync(_add)

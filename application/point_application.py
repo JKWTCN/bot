@@ -40,7 +40,7 @@ choice_probability = [
 
 # 改变今天的抽奖次数
 def ChangeGameblingTimesToday(user_id: int, group_id: int, today_num: int, today: int):
-    conn = sqlite3.connect("bot.db")
+    conn = sqlite3.connect("bot.db", timeout=30.0)
     cur = conn.cursor()
     cur.execute(
         "UPDATE gambling_today SET today_num=?,today=? where user_id=? and group_id=?",
@@ -62,7 +62,7 @@ def open_chart_by_base64(x, y):
 
 # 统计群友抽奖次数
 def find_gambling_times(user_id: int):
-    conn = sqlite3.connect("bot.db")
+    conn = sqlite3.connect("bot.db", timeout=30.0)
     cur = conn.cursor()
     cur.execute("SELECT times FROM gambling where user_id=?", (user_id,))
     data = cur.fetchall()
@@ -85,7 +85,7 @@ def find_gambling_times(user_id: int):
 # 增加数据库记录的总抽奖次数
 def add_gambling_times(user_id: int, add_times: int):
     now_times = find_gambling_times(user_id)
-    conn = sqlite3.connect("bot.db")
+    conn = sqlite3.connect("bot.db", timeout=30.0)
     cur = conn.cursor()
     cur.execute(
         "UPDATE gambling SET times=? WHERE user_id=?",
@@ -100,7 +100,7 @@ def add_gambling_times(user_id: int, add_times: int):
 
 # 获取抽奖限制
 def GetGamblingTimesToday(user_id: int, group_id: int):
-    conn = sqlite3.connect("bot.db")
+    conn = sqlite3.connect("bot.db", timeout=30.0)
     cur = conn.cursor()
     cur.execute(
         "SELECT today_num,today FROM gambling_today where user_id=? and group_id=?",
@@ -499,7 +499,7 @@ async def GivePoorPoint(websocket, user_id: int, group_id: int):
     now_point = find_point(user_id)
     payload = {}
     if now_point <= 0:
-        conn = sqlite3.connect("bot.db")
+        conn = sqlite3.connect("bot.db", timeout=30.0)
         cur = conn.cursor()
         cur.execute(
             "SELECT * FROM poor where user_id=? and group_id=?;",
@@ -582,6 +582,11 @@ async def GivePoorPoint(websocket, user_id: int, group_id: int):
 
 
 from tools.tools import FindNum
+
+# 导入线程池包装器，避免数据库锁定
+from database.sync_wrapper import run_in_thread_sync
+
+
 
 
 class PointApplication(GroupMessageApplication):

@@ -16,10 +16,15 @@ import logging
 from function.database_group import GetAllGroupId
 from application.chat_application import chat
 
+# 导入线程池包装器，避免数据库锁定
+from database.sync_wrapper import run_in_thread_sync
+
+
+
 
 # 设置冷群王次数
 def SetColdGroupTimes(user_id: int, group_id: int, times: int):
-    conn = sqlite3.connect("bot.db")
+    conn = sqlite3.connect("bot.db", timeout=30.0)
     cur = conn.cursor()
     cur.execute(
         "UPDATE cold_group_times SET times=? where user_id=? and group_id=?",
@@ -35,7 +40,7 @@ def SetColdGroupTimes(user_id: int, group_id: int, times: int):
 
 # 获取冷群王次数
 def GetColdGroupTimes(user_id: int, group_id: int):
-    conn = sqlite3.connect("bot.db")
+    conn = sqlite3.connect("bot.db", timeout=30.0)
     cur = conn.cursor()
     try:
         cur.execute(
