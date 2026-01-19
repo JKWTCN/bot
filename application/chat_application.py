@@ -280,9 +280,14 @@ class GroupChatApplication(GroupMessageApplication):
         self,
     ):
         applicationInfo = ApplicationInfo("ai聊天功能", "ai根据上下文聊天回复")
-        super().__init__(
-            applicationInfo, 0, True, ApplicationCostType.HIGH_TIME_HIGH_PERFORMANCE
-        )
+        if load_setting("use_local_ai", True):
+            super().__init__(
+                applicationInfo, 0, True, ApplicationCostType.HIGH_TIME_HIGH_PERFORMANCE
+            )
+        else:
+            super().__init__(
+                applicationInfo, 0, True, ApplicationCostType.NORMAL
+            )
 
     async def process(self, message: GroupMessageInfo):
         await chat(
