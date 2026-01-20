@@ -31,4 +31,6 @@ static_setting.json
 *.db
 images/*
 .claude
-bot_intelligence.db-journal
+*.db-journal
+*.db-shm
+*.db-wal

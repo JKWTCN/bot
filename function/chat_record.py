@@ -157,8 +157,8 @@ def GetChatRecord(user_id: int, group_id: int):
 
 
 # 统计水群次数
-def AddChatRecord(user_id: int, group_id: int):
-    """增加聊天记录 (使用线程池避免数据库锁定)"""
+async def AddChatRecord(user_id: int, group_id: int):
+    """增加聊天记录 (使用异步线程池避免数据库锁定和阻塞事件循环)"""
     def _add():
         conn = sqlite3.connect("bot.db", timeout=30.0)
         cur = conn.cursor()
@@ -203,4 +203,5 @@ def AddChatRecord(user_id: int, group_id: int):
         conn.close()
         return (all_num, today_num)
 
-    return run_in_thread_sync(_add)
+    from database.sync_wrapper import run_in_thread
+    return await run_in_thread(_add)

@@ -35,7 +35,7 @@ async def echo(websocket, message):
                         case "group":
                             groupMessageInfo = GroupMessageInfo(websocket, message)
                             # 增加水群次数
-                            AddChatRecord(
+                            await AddChatRecord(
                                 groupMessageInfo.senderId, groupMessageInfo.groupId
                             )
                             if len(groupMessageInfo.imageFileList) != 0 and get_config(
@@ -128,6 +128,11 @@ async def main():
         shutil.rmtree("downloads")
     os.makedirs("downloads", exist_ok=True)
     setup_logging()
+
+    # 初始化数据库 WAL 模式和优化配置
+    from database.db_init import init_all_databases
+    init_all_databases()
+
     from database.db_pool import init_pools, close_pools
     await init_pools()
 

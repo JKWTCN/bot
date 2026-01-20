@@ -25,9 +25,17 @@ class DatabasePool:
         self._pool = asyncio.Queue(maxsize=self.pool_size)
         for _ in range(self.pool_size):
             conn = await aiosqlite.connect(self.db_path)
+            # 启用 WAL 模式提升并发性能
+            await conn.execute("PRAGMA journal_mode=WAL")
+            # 设置繁忙超时时间为 30 秒
+            await conn.execute("PRAGMA busy_timeout=30000")
+            # 优化性能
+            await conn.execute("PRAGMA synchronous=NORMAL")
+            await conn.execute("PRAGMA cache_size=-10000")  # 10MB 缓存
+            await conn.commit()
             await self._pool.put(conn)
         self._initialized = True
-        print(f"✓ 数据库连接池已初始化: {self.db_path} (size={self.pool_size})")
+        print(f"✓ 数据库连接池已初始化: {self.db_path} (size={self.pool_size}) [WAL模式已启用]")
 
     @asynccontextmanager
     async def acquire(self) -> AsyncIterator[aiosqlite.Connection]:
