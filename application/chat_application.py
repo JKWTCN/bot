@@ -243,6 +243,11 @@ async def chat(
                 content = response["message"]["content"]
                 re_text = re.sub(r"<think>[\s\S]*?</think>", "", content).strip()
 
+            # 检查响应是否为空
+            if not re_text:
+                logging.warning(f"AI返回空响应，跳过回复 (群: {group_id})")
+                return
+
         else:
             # OpenAI调用也使用线程池，避免阻塞
             from openai import OpenAI
@@ -281,6 +286,11 @@ async def chat(
                 return re_text
 
             re_text = await asyncio.to_thread(_call_openai)
+
+            # 检查响应是否为空
+            if not re_text:
+                logging.warning(f"AI返回空响应，跳过回复 (群: {group_id})")
+                return
 
             logging.info(
                 "(AI)乐可在{}({})说:{}".format(

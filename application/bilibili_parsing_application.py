@@ -419,9 +419,12 @@ import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
-
+# opencv拼接图片到一起,然后删除底部的黑底
+import cv2
+import numpy as np
+from PIL import Image
 async def download_stitched_image_async(
-    folder: str, bvurl: str, jpeg_quality=85
+    folder: str, bvurl: str, jpeg_quality=95
 ) -> str:
     """异步版本的 download_stitched_image"""
     loop = asyncio.get_event_loop()
@@ -444,7 +447,7 @@ async def parse_bilibili_video_info_async(url: str) -> dict:
     return await loop.run_in_executor(None, _parse_bilibili_video_info)
 
 
-def download_stitched_image(folder: str, bvurl: str, jpeg_quality=85) -> str:
+def download_stitched_image(folder: str, bvurl: str, jpeg_quality=95) -> str:
     url = f"https://api.bilibili.com/x/player/videoshot?bvid={get_bvid(bvurl)}"
     response = requests.get(url, headers=headers)
     data = response.json()
@@ -462,10 +465,6 @@ def download_stitched_image(folder: str, bvurl: str, jpeg_quality=85) -> str:
             print(future.result())
 
     print(f"下载完成，耗时: {time.time() - start_time:.2f} 秒")
-
-    # opencv拼接图片到一起,然后删除底部的黑底
-    import cv2
-    import numpy as np
 
     images = []
     for i in range(len(image_urls)):
@@ -486,13 +485,96 @@ def download_stitched_image(folder: str, bvurl: str, jpeg_quality=85) -> str:
             x, y, w, h = cv2.boundingRect(coords)
             # 裁剪图片，移除所有黑边
             stitched = stitched[y : y + h, x : x + w]
-        # 设置JPEG质量为85（0-100之间，值越高质量越好，文件越大）
+        # 设置JPEG质量为95（0-100之间，值越高质量越好，文件越大）
         encode_params = [cv2.IMWRITE_JPEG_QUALITY, jpeg_quality]
         cv2.imwrite(f"{folder}/stitched.jpg", stitched, encode_params)
         print(f"拼接图片保存到 {folder}/stitched.jpg")
         return f"{folder}/stitched.jpg"
     return ""
 
+
+import cv2
+import shutil
+import os
+from PIL import Image
+
+def compact_restitched_image(input_path, output_path, target_cols=8):
+    """
+    安全地重新排列图像块。
+    支持原地覆盖，确保即使出错也不会产生 0KB 文件。
+    """
+    abs_input = os.path.abspath(input_path)
+    abs_output = os.path.abspath(output_path)
+    
+    # 临时文件路径（仅用于原地覆盖时的安全过渡）
+    temp_output = output_path + ".tmp.jpg"
+    
+    try:
+        # 1. 尝试读取和识别
+        img_cv = cv2.imread(input_path)
+        if img_cv is None:
+            raise ValueError(f"OpenCV 无法读取图片: {input_path}")
+
+        gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
+        _, thresh = cv2.threshold(gray, 15, 255, cv2.THRESH_BINARY)
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        blocks = []
+        for cnt in contours:
+            x, y, w, h = cv2.boundingRect(cnt)
+            if w > 20 and h > 20:
+                blocks.append((x, y, w, h))
+        
+        if not blocks:
+            raise ValueError("未检测到有效内容块")
+
+        # 排序逻辑
+        avg_h = sum([b[3] for b in blocks]) / len(blocks)
+        blocks.sort(key=lambda b: (int(b[1] / (avg_h / 2)), b[0]))
+
+        # 2. 内存中绘图
+        max_w = max([b[2] for b in blocks])
+        max_h = max([b[3] for b in blocks])
+        total_count = len(blocks)
+        rows = (total_count + target_cols - 1) // target_cols
+        
+        new_img = Image.new('RGB', (max_w * target_cols, max_h * rows), (0, 0, 0))
+        source_pil = Image.open(input_path)
+        
+        for i, (x, y, w, h) in enumerate(blocks):
+            row_idx = i // target_cols
+            col_idx = i % target_cols
+            cell = source_pil.crop((x, y, x + w, y + h))
+            new_img.paste(cell, (col_idx * max_w, row_idx * max_h))
+
+        # 3. 安全写入
+        # 如果是原地覆盖，先写到临时文件，防止 save 过程崩溃导致 0KB
+        save_target = temp_output if abs_input == abs_output else output_path
+        new_img.save(save_target, quality=95)
+
+        # 4. 如果使用了临时文件，进行替换
+        if abs_input == abs_output:
+            if os.path.exists(temp_output) and os.path.getsize(temp_output) > 0:
+                # 在 Windows 上替换已存在文件需要先删除原文件或使用 os.replace
+                if os.path.exists(output_path):
+                    os.remove(output_path)
+                os.rename(temp_output, output_path)
+        
+        print(f"处理成功: {output_path}")
+
+    except Exception as e:
+        print(f"遇到错误: {e}")
+        
+        # 清理可能产生的 0KB 临时文件
+        if os.path.exists(temp_output):
+            os.remove(temp_output)
+
+        # Fallback 逻辑
+        if abs_input != abs_output:
+            print("正在恢复原图到目标路径...")
+            shutil.copy2(input_path, output_path)
+        else:
+            print("原地覆盖模式下出错，已保护原始文件不受影响。")
 
 class BiliBiliParsingApplication(GroupMessageApplication):
     def __init__(
@@ -537,7 +619,7 @@ class BiliBiliParsingApplication(GroupMessageApplication):
 
         # 等待两个任务完成
         image_path, parsed_info = await asyncio.gather(image_task, info_task)
-        print("图片下载和视频信息解析完成")
+        compact_restitched_image(image_path, image_path, target_cols=8)
         
         if isCardMessage:
             display_text += f"{no_get_params_url}\n"
