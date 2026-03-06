@@ -36,7 +36,7 @@ def chatNoContext(texts):
             options={'temperature': 1.0}
         )
 
-        if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
+        if model != "deepseek-r1:1.5b" and model != "qwen3.5:9b":
             re_text = response['message']['content']
         else:
             match = re.findall(
@@ -90,7 +90,7 @@ def PrivateChatNoContext(texts):
             options={'temperature': 1.0}
         )
 
-        if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
+        if model != "deepseek-r1:1.5b" and model != "qwen3.5:9b":
             re_text = response['message']['content']
         else:
             match = re.findall(

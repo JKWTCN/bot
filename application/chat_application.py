@@ -29,6 +29,18 @@ from tools.tools import load_setting, load_static_setting
 from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
 
 
+# 创建任务集合跟踪后台任务
+background_tasks = set()
+
+
+def create_tracked_task(coro):
+    """创建被跟踪的后台任务"""
+    task = asyncio.create_task(coro)
+    background_tasks.add(task)
+    task.add_done_callback(background_tasks.discard)
+    return task
+
+
 def getPrompts() -> str:
     """获取系统提示词"""
     with open("prompts.json", "r", encoding="utf-8") as f:
@@ -60,7 +72,7 @@ async def chat(
         text: 传入信息,在ai回复后追加在后面
         reply_message_id: 引用的消息ID,如果有则检查是否包含图片
     """
-    model = "qwen3:8b"
+    model = "qwen3.5:9b"
     image_path = None
 
     # 检查是否引用了图片
@@ -92,22 +104,29 @@ async def chat(
         # 2. 后台更新画像 (使用create_task而非threading)
         async def update_profile_background():
             try:
-                from intelligence.profile.profile_extractor import ProfileExtractor
-                profile_extractor = ProfileExtractor()
-
-                logging.info(f"[后台] 开始更新画像: user_id={user_id}")
-                features = profile_extractor.extract_from_message(text, user_id)
-                updates = profile_extractor.merge_with_existing_profile(user_profile, features)
-
-                if updates:
-                    await update_profile(user_id, updates)
-                    logging.info(f"[后台] 画像更新成功: {list(updates.keys())}")
-                else:
-                    logging.info(f"[后台] 画像无需更新")
+                # 添加超时保护
+                await asyncio.wait_for(_update_profile_logic(), timeout=30.0)
+            except asyncio.TimeoutError:
+                logging.warning(f"[后台] 更新画像超时: user_id={user_id}")
             except Exception as e:
                 logging.error(f"后台更新画像失败: {e}", exc_info=True)
 
-        asyncio.create_task(update_profile_background())
+        async def _update_profile_logic():
+            """画像更新的实际逻辑"""
+            from intelligence.profile.profile_extractor import ProfileExtractor
+            profile_extractor = ProfileExtractor()
+
+            logging.info(f"[后台] 开始更新画像: user_id={user_id}")
+            features = profile_extractor.extract_from_message(text, user_id)
+            updates = profile_extractor.merge_with_existing_profile(user_profile, features)
+
+            if updates:
+                await update_profile(user_id, updates)
+                logging.info(f"[后台] 画像更新成功: {list(updates.keys())}")
+            else:
+                logging.info(f"[后台] 画像无需更新")
+
+        create_tracked_task(update_profile_background())
 
         # 3. 智能上下文获取 (异步)
         context_result = await get_smart_context(
@@ -125,42 +144,56 @@ async def chat(
         # 5. 智能提取新记忆 (后台任务，带过滤)
         async def extract_memory_background():
             try:
-                # 只提取有价值的记忆
-                result = await extract_and_store_memory_smart(
-                    user_id=user_id,
-                    message=text,
-                    context_type="group",
-                    context_id=group_id,
-                )
-                logging.info(f"[后台] 记忆提取结果: {result}")
+                # 添加超时保护
+                await asyncio.wait_for(_extract_memory_logic(), timeout=20.0)
+            except asyncio.TimeoutError:
+                logging.warning(f"[后台] 提取记忆超时: user_id={user_id}")
             except Exception as e:
                 logging.error(f"后台提取记忆失败: {e}", exc_info=True)
 
+        async def _extract_memory_logic():
+            """记忆提取的实际逻辑"""
+            # 只提取有价值的记忆
+            result = await extract_and_store_memory_smart(
+                user_id=user_id,
+                message=text,
+                context_type="group",
+                context_id=group_id,
+            )
+            logging.info(f"[后台] 记忆提取结果: {result}")
+
         # 只在消息较长时才提取记忆
         if len(text) > 10:
-            asyncio.create_task(extract_memory_background())
+            create_tracked_task(extract_memory_background())
 
         # 6. 生成对话摘要 (后台任务，长对话时触发)
         async def generate_summary_background():
             try:
-                from intelligence.context.summary_generator_async import generate_summary
-
-                msg_count = len(context_result.get("messages", []))
-                logging.info(f"[后台] 检查摘要生成: user_id={user_id}, msg_count={msg_count}")
-
-                if msg_count >= 8:
-                    summary = await generate_summary(
-                        user_id=user_id,
-                        group_id=group_id,
-                        messages=context_result["messages"],
-                    )
-                    logging.info(f"[后台] 摘要生成结果: {summary}")
-                else:
-                    logging.info(f"[后台] 消息数不足8条,跳过摘要生成")
+                # 添加超时保护
+                await asyncio.wait_for(_generate_summary_logic(), timeout=30.0)
+            except asyncio.TimeoutError:
+                logging.warning(f"[后台] 生成摘要超时: user_id={user_id}")
             except Exception as e:
                 logging.error(f"后台生成摘要失败: {e}", exc_info=True)
 
-        asyncio.create_task(generate_summary_background())
+        async def _generate_summary_logic():
+            """摘要生成的实际逻辑"""
+            from intelligence.context.summary_generator_async import generate_summary
+
+            msg_count = len(context_result.get("messages", []))
+            logging.info(f"[后台] 检查摘要生成: user_id={user_id}, msg_count={msg_count}")
+
+            if msg_count >= 8:
+                summary = await generate_summary(
+                    user_id=user_id,
+                    group_id=group_id,
+                    messages=context_result["messages"],
+                )
+                logging.info(f"[后台] 摘要生成结果: {summary}")
+            else:
+                logging.info(f"[后台] 消息数不足8条,跳过摘要生成")
+
+        create_tracked_task(generate_summary_background())
 
         # 7. 构建个性化system prompt
         from intelligence.personalization.prompt_builder import PromptBuilder
@@ -183,11 +216,14 @@ async def chat(
         # 增加用户熟悉度 (后台任务)
         async def increment_familiarity_background():
             try:
-                await increment_familiarity(user_id, delta=0.01)
+                # 添加超时保护
+                await asyncio.wait_for(increment_familiarity(user_id, delta=0.01), timeout=10.0)
+            except asyncio.TimeoutError:
+                logging.warning(f"[后台] 增加熟悉度超时: user_id={user_id}")
             except Exception as e:
                 logging.error(f"增加熟悉度失败: {e}")
 
-        asyncio.create_task(increment_familiarity_background())
+        create_tracked_task(increment_familiarity_background())
 
     except Exception as e:
         # 如果智能模块出错,回退到原有逻辑
@@ -229,7 +265,15 @@ async def chat(
                     model=model, messages=messages, options={"temperature": 0.2}
                 )
 
-            response = await asyncio.to_thread(_call_ollama)
+            # 使用wait_for添加超时保护
+            try:
+                response = await asyncio.wait_for(
+                    asyncio.to_thread(_call_ollama),
+                    timeout=60.0  # 60秒超时
+                )
+            except asyncio.TimeoutError:
+                logging.error(f"Ollama调用超时 (群: {group_id})")
+                return
 
             logging.info(
                 "(AI)乐可在{}({})说:{}".format(
@@ -237,7 +281,7 @@ async def chat(
                 )
             )
 
-            if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
+            if model != "deepseek-r1:1.5b" and model != "qwen3.5:9b":
                 re_text = response["message"]["content"]
             else:
                 content = response["message"]["content"]
@@ -285,7 +329,15 @@ async def chat(
 
                 return re_text
 
-            re_text = await asyncio.to_thread(_call_openai)
+            # 使用wait_for添加超时保护
+            try:
+                re_text = await asyncio.wait_for(
+                    asyncio.to_thread(_call_openai),
+                    timeout=120.0  # 120秒超时（OpenAI可能需要更长时间）
+                )
+            except asyncio.TimeoutError:
+                logging.error(f"OpenAI调用超时 (群: {group_id})")
+                return
 
             # 检查响应是否为空
             if not re_text:

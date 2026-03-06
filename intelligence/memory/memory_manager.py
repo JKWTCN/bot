@@ -172,7 +172,7 @@ class MemoryManager:
 """
 
             response = ollama.chat(
-                model='qwen3:8b',
+                model='qwen3.5:9b',
                 messages=[{'role': 'user', 'content': extraction_prompt}],
                 options={'temperature': 0.3}  # 降低温度以获得更稳定的提取
             )

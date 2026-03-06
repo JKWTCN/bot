@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+import os
 import re
 
 import requests
@@ -68,8 +69,41 @@ async def ReplySayTextImage(
         message_id (int): 引用回复的消息ID
         image_path (str): 图片文件路径
     """
-    with open(image_path, "rb") as image_file:
-        image_data = image_file.read()
+    if not os.path.exists(image_path):
+        logging.error(f"错误：图片文件不存在 {image_path}")
+        # 降级为只发送文本
+        payload = {
+            "action": "send_group_msg",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {"type": "reply", "data": {"id": message_id}},
+                    {"type": "text", "data": {"text": text}},
+                ],
+            },
+        }
+        await websocket.send(json.dumps(payload))
+        return
+
+    try:
+        with open(image_path, "rb") as image_file:
+            image_data = image_file.read()
+    except Exception as e:
+        logging.error(f"错误：读取图片文件失败 {image_path}, {e}")
+        # 降级为只发送文本
+        payload = {
+            "action": "send_group_msg",
+            "params": {
+                "group_id": group_id,
+                "message": [
+                    {"type": "reply", "data": {"id": message_id}},
+                    {"type": "text", "data": {"text": text}},
+                ],
+            },
+        }
+        await websocket.send(json.dumps(payload))
+        return
+
     image_base64 = base64.b64encode(image_data)
     payload = {
         "action": "send_group_msg",
@@ -326,7 +360,7 @@ def chatNoContext(texts):
             options={'temperature': 1.0}
         )
 
-        if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
+        if model != "deepseek-r1:1.5b" and model != "qwen3.5:9b":
             re_text = response['message']['content']
         else:
             match = re.findall(

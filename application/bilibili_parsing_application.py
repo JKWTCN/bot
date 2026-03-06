@@ -466,31 +466,117 @@ def download_stitched_image(folder: str, bvurl: str, jpeg_quality=95) -> str:
 
     print(f"下载完成，耗时: {time.time() - start_time:.2f} 秒")
 
-    images = []
-    for i in range(len(image_urls)):
-        img = cv2.imread(f"{folder}/image_{i}.jpg")
-        if img is not None:
-            images.append(img)
+    try:
+        logging.info(f"[图片拼接] 开始处理图片拼接...")
 
-    if images:
+        # 读取图片
+        images = []
+        failed_images = []
+        for i in range(len(image_urls)):
+            img_path = f"{folder}/image_{i}.jpg"
+            img = cv2.imread(img_path)
+            if img is not None:
+                images.append(img)
+                logging.info(f"[图片读取] 成功: {img_path}, 尺寸: {img.shape}")
+            else:
+                failed_images.append(img_path)
+                logging.warning(f"[图片读取] 失败: {img_path}")
+
+        if failed_images:
+            logging.warning(f"[图片读取] 警告: {len(failed_images)} 张图片读取失败")
+
+        if not images:
+            logging.error(f"[图片拼接] 错误: 没有成功读取任何图片")
+            return ""
+
+        logging.info(f"[图片拼接] 成功读取 {len(images)} 张图片，准备拼接")
+
+        # 显示所有图片的尺寸信息
+        for i, img in enumerate(images):
+            logging.info(f"[图片信息] 图片 {i}: 高度={img.shape[0]}, 宽度={img.shape[1]}, 通道={img.shape[2]}")
+
         # 拼接图片
+        logging.info(f"[图片拼接] 开始垂直拼接...")
         stitched = np.concatenate(images, axis=0)
+        logging.info(f"[图片拼接] 拼接完成，最终尺寸: {stitched.shape} (高度={stitched.shape[0]}, 宽度={stitched.shape[1]})")
+
         # 删除所有黑边
-        # 转换为灰度图以便更好地检测黑边
+        logging.info(f"[黑边裁剪] 开始检测和裁剪黑边...")
         gray = cv2.cvtColor(stitched, cv2.COLOR_BGR2GRAY)
-        # 找到非黑色像素的位置（阈值设为10以处理可能的噪声）
         coords = cv2.findNonZero((gray > 10).astype(np.uint8))
+
         if coords is not None:
-            # 获取边界框
             x, y, w, h = cv2.boundingRect(coords)
-            # 裁剪图片，移除所有黑边
+            logging.info(f"[黑边裁剪] 检测到黑边 - 边界框: x={x}, y={y}, 宽度={w}, 高度={h}")
+            logging.info(f"[黑边裁剪] 裁剪前尺寸: {stitched.shape}")
             stitched = stitched[y : y + h, x : x + w]
-        # 设置JPEG质量为95（0-100之间，值越高质量越好，文件越大）
+            logging.info(f"[黑边裁剪] 裁剪后尺寸: {stitched.shape}")
+        else:
+            logging.info(f"[黑边裁剪] 未检测到黑边，跳过裁剪")
+
+        # 验证图片数据
+        logging.info(f"[数据验证] 检查拼接后的图片数据...")
+        if stitched.size == 0:
+            logging.error(f"[数据验证] 错误: 图片数据为空 (size=0)")
+            return ""
+        if stitched.shape[0] == 0 or stitched.shape[1] == 0:
+            logging.error(f"[数据验证] 错误: 图片尺寸无效 (shape={stitched.shape})")
+            return ""
+        logging.info(f"[数据验证] 图片数据验证通过")
+
+        # 检查图片尺寸，超过限制直接返回空字符串（发送纯文本）
+        JPEG_MAX_DIMENSION = 65535
+        height, width = stitched.shape[:2]
+
+        logging.info(f"[格式选择] 检查图片尺寸: 宽度={width}, 高度={height}")
+        logging.info(f"[格式选择] JPEG最大尺寸限制: {JPEG_MAX_DIMENSION}")
+
+        if width > JPEG_MAX_DIMENSION or height > JPEG_MAX_DIMENSION:
+            logging.warning(f"[格式选择] ⚠ 图片尺寸超过JPEG限制，将发送纯文本")
+            if width > JPEG_MAX_DIMENSION:
+                logging.warning(f"[格式选择] 超限原因: 宽度={width} > {JPEG_MAX_DIMENSION}")
+            if height > JPEG_MAX_DIMENSION:
+                logging.warning(f"[格式选择] 超限原因: 高度={height} > {JPEG_MAX_DIMENSION}")
+            logging.info(f"[格式选择] ✓ 跳过图片保存，返回空字符串以发送纯文本")
+            return ""
+
+        output_format = "JPEG"
+        file_extension = ".jpg"
+        logging.info(f"[格式选择] ✓ 使用JPEG格式 (尺寸在限制内)")
+
+        # 保存图片
+        output_path = f"{folder}/stitched.jpg"
         encode_params = [cv2.IMWRITE_JPEG_QUALITY, jpeg_quality]
-        cv2.imwrite(f"{folder}/stitched.jpg", stitched, encode_params)
-        print(f"拼接图片保存到 {folder}/stitched.jpg")
-        return f"{folder}/stitched.jpg"
-    return ""
+        logging.info(f"[文件保存] 准备保存图片到: {output_path}")
+        logging.info(f"[文件保存] JPEG质量参数: {jpeg_quality}")
+        logging.info(f"[文件保存] 图片数据类型: {stitched.dtype}, 数据范围: [{stitched.min()}, {stitched.max()}]")
+
+        success = cv2.imwrite(output_path, stitched, encode_params)
+        logging.info(f"[文件保存] cv2.imwrite 返回值: {success}")
+
+        if not success:
+            logging.error(f"[文件保存] 错误: cv2.imwrite 返回 False")
+            logging.error(f"[文件保存] 可能的原因: 磁盘空间不足、权限问题、路径无效、编码参数错误")
+            return ""
+
+        # 验证文件是否真的存在
+        if os.path.exists(output_path):
+            file_size = os.path.getsize(output_path)
+            logging.info(f"[文件保存] 成功: 文件已创建，大小: {file_size} 字节 ({file_size/1024:.2f} KB)")
+        else:
+            logging.error(f"[文件保存] 错误: cv2.imwrite 返回 True，但文件不存在: {output_path}")
+            return ""
+
+        logging.info(f"[图片拼接] ✓ 成功完成，保存到: {output_path}")
+        return output_path
+
+    except Exception as e:
+        logging.error(f"[异常] 图片拼接过程中发生异常:")
+        logging.error(f"[异常] 错误类型: {type(e).__name__}")
+        logging.error(f"[异常] 错误信息: {str(e)}")
+        import traceback
+        logging.error(f"[异常] 详细堆栈:", exc_info=True)
+        return ""
 
 
 import cv2
@@ -619,7 +705,7 @@ class BiliBiliParsingApplication(GroupMessageApplication):
 
         # 等待两个任务完成
         image_path, parsed_info = await asyncio.gather(image_task, info_task)
-        compact_restitched_image(image_path, image_path, target_cols=8)
+        # compact_restitched_image(image_path, image_path, target_cols=8)
         
         if isCardMessage:
             display_text += f"{no_get_params_url}\n"

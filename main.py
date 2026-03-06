@@ -41,9 +41,9 @@ async def echo(websocket, message):
                             if len(groupMessageInfo.imageFileList) != 0 and get_config(
                                 "image_parsing", groupMessageInfo.groupId
                             ):
-                                # 处理图片消息
-                                from function.image_processor import process_image_message
-                                text_message = process_image_message(message, websocket)
+                                # 处理图片消息 - 使用异步版本避免阻塞主线程
+                                from function.image_processor import process_image_message_async
+                                text_message = await process_image_message_async(message, websocket)
                                 if text_message is not None:
                                     # 立即处理的情况（已缓存或未开启解析）
                                     write_message(message, text_message)
@@ -82,8 +82,14 @@ async def echo(websocket, message):
 
 
 async def pro(websocket):
-    async for message in websocket:
-        await echo(websocket, message)
+    """WebSocket连接处理函数（带异常处理）"""
+    try:
+        async for message in websocket:
+            await echo(websocket, message)
+    except websockets.exceptions.ConnectionClosed as e:
+        logging.warning(f"WebSocket连接关闭: {e}")
+    except Exception as e:
+        logging.error(f"WebSocket处理错误: {e}", exc_info=True)
 
 
 schedule = Schedule()
@@ -150,7 +156,9 @@ async def main():
     init_database()
 
     try:
-        async with serve(pro, "0.0.0.0", GetNCWCPort()) as server:
+        async with serve(pro, "0.0.0.0", GetNCWCPort(),
+                        ping_timeout=30,  # 30秒ping超时
+                        close_timeout=10) as server:
             await server.serve_forever()
     finally:
         await close_pools()

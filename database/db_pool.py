@@ -38,12 +38,16 @@ class DatabasePool:
         print(f"✓ 数据库连接池已初始化: {self.db_path} (size={self.pool_size}) [WAL模式已启用]")
 
     @asynccontextmanager
-    async def acquire(self) -> AsyncIterator[aiosqlite.Connection]:
-        """获取连接"""
+    async def acquire(self, timeout: float = 30.0) -> AsyncIterator[aiosqlite.Connection]:
+        """获取连接，带超时保护"""
         if not self._initialized:
             await self.init()
 
-        conn = await self._pool.get()
+        try:
+            conn = await asyncio.wait_for(self._pool.get(), timeout=timeout)
+        except asyncio.TimeoutError:
+            raise TimeoutError(f"获取数据库连接超时 ({timeout}秒)")
+
         try:
             yield conn
         finally:

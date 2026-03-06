@@ -65,7 +65,7 @@ async def miaomiaoTranslation(websocket, user_id: int, group_id: int, message_id
             )
         )
 
-        if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
+        if model != "deepseek-r1:1.5b" and model != "qwen3.5:9b":
             re_text = response['message']['content']
         else:
             match = re.findall(

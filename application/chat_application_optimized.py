@@ -60,7 +60,7 @@ async def chat(
         text: 传入信息,在ai回复后追加在后面
         reply_message_id: 引用的消息ID,如果有则检查是否包含图片
     """
-    model = "qwen3:8b"
+    model = "qwen3.5:9b"
     image_path = None
 
     # 检查是否引用了图片
@@ -231,7 +231,7 @@ async def chat(
                 )
             )
 
-            if model != "deepseek-r1:1.5b" and model != "qwen3:8b":
+            if model != "deepseek-r1:1.5b" and model != "qwen3.5:9b":
                 re_text = response["message"]["content"]
             else:
                 content = response["message"]["content"]

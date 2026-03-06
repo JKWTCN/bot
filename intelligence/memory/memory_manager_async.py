@@ -143,11 +143,14 @@ class MemoryManager:
 如果没有任何重要信息,返回: {{"memories": []}}
 """
 
-            # 同步调用ollama (因为ollama库不支持异步)
-            response = ollama.chat(
-                model='qwen3:8b',
-                messages=[{'role': 'user', 'content': extraction_prompt}],
-                options={'temperature': 0.3}
+            # 使用asyncio.to_thread执行同步ollama调用，避免阻塞事件循环
+            import asyncio
+            response = await asyncio.to_thread(
+                lambda: ollama.chat(
+                    model='qwen3.5:9b',
+                    messages=[{'role': 'user', 'content': extraction_prompt}],
+                    options={'temperature': 0.3}
+                )
             )
 
             # 解析结果

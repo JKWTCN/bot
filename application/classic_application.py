@@ -4254,7 +4254,7 @@ class AnswerBookApplication(GroupMessageApplication):
 
 # 获取系统状态
 def ShowSystemInfoTableByBase64():
-
+    import platform
     plt.rcParams["font.sans-serif"] = load_static_setting(
         "font", ["Unifont"]
     )  # 设置字体

@@ -9,10 +9,15 @@ import sqlite3
 import threading
 import traceback
 import requests
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional, Tuple
 
 # 创建任务队列和处理线程
 image_process_queue = queue.Queue()
+
+# 创建线程池用于异步执行同步操作
+executor = ThreadPoolExecutor(max_workers=4)
 
 
 def process_queue():
@@ -274,6 +279,73 @@ def process_image_message(message: dict, websocket) -> Optional[str]:
                     if os.path.exists(imagePath):
                         os.remove(imagePath)
                         logging.info(f"已删除临时图片文件:{imagePath}")
+
+            case "text":
+                text_message += i["data"]["text"]
+
+    return text_message
+
+
+async def process_image_message_async(message: dict, websocket) -> Optional[str]:
+    """
+    异步处理图片消息的主函数（修复版本 - 不阻塞主线程）
+
+    参数:
+        message: 消息字典
+        websocket: websocket连接对象
+
+    返回:
+        如果需要立即处理返回文本消息，如果需要异步处理返回None
+    """
+    text_message = ""
+    loop = asyncio.get_event_loop()
+
+    for i in message["message"]:
+        match i["type"]:
+            case "image":
+                file = i["data"]["file"]
+                url = i["data"]["url"]
+
+                try:
+                    # 在线程池中执行同步操作，避免阻塞事件循环
+                    imagePath = await loop.run_in_executor(
+                        executor, getImagePathByFile, file, url
+                    )
+                    fileMd5 = await loop.run_in_executor(
+                        executor, calculate_md5, imagePath
+                    )
+
+                    # 检查是否需要图片解析
+                    from function.GroupConfig import get_config
+                    needDescription = get_config("image_parsing", message["group_id"])
+
+                    if needDescription:
+                        description = get_description_by_md5(fileMd5)
+                        if description is None:
+                            # MD5未命中，加入处理队列
+                            logging.info(
+                                f"{message['group_id']}:图片MD5未命中,加入处理队列:{imagePath}"
+                            )
+                            # 将任务加入队列（包含原始消息和websocket）
+                            image_process_queue.put((imagePath, fileMd5, message, websocket))
+                            return None  # 异步处理，不立即返回
+                        else:
+                            text_message += f"[图片内容:{description}]"
+                            # 删除临时图片
+                            if os.path.exists(imagePath):
+                                os.remove(imagePath)
+                                logging.info(f"已删除临时图片文件:{imagePath}")
+                    else:
+                        logging.info(f"{message['group_id']}:本群未开启图片识别")
+                        text_message += f"[图片]"
+                        # 删除临时图片
+                        if os.path.exists(imagePath):
+                            os.remove(imagePath)
+                            logging.info(f"已删除临时图片文件:{imagePath}")
+
+                except Exception as e:
+                    logging.error(f"异步处理图片时出错: {e}", exc_info=True)
+                    text_message += f"[图片]"
 
             case "text":
                 text_message += i["data"]["text"]

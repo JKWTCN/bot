@@ -152,7 +152,7 @@ class SummaryGenerator:
 摘要:"""
 
             response = ollama.chat(
-                model='qwen3:8b',
+                model='qwen3.5:9b',
                 messages=[{'role': 'user', 'content': prompt}],
                 options={'temperature': 0.5, 'max_tokens': 100}
             )
