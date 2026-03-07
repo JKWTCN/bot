@@ -5,6 +5,7 @@ import traceback
 import json
 import asyncio
 from websockets.asyncio.server import serve
+from websockets.exceptions import ConnectionClosed
 from schedule.schedule import Schedule
 from data.message.group_message_info import GroupMessageInfo
 from data.message.private_message_info import PrivateMesssageInfo
@@ -86,7 +87,7 @@ async def pro(websocket):
     try:
         async for message in websocket:
             await echo(websocket, message)
-    except websockets.exceptions.ConnectionClosed as e:
+    except ConnectionClosed as e:
         logging.warning(f"WebSocket连接关闭: {e}")
     except Exception as e:
         logging.error(f"WebSocket处理错误: {e}", exc_info=True)

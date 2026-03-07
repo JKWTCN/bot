@@ -130,7 +130,7 @@ class SummaryGenerator:
             摘要文本
         """
         try:
-            import ollama
+            from ollama import chat
 
             # 构建对话文本 - 消息已经是role/content格式
             conversation_text = "\n".join([
@@ -151,10 +151,11 @@ class SummaryGenerator:
 
 摘要:"""
 
-            response = ollama.chat(
+            response = chat(
                 model='qwen3.5:9b',
                 messages=[{'role': 'user', 'content': prompt}],
-                options={'temperature': 0.5, 'max_tokens': 100}
+                options={'temperature': 0.5, 'max_tokens': 100},
+                think=False  # 显式禁用思考模式
             )
 
             summary = response['message']['content'].strip()

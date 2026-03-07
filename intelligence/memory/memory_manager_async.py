@@ -113,7 +113,8 @@ class MemoryManager:
     async def _extract_memories_with_llm(self, message: str, user_id: int) -> List[Dict]:
         """使用LLM从消息中提取记忆"""
         try:
-            import ollama
+            from ollama import chat
+            import asyncio
 
             extraction_prompt = f"""分析以下对话,提取值得长期记忆的重要信息。
 
@@ -144,12 +145,12 @@ class MemoryManager:
 """
 
             # 使用asyncio.to_thread执行同步ollama调用，避免阻塞事件循环
-            import asyncio
             response = await asyncio.to_thread(
-                lambda: ollama.chat(
+                lambda: chat(
                     model='qwen3.5:9b',
                     messages=[{'role': 'user', 'content': extraction_prompt}],
-                    options={'temperature': 0.3}
+                    options={'temperature': 0.3},
+                    think=False  # 显式禁用思考模式
                 )
             )
 

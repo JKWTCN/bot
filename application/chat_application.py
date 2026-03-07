@@ -254,15 +254,18 @@ async def chat(
     try:
         if load_setting("use_local_ai", True):
             # 使用线程池执行ollama调用，避免阻塞事件循环
-            import ollama
+            from ollama import chat
 
             print(f"使用模型: {model}")
             logging.info(f"使用模型: {model}")
 
             # 在线程池中运行同步的ollama调用
             def _call_ollama():
-                return ollama.chat(
-                    model=model, messages=messages, options={"temperature": 0.2}
+                return chat(
+                    model=model,
+                    messages=messages,
+                    options={"temperature": 0.2},
+                    think=False  # 显式禁用思考模式
                 )
 
             # 使用wait_for添加超时保护
@@ -312,7 +315,7 @@ async def chat(
                     temperature=0.2,
                     top_p=0.7,
                     max_tokens=8192,
-                    extra_body={"chat_template_kwargs": {"thinking": True}},
+                    extra_body={"chat_template_kwargs": {"thinking": load_static_setting("ai_thinking", True)}} if load_static_setting("ai_thinking", True) else None,
                     stream=True,
                 )
 

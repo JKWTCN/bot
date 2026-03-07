@@ -141,7 +141,7 @@ class MemoryManager:
             提取的记忆列表
         """
         try:
-            import ollama
+            from ollama import chat
 
             extraction_prompt = f"""分析以下对话,提取值得长期记忆的重要信息。
 
@@ -171,10 +171,11 @@ class MemoryManager:
 如果没有任何重要信息,返回: {{"memories": []}}
 """
 
-            response = ollama.chat(
+            response = chat(
                 model='qwen3.5:9b',
                 messages=[{'role': 'user', 'content': extraction_prompt}],
-                options={'temperature': 0.3}  # 降低温度以获得更稳定的提取
+                options={'temperature': 0.3},  # 降低温度以获得更稳定的提取
+                think=False  # 显式禁用思考模式
             )
 
             # 解析结果
