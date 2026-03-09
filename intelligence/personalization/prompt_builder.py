@@ -126,9 +126,9 @@ class PromptBuilder:
         # 回复长度偏好
         length_pref = user_profile.get('preferred_response_length', 'medium')
         length_map = {
-            'short': '简短精炼(15-35 token)',
-            'medium': '适中长度(35-60 token)',
-            'long': '详细阐述(60-100 token)'
+            'short': '超短回复(10-20 字)',
+            'medium': '简短回复(20-30 字)',
+            'long': '稍长回复(30-40 字)'
         }
         if length_pref in length_map:
             sections.append(f"- 回复长度: {length_map[length_pref]}")
