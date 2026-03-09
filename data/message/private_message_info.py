@@ -12,6 +12,7 @@ class PrivateMesssageInfo(MessageInfo):
         self.replyMessageId = -1
         self.imageFileList = []
         self.faceList = []
+        self.isPainTextMessage = True
         super().__init__(websocket, rawMessage)
         self.messageType = MessageType.PRIVATE_MESSAGE
         self.senderId = self.rawMessage["user_id"]
@@ -20,7 +21,9 @@ class PrivateMesssageInfo(MessageInfo):
             match i["type"]:
                 case "image":
                     self.imageFileList.append(i["data"]["file"])
+                    self.isPainTextMessage = False
                 case "file":
+                    self.isPainTextMessage = False
                     pass
                 case "reply":
                     self.replyMessageId = i["data"]["id"]
@@ -28,3 +31,4 @@ class PrivateMesssageInfo(MessageInfo):
                     self.plainTextMessage += i["data"]["text"]
                 case "face":
                     self.faceList.append(i["data"]["id"])
+                    self.isPainTextMessage = False

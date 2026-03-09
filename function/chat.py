@@ -31,22 +31,20 @@ def chatNoContext(texts):
 
         print(f"使用模型: {model}, 消息: {base_messages}")
         response = ollama.chat(
-            model=model,
-            messages=base_messages,
-            options={'temperature': 1.0}
+            model=model, messages=base_messages, options={"temperature": 1.0}
         )
 
         if model != "deepseek-r1:1.5b" and model != "qwen3.5:9b":
-            re_text = response['message']['content']
+            re_text = response["message"]["content"]
         else:
             match = re.findall(
                 r"<think>([\s\S]*)</think>([\s\S]*)",
-                response['message']['content'],
+                response["message"]["content"],
             )
             if match:
                 re_text = match[0][1]
             else:
-                re_text = response['message']['content'].strip()
+                re_text = response["message"]["content"].strip()
     except Exception as e:
         logging.error(f"调用Ollama时出错: {str(e)}")
         re_text = "呜呜不太理解呢喵."
@@ -61,7 +59,7 @@ def chatNoContext(texts):
 
 def PrivateChatNoContext(texts):
     """只处理单句"""
-    model = "qwen3-vl:8b"
+    model = "qwen3.5:9b"
 
     # 构建基础消息结构
     from application.chat_application import getPrompts
@@ -87,20 +85,21 @@ def PrivateChatNoContext(texts):
         response = ollama.chat(
             model=model,
             messages=base_messages,
-            options={'temperature': 1.0}
+            options={"temperature": 1.0},
+            think=False,
         )
 
         if model != "deepseek-r1:1.5b" and model != "qwen3.5:9b":
-            re_text = response['message']['content']
+            re_text = response["message"]["content"]
         else:
             match = re.findall(
                 r"<think>([\s\S]*)</think>([\s\S]*)",
-                response['message']['content'],
+                response["message"]["content"],
             )
             if match:
                 re_text = match[0][1]
             else:
-                re_text = response['message']['content'].strip()
+                re_text = response["message"]["content"].strip()
     except Exception as e:
         logging.error(f"调用Ollama时出错: {str(e)}")
         re_text = "呜呜不太理解呢喵."
