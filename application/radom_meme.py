@@ -1,30 +1,23 @@
 import base64
-import glob
 import json
 import logging
+import asyncio
+import random
 from data.application.group_message_application import GroupMessageApplication
 from data.application.application_info import ApplicationInfo
 from data.enumerates import ApplicationCostType
 from data.message.group_message_info import GroupMessageInfo
 from function.say import SayRaw, SayGroup
 from tools.tools import FindNum, load_setting
-
-import random
-
-
-def FindAllFiles(path: str):
-    s = []
-    dir_path = "{}/**/*.*".format(path)
-    for file in glob.glob(dir_path, recursive=True):
-        # print(file)
-        s.append(file)
-    return s
+from tools.file_list_cache import file_cache
 
 
 async def SendSingleMeme(websocket, groupId: int):
     try:
-        all_file = FindAllFiles(load_setting("meme_path", ""))
+        # 使用缓存获取文件列表（30分钟内不重复扫描）
+        all_file = await file_cache.get_image_files(load_setting("meme_path", ""))
         logging.info("读取目录完毕")
+
         payload = {
             "action": "send_forward_msg",
             "params": {
@@ -33,10 +26,13 @@ async def SendSingleMeme(websocket, groupId: int):
                 "message": [],
             },
         }
+
+        # 异步读取图片（不阻塞事件循环）
         dir = random.choice(all_file)
-        with open(dir, "rb") as image_file:
-            image_data = image_file.read()
+        loop = asyncio.get_event_loop()
+        image_data = await loop.run_in_executor(None, lambda: open(dir, "rb").read())
         image_base64 = base64.b64encode(image_data)
+
         payload["params"]["message"].append(
             {
                 "type": "image",
@@ -52,8 +48,10 @@ async def SendSingleMeme(websocket, groupId: int):
 async def SendMemeMergeForwarding(websocket, group_id: int, nums: int):
     """发送随机梗图合并转发消息"""
     try:
-        all_file = FindAllFiles(load_setting("meme_path", ""))
+        # 使用缓存获取文件列表（已过滤扩展名，30分钟内不重复扫描）
+        all_file = await file_cache.get_image_files(load_setting("meme_path", ""))
         logging.info("读取目录完毕")
+
         payload = {
             "action": "send_forward_msg",
             "params": {
@@ -62,25 +60,22 @@ async def SendMemeMergeForwarding(websocket, group_id: int, nums: int):
                 "message": [],
             },
         }
-        for i in range(nums):
-            dir = random.choice(all_file)
-            while (
-                not dir.endswith(".jpg")
-                and not dir.endswith(".png")
-                and not dir.endswith(".JPG")
-                and not dir.endswith(".JPG")
-                and not dir.endswith(".PNG")
-                and not dir.endswith(".JEPG")
-                and not dir.endswith(".jpeg")
-                and not dir.endswith(".gif")
-                and not dir.endswith(".GIF")
-            ):
-                dir = random.choice(all_file)
+
+        # 确保不超过可用文件数量
+        actual_nums = min(nums, len(all_file))
+
+        # 使用 random.sample() 单次多连内无重复选择
+        selected_files = random.sample(all_file, actual_nums)
+        loop = asyncio.get_event_loop()
+
+        for i, dir in enumerate(selected_files):
             print(dir)
-            logging.info("剩余发送{}张，发送了图片:{}".format(nums - i - 1, dir))
-            with open(dir, "rb") as image_file:
-                image_data = image_file.read()
+            logging.info("剩余发送{}张，发送了图片:{}".format(actual_nums - i - 1, dir))
+
+            # 异步读取图片（不阻塞事件循环）
+            image_data = await loop.run_in_executor(None, lambda: open(dir, "rb").read())
             image_base64 = base64.b64encode(image_data)
+
             payload["params"]["message"].append(
                 {
                     "type": "node",

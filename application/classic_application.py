@@ -61,6 +61,7 @@ from tools.tools import (
     HasChinese, FindNum, GetDirSizeByUnit, load_static_setting,
     GetSleepSeconds, HasNoneKeyWords, GetLogTime
 )
+from tools.file_list_cache import file_cache
 
 # Welcome application imports
 from application.welcome_application import (
@@ -2818,7 +2819,9 @@ class LunchTimeApplication(GroupMessageApplication):
 
 
 async def MemeStatistics(websocket, group_id: int):
-    all_file = find_all_file(load_setting("meme_path", ""))
+    """统计梗图库存（使用缓存优化）"""
+    # 使用缓存获取图片文件列表（30分钟内不重复扫描）
+    all_file = await file_cache.get_image_files(load_setting("meme_path", ""))
     num, unit = GetDirSizeByUnit(load_setting("meme_path", ""))
     payload = {
         "action": "send_msg_async",
@@ -2835,15 +2838,6 @@ async def MemeStatistics(websocket, group_id: int):
         },
     }
     await websocket.send(json.dumps(payload))
-
-
-def find_all_file(path: str):
-    s = []
-    dir_path = "{}/**/*.*".format(path)
-    for file in glob.glob(dir_path, recursive=True):
-        # print(file)
-        s.append(file)
-    return s
 
 
 class MemeStatisticsApplication(GroupMessageApplication):
