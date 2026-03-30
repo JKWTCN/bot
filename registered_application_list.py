@@ -180,9 +180,12 @@ def initApplications():
     RegisterApplication(classic_application.RandomCuteApplication())
 
     from application.point_application import PointApplication
+    from application.my_chat_chart_application import MyChatChartApplication
 
     # 注册积分抽奖应用
     RegisterApplication(PointApplication())
+    # 注册我的发言图表应用
+    RegisterApplication(MyChatChartApplication())
 
     from application.debug_application import DebugApplication
 
