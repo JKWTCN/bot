@@ -40,6 +40,7 @@ default_configs = {
     "level_limit": -1,  # 入群等级最低等级限制
     "bing_search": False,  # 群搜索功能
     "repeat_check": False,  # 复读机灵敏度
+    "group_joining_verification": False  # 入群验证
 }
 
 intOptionType = [
@@ -67,6 +68,7 @@ boolOptionType = [
     "dont_at_me",
     "bing_search",
     "repeat_check",
+    "group_joining_verification",
 ]
 
 
