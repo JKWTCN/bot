@@ -28,6 +28,7 @@ default_configs = {
     "group_decrease_reminder": True,  # 退群提醒
     "cat_day_date": -1,  # 猫猫日日期，-1表示不设置
     "cat_day_ignore_admin": True,  # 猫猫日忽略管理员
+    "group_member_min": -1,  # 群人数多于多少人开始踢掉没发言的群友，-1表示不设置
     "kick_time_sec": -1,  # 踢掉多久没发言的群友，-1表示不踢
     "sensitive_words": [],  # 敏感词，发出会禁言
     "sensitive_ban_sec": 60,  # 敏感词禁言秒数
@@ -50,6 +51,7 @@ intOptionType = [
     "cold_group_time_out",
     "cat_day_date",
     "kick_time_sec",
+    "group_member_min",
     "sensitive_ban_sec",
     "hate_at_list",
     "level_limit",

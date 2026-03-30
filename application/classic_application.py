@@ -237,6 +237,12 @@ class GreatPurgeApplication(MetaMessageApplication):
                         f"更新群成员列表失败,群:{group['group_name']}({group['group_id']})"
                     )
                     continue
+                # 获取群人数
+                len_member = len(new_data)
+                group_member_min= get_config("group_member_min", group['group_id'], -1)
+                # 如果当前群人数小于设置的开始踢人人数,则不提
+                if group_member_min != -1 and len_member < group_member_min:
+                    continue
                 for group_member in new_data:
                     user = Group_member()
                     user.init_by_dict(group_member)
