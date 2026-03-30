@@ -1,6 +1,6 @@
 # Standard library imports
 import base64
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import glob
 import json
 import logging
@@ -2884,7 +2884,7 @@ class PersonalStatisticsApplication(GroupMessageApplication):
 
 
 # 群友水群次数表格
-def ShowTableByBase64(data):
+def ShowTableByBase64(data, title: str = "水群排名"):
     plt.rcParams["font.sans-serif"] = load_static_setting(
         "font", ["Unifont"]
     )  # 设置字体
@@ -2893,7 +2893,7 @@ def ShowTableByBase64(data):
     fig, ax = plt.subplots()
     table = table.set_index("排名")
     Table(table)
-    plt.title("水群排名")
+    plt.title(title)
     plt.savefig("figs/chat_table.png", dpi=460)
     plt.close()
     with open("figs/chat_table.png", "rb") as image_file:
@@ -2986,6 +2986,110 @@ async def GetNowChatRecord(websocket, group_id: int):
         }
     )
     await websocket.send(json.dumps(payload))
+
+
+def GetPeriodStartTimestamp(period: str) -> int:
+    now = datetime.now()
+    if period == "year":
+        start_time = datetime(now.year, 1, 1)
+    elif period == "quarter":
+        quarter_start_month = ((now.month - 1) // 3) * 3 + 1
+        start_time = datetime(now.year, quarter_start_month, 1)
+    elif period == "month":
+        start_time = datetime(now.year, now.month, 1)
+    elif period == "week":
+        start_time = datetime(now.year, now.month, now.day) - timedelta(
+            days=now.weekday()
+        )
+    else:
+        start_time = datetime(now.year, now.month, now.day)
+    return int(start_time.timestamp())
+
+
+async def GetPeriodChatRecord(websocket, group_id: int, start_time: int, title: str):
+    conn = sqlite3.connect("bot.db")
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT user_id, COUNT(*) AS chat_num FROM group_message WHERE group_id=? AND time>=? GROUP BY user_id ORDER BY chat_num DESC;",
+        (group_id, start_time),
+    )
+    data = cur.fetchall()
+    conn.close()
+
+    num: int = 0
+    if len(data) == 0:
+        return
+    elif len(data) <= 20:
+        num = len(data)
+    else:
+        num = 20
+
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": [],
+        },
+    }
+    end_time = int(time.time())
+    start_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time))
+    end_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(end_time))
+    chart_title = f"{title}水群排名\n统计时间:{start_time_str} ~ {end_time_str}"
+    times_key = f"{title}次数"
+    table_list = {"排名": [], "昵称": [], "QQ": [], times_key: []}
+    for i in range(num):
+        name = get_user_name(data[i][0], group_id)
+        table_list["排名"].append(i + 1)
+        table_list["QQ"].append(data[i][0])
+        table_list["昵称"].append(name)
+        table_list[times_key].append(data[i][1])
+
+    payload["params"]["message"].append(
+        {
+            "type": "image",
+            "data": {
+                "file": "base64://"
+                + ShowTableByBase64(table_list, chart_title).decode("utf-8")
+            },
+        }
+    )
+    await websocket.send(json.dumps(payload))
+
+
+async def GetYearChatRecord(websocket, group_id: int):
+    await GetPeriodChatRecord(
+        websocket,
+        group_id,
+        GetPeriodStartTimestamp("year"),
+        "本年",
+    )
+
+
+async def GetQuarterChatRecord(websocket, group_id: int):
+    await GetPeriodChatRecord(
+        websocket,
+        group_id,
+        GetPeriodStartTimestamp("quarter"),
+        "本季度",
+    )
+
+
+async def GetMonthChatRecord(websocket, group_id: int):
+    await GetPeriodChatRecord(
+        websocket,
+        group_id,
+        GetPeriodStartTimestamp("month"),
+        "本月",
+    )
+
+
+async def GetWeekChatRecord(websocket, group_id: int):
+    await GetPeriodChatRecord(
+        websocket,
+        group_id,
+        GetPeriodStartTimestamp("week"),
+        "本周",
+    )
 
 
 class User_point:
@@ -3134,6 +3238,29 @@ class RankingApplication(GroupMessageApplication):
             ["生涯", "水群", "排名"],
         ):
             await GetLifeChatRecord(message.websocket, message.groupId)
+        elif HasAllKeyWords(
+            message.plainTextMessage,
+            ["本年", "水群", "排名"],
+        ):
+            await GetYearChatRecord(message.websocket, message.groupId)
+        elif HasAllKeyWords(
+            message.plainTextMessage,
+            ["本季度", "水群", "排名"],
+        ) or HasAllKeyWords(
+            message.plainTextMessage,
+            ["本季", "水群", "排名"],
+        ):
+            await GetQuarterChatRecord(message.websocket, message.groupId)
+        elif HasAllKeyWords(
+            message.plainTextMessage,
+            ["本月", "水群", "排名"],
+        ):
+            await GetMonthChatRecord(message.websocket, message.groupId)
+        elif HasAllKeyWords(
+            message.plainTextMessage,
+            ["本周", "水群", "排名"],
+        ):
+            await GetWeekChatRecord(message.websocket, message.groupId)
         elif "水群排名" in message.plainTextMessage:
             await GetNowChatRecord(message.websocket, message.groupId)
         elif "排名" in message.plainTextMessage:
@@ -3145,6 +3272,11 @@ class RankingApplication(GroupMessageApplication):
             message.plainTextMessage, [load_setting("bot_name", "乐可")]  # type: ignore
         ) and (
             HasAllKeyWords(message.plainTextMessage, ["生涯", "水群", "排名"])
+            or HasAllKeyWords(message.plainTextMessage, ["本年", "水群", "排名"])
+            or HasAllKeyWords(message.plainTextMessage, ["本季度", "水群", "排名"])
+            or HasAllKeyWords(message.plainTextMessage, ["本季", "水群", "排名"])
+            or HasAllKeyWords(message.plainTextMessage, ["本月", "水群", "排名"])
+            or HasAllKeyWords(message.plainTextMessage, ["本周", "水群", "排名"])
             or HasKeyWords(message.plainTextMessage, ["水群排名", "排名"])
         )
 
