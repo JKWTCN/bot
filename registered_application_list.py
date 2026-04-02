@@ -229,3 +229,9 @@ def initApplications():
     # 更换头像应用
     from application.classic_application import ChangeAvatarApplication
     RegisterApplication(ChangeAvatarApplication())
+
+    # 注册 Steam 状态应用
+    from application.steam_status_application import SteamBindingApplication, SteamStatusPushApplication
+
+    RegisterApplication(SteamBindingApplication())
+    RegisterApplication(SteamStatusPushApplication())
