@@ -14,7 +14,7 @@ from data.message.group_message_info import GroupMessageInfo
 from data.message.meta_message_info import MetaMessageInfo
 from function.datebase_user import get_user_name
 from function.say import ReplySay, SayGroup
-from tools.tools import FindNum, HasAllKeyWords, load_static_setting
+from tools.tools import FindNum, HasAllKeyWords, load_static_setting, load_setting
 
 
 def get_steam_status(steam_ids: list):
@@ -218,10 +218,11 @@ class SteamBindingApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
+        bot_name = load_setting("bot_name", "乐可")
         return (
-            HasAllKeyWords(message.plainTextMessage, ["绑定", "steam"]) or
-            HasAllKeyWords(message.plainTextMessage, ["解绑", "steam"]) or
-            HasAllKeyWords(message.plainTextMessage, ["查询", "steam"])
+            HasAllKeyWords(message.plainTextMessage, [bot_name, "绑定", "steam"]) or
+            HasAllKeyWords(message.plainTextMessage, [bot_name, "解绑", "steam"]) or
+            HasAllKeyWords(message.plainTextMessage, [bot_name, "查询", "steam"])
         )
 
     async def process(self, message: GroupMessageInfo):
