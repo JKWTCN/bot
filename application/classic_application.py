@@ -239,7 +239,7 @@ class GreatPurgeApplication(MetaMessageApplication):
                     continue
                 # 获取群人数
                 len_member = len(new_data)
-                group_member_min= get_config("group_member_min", group['group_id'], -1)
+                group_member_min= get_config("group_member_min", group['group_id'])
                 # 如果当前群人数小于设置的开始踢人人数,则不提
                 if group_member_min != -1 and len_member < group_member_min:
                     continue

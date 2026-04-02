@@ -356,7 +356,7 @@ class WelcomeApplication(NoticeMessageApplication):
             else:
                 await SayGroup(message.websocket,message.groupId,f"用户{get_person_name(message.senderId)}的等级为{level},未达到入群等级限制{get_config('level_limit', message.groupId)},可能是广告号,建议管理员手动踢出喵！")
         else:
-            if BotIsAdmin(message.groupId) and get_config("group_joining_verification", message.groupId, False):
+            if BotIsAdmin(message.groupId) and get_config("group_joining_verification", message.groupId):
                 await welcome_verify(message.websocket, message.senderId, message.groupId)
             elif message.groupId == load_setting("main_group_id", 0):
                 await welcome_new(message.websocket, message.senderId, message.groupId)
