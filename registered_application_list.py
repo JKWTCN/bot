@@ -181,11 +181,14 @@ def initApplications():
 
     from application.point_application import PointApplication
     from application.my_chat_chart_application import MyChatChartApplication
+    from application.my_chat_heatmap_application import MyChatHeatmapApplication
 
     # 注册积分抽奖应用
     RegisterApplication(PointApplication())
     # 注册我的发言图表应用
     RegisterApplication(MyChatChartApplication())
+    # 注册我的发言热力图应用
+    RegisterApplication(MyChatHeatmapApplication())
 
     from application.debug_application import DebugApplication
 
