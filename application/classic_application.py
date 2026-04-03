@@ -39,6 +39,9 @@ from function.say import (
     SayGroup, ReplySay, SayImage, SayAndAt, SayGroupReturnMessageId,
     SayImgReply, SayPrivte
 )
+
+# Local imports - Application management
+from schedule.application_list import groupMessageApplicationList
 from function.datebase_user import (
     IsAdmin, get_user_name, Group_member, BotIsAdmin, updata_user_info,
     IsDeveloper, get_user_info
@@ -1815,57 +1818,54 @@ class GoodMorningApplication(GroupMessageApplication):
 # 功能菜单应用
 
 
-async def return_function(websocket, user_id: int, group_id: int):
-    with open("res/function.png", "rb") as image_file:
-        image_data = image_file.read()
-    image_base64 = base64.b64encode(image_data)
-    payload = {
-        "action": "send_msg_async",
-        "params": {
-            "group_id": group_id,
-            "message": [
-                {"type": "at", "data": {"qq": user_id}},
-                {
-                    "type": "text",
-                    "data": {
-                        "text": """
-    "catgirl": [],  # 猫娘群友
-    "kotomitako": [],  # 香香软软小南梁群友
-    "blacklist": [],  # 黑名单群友
-    "no_reply_list": [],  # 不回复的群友
-    "cold_group": False,  # 冷群回复开关
-    "cold_group_num_out": 5,  # 多少句触发冷群
-    "cold_group_time_out": 300,  # 多久触发冷群
-    "group_decrease_reminder": True,  # 退群提醒
-    "cat_day_date": -1,  # 猫猫日日期，-1表示不设置
-    "cat_day_ignore_admin": True,  # 猫猫日忽略管理员
-    "kick_time_sec": -1,  # 踢掉多久没发言的群友，-1表示不踢
-"""
-                    },
-                },
-                {
-                    "type": "image",
-                    "data": {"file": "base64://" + image_base64.decode("utf-8")},
-                },
-            ],
-        },
-    }
-    await websocket.send(json.dumps(payload))
-
-
 class FeaturesMenuApplication(GroupMessageApplication):
     def __init__(self):
-        applicationInfo = ApplicationInfo("功能菜单", "功能菜单", False)
+        applicationInfo = ApplicationInfo("功能菜单", "查看所有可用功能", True)
         super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
-        # 处理消息
-        await return_function(message.websocket, message.senderId, message.groupId)
+        """动态收集并展示已注册的群消息应用"""
+        # 获取所有群消息应用
+        applications = groupMessageApplicationList.get()
+
+        # 过滤出可显示的应用
+        display_apps = [
+            app for app in applications
+            if app.applicationInfo.can_display
+        ]
+
+        # 构建菜单文本
+        bot_name = load_setting("bot_name", "乐可")  # type: ignore
+        menu_lines = [
+            "===== Bot 功能菜单 =====\n",
+            "【群消息功能】"
+        ]
+
+        # 添加应用列表
+        for app in display_apps:
+            name = app.applicationInfo.name
+            info = app.applicationInfo.info
+            menu_lines.append(f"• {name} - {info}")
+
+        # 添加统计和使用说明
+        menu_lines.extend([
+            f"\n共计 {len(display_apps)} 个功能",
+            f"\n使用方法:发送 \"{bot_name},查看功能菜单\" 查看此菜单"
+        ])
+
+        # 发送消息
+        await SayGroup(
+            message.websocket,
+            message.groupId,
+            "\n".join(menu_lines)
+        )
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
+        bot_name = load_setting("bot_name", "乐可")  # type: ignore
+        # 检查是否同时包含 bot_name 和"功能"关键词
         return HasAllKeyWords(
-            message.plainTextMessage, [f"{load_setting("bot_name", "乐可")},功能"]  # type: ignore
+            message.plainTextMessage, [bot_name, "查看功能菜单"]
         )
 
 
