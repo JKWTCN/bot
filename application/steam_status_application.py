@@ -232,17 +232,28 @@ class SteamBindingApplication(GroupMessageApplication):
             # 先尝试提取 SteamID64（17位数字）
             steam_id = FindNum(message.plainTextMessage)
 
-            if steam_id:
-                # 直接使用 SteamID64
-                bind_steam_id(message.senderId, message.groupId, str(steam_id))
-                await ReplySay(
-                    message.websocket,
-                    message.groupId,
-                    message.messageId,
-                    f"已成功绑定 Steam ID: {steam_id}\n每 10 秒会检查一次状态变化并推送"
-                )
+            if steam_id and steam_id != -1:
+                # 验证是否为有效的 SteamID64（17位数字）
+                if len(str(steam_id)) == 17:
+                    # 直接使用 SteamID64
+                    bind_steam_id(message.senderId, message.groupId, str(steam_id))
+                    await ReplySay(
+                        message.websocket,
+                        message.groupId,
+                        message.messageId,
+                        f"已成功绑定 Steam ID: {steam_id}\n每 10 秒会检查一次状态变化并推送"
+                    )
+                else:
+                    await ReplySay(
+                        message.websocket,
+                        message.groupId,
+                        message.messageId,
+                        f"绑定失败：SteamID64 必须是 17 位数字\n"
+                        f"你提供的 ID: {steam_id} ({len(str(steam_id))} 位)\n"
+                        f"请提供有效的 SteamID64"
+                    )
             else:
-                # 尝试提取个人域名
+                # 没有找到有效数字，尝试提取个人域名
                 # 匹配格式：https://steamcommunity.com/id/xxxxx 或 steamcommunity.com/id/xxxxx
                 vanity_pattern = r'steamcommunity\.com/id/([a-zA-Z0-9_-]+)'
                 match = re.search(vanity_pattern, message.plainTextMessage)
@@ -336,7 +347,7 @@ class SteamBindingApplication(GroupMessageApplication):
 class SteamStatusPushApplication(MetaMessageApplication):
     """Steam 状态推送应用"""
 
-    CHECK_INTERVAL = 10  # 检查间隔（秒）
+    CHECK_INTERVAL = 60  # 检查间隔（秒）
 
     def __init__(self):
         applicationInfo = ApplicationInfo("Steam 状态推送", "定期检查并推送 Steam 状态变化")
