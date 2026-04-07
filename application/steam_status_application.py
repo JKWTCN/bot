@@ -116,10 +116,22 @@ def create_steam_binding_table():
         steam_id TEXT,
         last_status TEXT,
         last_check_time INTEGER DEFAULT 0,
+        game_start_time INTEGER DEFAULT 0,
         PRIMARY KEY (user_id, group_id)
     )
     """)
     conn.commit()
+    conn.close()
+
+    # 添加新字段（如果表已存在）
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    try:
+        cur.execute("ALTER TABLE steam_binding ADD COLUMN game_start_time INTEGER DEFAULT 0")
+        conn.commit()
+    except sqlite3.OperationalError:
+        # 字段已存在，忽略错误
+        pass
     conn.close()
 
 
@@ -165,7 +177,7 @@ def get_all_steam_bindings():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     cur.execute("""
-    SELECT user_id, group_id, steam_id, last_status, last_check_time
+    SELECT user_id, group_id, steam_id, last_status, last_check_time, game_start_time
     FROM steam_binding
     """)
     results = cur.fetchall()
@@ -182,6 +194,19 @@ def update_steam_status(user_id: int, group_id: int, status_json: str, check_tim
     SET last_status = ?, last_check_time = ?
     WHERE user_id = ? AND group_id = ?
     """, (status_json, check_time, user_id, group_id))
+    conn.commit()
+    conn.close()
+
+
+def update_game_start_time(user_id: int, group_id: int, game_start_time: int):
+    """更新游戏开始时间"""
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+    UPDATE steam_binding
+    SET game_start_time = ?
+    WHERE user_id = ? AND group_id = ?
+    """, (game_start_time, user_id, group_id))
     conn.commit()
     conn.close()
 
@@ -205,6 +230,22 @@ def get_status_text(status_code: int, current_game: str):
     if current_game and current_game != "未在玩游戏":
         return f"{status} - 玩游戏中: {current_game}"
     return status
+
+
+def format_duration(seconds: int) -> str:
+    """格式化时长为可读字符串"""
+    if seconds < 60:
+        return f"{seconds}秒"
+    elif seconds < 3600:
+        minutes = seconds // 60
+        return f"{minutes}分钟"
+    else:
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        if minutes > 0:
+            return f"{hours}小时{minutes}分钟"
+        else:
+            return f"{hours}小时"
 
 
 # ==================== 应用一：Steam ID 绑定应用 ====================
@@ -376,11 +417,11 @@ class SteamStatusPushApplication(MetaMessageApplication):
                 return
 
             # 按 steam_id 分组，减少 API 调用
-            steam_id_map = {}  # {steam_id: [(user_id, group_id, last_status, last_check_time)]}
-            for user_id, group_id, steam_id, last_status, last_check_time in bindings:
+            steam_id_map = {}  # {steam_id: [(user_id, group_id, last_status, last_check_time, game_start_time)]}
+            for user_id, group_id, steam_id, last_status, last_check_time, game_start_time in bindings:
                 if steam_id not in steam_id_map:
                     steam_id_map[steam_id] = []
-                steam_id_map[steam_id].append((user_id, group_id, last_status, last_check_time))
+                steam_id_map[steam_id].append((user_id, group_id, last_status, last_check_time, game_start_time))
 
             # 批量获取状态（使用异步版本）
             all_steam_ids = list(steam_id_map.keys())
@@ -404,67 +445,82 @@ class SteamStatusPushApplication(MetaMessageApplication):
                 current_status = status_map[steam_id]
                 new_status_json = json.dumps(current_status, ensure_ascii=False)
 
-                for user_id, group_id, last_status_json, last_check in user_bindings:
+                for user_id, group_id, last_status_json, last_check, game_start_time in user_bindings:
                     # 检查状态是否变化
                     if last_status_json:
                         try:
                             last_status = json.loads(last_status_json)
-                            # 比较状态码和游戏
-                            if (last_status["status_code"] != current_status["status_code"] or
-                                last_status["current_game"] != current_status["current_game"]):
+                            last_game = last_status.get("current_game", "")
+                            current_game = current_status.get("current_game", "")
 
-                                # 获取群的简化通知配置
-                                simple_notify = get_config("simple_steam_notify", group_id)
+                            # 标准化游戏名称处理：None 和 "未在玩游戏" 都视为不在游戏中
+                            def is_playing(game_name):
+                                return game_name and game_name not in ["", None, "未在玩游戏"]
 
-                                # 判断是否应该通知
-                                should_notify = False
-                                if simple_notify:
-                                    # 简化模式：只在进入或退出游戏时通知
-                                    last_game = last_status.get("current_game", "")
-                                    current_game = current_status.get("current_game", "")
+                            was_playing = is_playing(last_game)
+                            is_now_playing = is_playing(current_game)
 
-                                    # 进入游戏：之前没在玩，现在在玩
-                                    is_entering_game = (
-                                        last_game in ["", None, "未在玩游戏"] and
-                                        current_game and current_game != "未在玩游戏"
-                                    )
-                                    # 退出游戏：之前在玩，现在没在玩
-                                    is_exiting_game = (
-                                        last_game and last_game != "未在玩游戏" and
-                                        current_game in ["", None, "未在玩游戏"]
-                                    )
+                            # 获取群的简化通知配置
+                            simple_notify = get_config("simple_steam_notify", group_id)
 
-                                    should_notify = is_entering_game or is_exiting_game
-                                else:
-                                    # 普通模式：所有状态变化都通知
+                            # 判断状态变化类型
+                            is_entering_game = (not was_playing and is_now_playing)
+                            is_exiting_game = (was_playing and not is_now_playing)
+
+                            should_notify = False
+                            notify_message = ""
+
+                            if simple_notify:
+                                # 简化模式：只在进入或退出游戏时通知
+                                if is_entering_game:
+                                    # 进入游戏
                                     should_notify = True
-
-                                if should_notify:
-                                    # 状态发生变化，发送通知
+                                    notify_message = f"开始玩 {current_game}"
+                                    # 记录游戏开始时间
+                                    game_start_time = int(current_time)
+                                    update_game_start_time(user_id, group_id, game_start_time)
+                                elif is_exiting_game:
+                                    # 退出游戏，计算游戏时长
+                                    if game_start_time > 0:
+                                        duration = int(current_time) - game_start_time
+                                        duration_text = format_duration(duration)
+                                        should_notify = True
+                                        notify_message = f"退出了 {last_game}，本次一共玩了 {duration_text}"
+                                        # 清除游戏开始时间
+                                        update_game_start_time(user_id, group_id, 0)
+                            else:
+                                # 普通模式：所有状态变化都通知
+                                if (last_status["status_code"] != current_status["status_code"] or
+                                    last_game != current_game):
+                                    should_notify = True
                                     old_status_text = get_status_text(
                                         last_status["status_code"],
-                                        last_status["current_game"]
+                                        last_game
                                     )
                                     new_status_text = get_status_text(
                                         current_status["status_code"],
-                                        current_status["current_game"]
+                                        current_game
                                     )
+                                    notify_message = f"Steam 状态变化:\n{old_status_text} -> {new_status_text}"
 
-                                    # 获取群昵称
-                                    group_nickname = get_user_name(user_id, group_id)
+                            if should_notify:
+                                # 获取群昵称
+                                group_nickname = get_user_name(user_id, group_id)
 
-                                    await SayGroup(
-                                        message.websocket,
-                                        group_id,
-                                        f"[{group_nickname}({current_status['nickname']})] Steam 状态变化:\n"
-                                        f"{old_status_text} -> {new_status_text}"
-                                    )
+                                await SayGroup(
+                                    message.websocket,
+                                    group_id,
+                                    f"[{group_nickname}({current_status['nickname']})] {notify_message}"
+                                )
                         except json.JSONDecodeError:
                             # JSON 解析错误，忽略
                             pass
                     else:
                         # 首次记录，不发送通知，只记录到数据库
-                        pass
+                        # 如果当前正在玩游戏，记录开始时间
+                        current_game = current_status.get("current_game", "")
+                        if current_game and current_game != "未在玩游戏":
+                            update_game_start_time(user_id, group_id, int(current_time))
 
                     # 更新数据库中的状态（无论是否变化都需要更新）
                     update_steam_status(user_id, group_id, new_status_json, int(current_time))
