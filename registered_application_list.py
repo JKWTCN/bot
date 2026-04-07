@@ -238,3 +238,8 @@ def initApplications():
 
     RegisterApplication(SteamBindingApplication())
     RegisterApplication(SteamStatusPushApplication())
+
+    # 注册群发言热力图应用
+    from application.group_chat_heatmap_application import GroupChatHeatmapApplication
+
+    RegisterApplication(GroupChatHeatmapApplication())
