@@ -40,7 +40,8 @@ default_configs = {
     "level_limit": -1,  # 入群等级最低等级限制
     "bing_search": False,  # 群搜索功能
     "repeat_check": False,  # 复读机灵敏度
-    "group_joining_verification": False  # 入群验证
+    "group_joining_verification": False,  # 入群验证
+    "simple_steam_notify": True,  # 简化steam通知
 }
 
 intOptionType = [
@@ -69,6 +70,7 @@ boolOptionType = [
     "bing_search",
     "repeat_check",
     "group_joining_verification",
+    "simple_steam_notify"
 ]
 
 

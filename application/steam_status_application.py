@@ -12,6 +12,7 @@ from data.application.meta_application import MetaMessageApplication
 from data.enumerates import ApplicationCostType, ApplicationType, MetaEventType
 from data.message.group_message_info import GroupMessageInfo
 from data.message.meta_message_info import MetaMessageInfo
+from function.GroupConfig import get_config
 from function.datebase_user import get_user_name
 from function.say import ReplySay, SayGroup
 from tools.tools import FindNum, HasAllKeyWords, load_static_setting, load_setting
@@ -347,13 +348,12 @@ class SteamBindingApplication(GroupMessageApplication):
 class SteamStatusPushApplication(MetaMessageApplication):
     """Steam 状态推送应用"""
 
-    CHECK_INTERVAL = 60  # 检查间隔（秒）
-
     def __init__(self):
         applicationInfo = ApplicationInfo("Steam 状态推送", "定期检查并推送 Steam 状态变化")
         super().__init__(applicationInfo, 5, True, ApplicationCostType.NORMAL)
         create_steam_binding_table()
         self.last_check_time = 0
+        self.check_interval = load_static_setting("steam_check_interval", 60)
 
     def judge(self, message: MetaMessageInfo) -> bool:
         """判断是否触发应用"""
@@ -365,7 +365,7 @@ class SteamStatusPushApplication(MetaMessageApplication):
             current_time = time.time()
 
             # 检查是否超过间隔时间
-            if current_time - self.last_check_time < self.CHECK_INTERVAL:
+            if current_time - self.last_check_time < self.check_interval:
                 return
 
             self.last_check_time = current_time
@@ -413,25 +413,52 @@ class SteamStatusPushApplication(MetaMessageApplication):
                             if (last_status["status_code"] != current_status["status_code"] or
                                 last_status["current_game"] != current_status["current_game"]):
 
-                                # 状态发生变化，发送通知
-                                old_status_text = get_status_text(
-                                    last_status["status_code"],
-                                    last_status["current_game"]
-                                )
-                                new_status_text = get_status_text(
-                                    current_status["status_code"],
-                                    current_status["current_game"]
-                                )
+                                # 获取群的简化通知配置
+                                simple_notify = get_config("simple_steam_notify", group_id)
 
-                                # 获取群昵称
-                                group_nickname = get_user_name(user_id, group_id)
+                                # 判断是否应该通知
+                                should_notify = False
+                                if simple_notify:
+                                    # 简化模式：只在进入或退出游戏时通知
+                                    last_game = last_status.get("current_game", "")
+                                    current_game = current_status.get("current_game", "")
 
-                                await SayGroup(
-                                    message.websocket,
-                                    group_id,
-                                    f"[{group_nickname}({current_status['nickname']})] Steam 状态变化:\n"
-                                    f"{old_status_text} -> {new_status_text}"
-                                )
+                                    # 进入游戏：之前没在玩，现在在玩
+                                    is_entering_game = (
+                                        last_game in ["", None, "未在玩游戏"] and
+                                        current_game and current_game != "未在玩游戏"
+                                    )
+                                    # 退出游戏：之前在玩，现在没在玩
+                                    is_exiting_game = (
+                                        last_game and last_game != "未在玩游戏" and
+                                        current_game in ["", None, "未在玩游戏"]
+                                    )
+
+                                    should_notify = is_entering_game or is_exiting_game
+                                else:
+                                    # 普通模式：所有状态变化都通知
+                                    should_notify = True
+
+                                if should_notify:
+                                    # 状态发生变化，发送通知
+                                    old_status_text = get_status_text(
+                                        last_status["status_code"],
+                                        last_status["current_game"]
+                                    )
+                                    new_status_text = get_status_text(
+                                        current_status["status_code"],
+                                        current_status["current_game"]
+                                    )
+
+                                    # 获取群昵称
+                                    group_nickname = get_user_name(user_id, group_id)
+
+                                    await SayGroup(
+                                        message.websocket,
+                                        group_id,
+                                        f"[{group_nickname}({current_status['nickname']})] Steam 状态变化:\n"
+                                        f"{old_status_text} -> {new_status_text}"
+                                    )
                         except json.JSONDecodeError:
                             # JSON 解析错误，忽略
                             pass
