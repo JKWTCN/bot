@@ -42,6 +42,12 @@ default_configs = {
     "repeat_check": False,  # 复读机灵敏度
     "group_joining_verification": False,  # 入群验证
     "simple_steam_notify": True,  # 简化steam通知
+    # 猜数字游戏配置
+    "guess_number_max_range": 10000,  # 最大数字范围
+    "guess_number_max_guesses": 20,  # 最大猜测次数
+    "guess_number_reward_multiplier": 1.0,  # 积分奖励倍数
+    "guess_number_penalty": 20,  # 失败者扣除积分
+    "guess_number_enabled": True,  # 是否启用游戏
 }
 
 intOptionType = [
@@ -57,6 +63,10 @@ intOptionType = [
     "sensitive_ban_sec",
     "hate_at_list",
     "level_limit",
+    # 猜数字游戏配置
+    "guess_number_max_range",
+    "guess_number_max_guesses",
+    "guess_number_penalty",
 ]
 stringOptionType = ["sensitive_words"]
 boolOptionType = [
@@ -70,7 +80,9 @@ boolOptionType = [
     "bing_search",
     "repeat_check",
     "group_joining_verification",
-    "simple_steam_notify"
+    "simple_steam_notify",
+    # 猜数字游戏配置
+    "guess_number_enabled",
 ]
 
 

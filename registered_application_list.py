@@ -15,6 +15,8 @@ import application
 import application.classic_application as classic_application
 import application.cold_group_king as cold_group_king
 import application.weather_application as weather_application
+# 猜数字游戏应用
+import application.guess_number_game
 
 
 def initApplications():
@@ -243,3 +245,6 @@ def initApplications():
     from application.group_chat_heatmap_application import GroupChatHeatmapApplication
 
     RegisterApplication(GroupChatHeatmapApplication())
+
+    # 注册猜数字游戏应用
+    RegisterApplication(application.guess_number_game.GuessNumberGameApplication())
