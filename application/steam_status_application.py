@@ -31,7 +31,7 @@ def get_steam_status(steam_ids: list):
     url = f"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={api_key}&steamids={ids_str}"
 
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=30)
         response.raise_for_status()  # 检查请求是否成功
         data = response.json()
 
@@ -273,7 +273,7 @@ class SteamBindingApplication(GroupMessageApplication):
         if HasAllKeyWords(message.plainTextMessage, ["绑定", "steam"]):
             # 先尝试提取 SteamID64（17位数字）
             steam_id = FindNum(message.plainTextMessage)
-
+            check_interval = load_static_setting("steam_check_interval", 60)
             if steam_id and steam_id != -1:
                 # 验证是否为有效的 SteamID64（17位数字）
                 if len(str(steam_id)) == 17:
@@ -283,7 +283,7 @@ class SteamBindingApplication(GroupMessageApplication):
                         message.websocket,
                         message.groupId,
                         message.messageId,
-                        f"已成功绑定 Steam ID: {steam_id}\n每 10 秒会检查一次状态变化并推送"
+                        f"已成功绑定 Steam ID: {steam_id}\n每 {check_interval} 秒会检查一次状态变化并推送"
                     )
                 else:
                     await ReplySay(
@@ -325,7 +325,7 @@ class SteamBindingApplication(GroupMessageApplication):
                             message.messageId,
                             f"已成功绑定 Steam ID: {steam_id64}\n"
                             f"个人域名: {vanity_url_name}\n"
-                            f"每 10 秒会检查一次状态变化并推送"
+                            f"每 {check_interval} 秒会检查一次状态变化并推送"
                         )
                     else:
                         await ReplySay(
@@ -471,7 +471,7 @@ class SteamStatusPushApplication(MetaMessageApplication):
                             notify_message = ""
 
                             if simple_notify:
-                                # 简化模式：只在进入或退出游戏时通知
+                                # 简化模式：在进入、退出、或切换游戏时通知
                                 if is_entering_game:
                                     # 进入游戏
                                     should_notify = True
@@ -488,6 +488,19 @@ class SteamStatusPushApplication(MetaMessageApplication):
                                         notify_message = f"退出了 {last_game}，本次一共玩了 {duration_text}"
                                         # 清除游戏开始时间
                                         update_game_start_time(user_id, group_id, 0)
+                                elif was_playing and is_now_playing and last_game != current_game:
+                                    # 切换游戏：从 A 切换到 B
+                                    should_notify = True
+                                    # 计算游戏A的游玩时长
+                                    if game_start_time > 0:
+                                        duration = int(current_time) - game_start_time
+                                        duration_text = format_duration(duration)
+                                        notify_message = f"{last_game} 玩了 {duration_text}，切换到 {current_game}"
+                                    else:
+                                        notify_message = f"切换游戏：{last_game} -> {current_game}"
+                                    # 更新游戏开始时间为新游戏的开始时间
+                                    game_start_time = int(current_time)
+                                    update_game_start_time(user_id, group_id, game_start_time)
                             else:
                                 # 普通模式：所有状态变化都通知
                                 if (last_status["status_code"] != current_status["status_code"] or
