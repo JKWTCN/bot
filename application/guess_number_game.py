@@ -70,8 +70,8 @@ class GuessNumberGameApplication(GroupMessageApplication):
 
         # 猜测数字（包含"猜"或"我猜"且后面有数字）
         if "猜" in text:
-            numbers = FindNum(text)
-            if numbers:  # 如果找到数字
+            guess = FindNum(text)
+            if guess is not None:  # 如果找到数字
                 return True
 
         return False
@@ -99,9 +99,9 @@ class GuessNumberGameApplication(GroupMessageApplication):
 
             # 猜测数字
             elif "猜" in text:
-                numbers = FindNum(text)
-                if numbers:
-                    await self._make_guess(message, numbers[0])
+                guess = FindNum(text)
+                if guess is not None:
+                    await self._make_guess(message, guess)
 
         except Exception as e:
             logging.error(f"猜数字游戏处理错误: {e}", exc_info=True)

@@ -247,4 +247,4 @@ def initApplications():
     RegisterApplication(GroupChatHeatmapApplication())
 
     # 注册猜数字游戏应用
-    RegisterApplication(application.guess_number_game.GuessNumberGameApplication())
+    # RegisterApplication(application.guess_number_game.GuessNumberGameApplication())
