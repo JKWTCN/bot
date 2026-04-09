@@ -4,6 +4,7 @@ import os
 import re
 import sqlite3
 import time
+import urllib3
 
 import requests
 from data.application.application_info import ApplicationInfo
@@ -16,6 +17,9 @@ from function.GroupConfig import get_config
 from function.datebase_user import get_user_name
 from function.say import ReplySay, SayGroup
 from tools.tools import FindNum, HasAllKeyWords, load_static_setting, load_setting
+
+# 禁用SSL警告（因为验证被禁用）
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def get_steam_status(steam_ids: list):
@@ -31,7 +35,8 @@ def get_steam_status(steam_ids: list):
     url = f"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={api_key}&steamids={ids_str}"
 
     try:
-        response = requests.get(url, timeout=30)
+        # 禁用SSL验证（macOS Python 3.13 证书问题的临时解决方案）
+        response = requests.get(url, timeout=30, verify=False)
         response.raise_for_status()  # 检查请求是否成功
         data = response.json()
 
@@ -73,7 +78,8 @@ def get_steamid_by_vanity_url(vanity_url_name):
     }
 
     try:
-        response = requests.get(url, params=params)
+        # 禁用SSL验证（macOS Python 3.13 证书问题的临时解决方案）
+        response = requests.get(url, params=params, verify=False)
         data = response.json()
         
         # success 为 1 表示查询成功
