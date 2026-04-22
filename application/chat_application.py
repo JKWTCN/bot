@@ -75,6 +75,15 @@ async def chat(
     """
     model = "qwen3.5:9b"
     image_path = None
+    target_user_label = sender_nickname if sender_nickname else str(user_id)
+    target_user_guard = (
+        "你正在群聊中回复单个用户。"
+        f"本轮你要回复的对象是【{target_user_label}】。"
+        "历史中其他昵称代表其他人。"
+        "当你使用“你/你的”时，只能指向本轮对象。"
+        "不得把其他人的行为、偏好、经历归因给本轮对象。"
+        "若需引用他人，请明确写出对方昵称。"
+    )
 
     # 检查是否引用了图片
     if reply_message_id != -1:
@@ -209,7 +218,8 @@ async def chat(
         )
 
         # 8. 构建消息列表
-        messages = [{"role": "system", "content": system_prompt}]
+        messages: list[dict[str, object]] = [{"role": "system", "content": system_prompt}]
+        messages.append({"role": "system", "content": target_user_guard})
 
         # 添加智能上下文消息
         if context_result["messages"]:
@@ -235,12 +245,13 @@ async def chat(
         context_messages = await GetChatContext(user_id, group_id)
 
         # 构建基础消息结构
-        messages = [
+        messages: list[dict[str, object]] = [
             {
                 "role": "system",
                 "content": getPrompts(),
             }
         ]
+        messages.append({"role": "system", "content": target_user_guard})
 
         # 添加上下文消息
         if context_messages:

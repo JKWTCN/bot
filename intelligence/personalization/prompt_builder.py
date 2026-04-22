@@ -62,6 +62,8 @@ class PromptBuilder:
                     f"不同方括号代表不同的人。"
                     f"当前正在与你对话的用户是【{current_user_name}】，你要回复的就是他的最新消息。"
                     f"请严格区分不同人说过的话，不要张冠李戴。"
+                    f"当你使用“你/你的”时，只能指向【{current_user_name}】。"
+                    f"如果某条行为来自其他人，请用该昵称明确指代，不要归因给当前用户。"
                 )
                 personalized_sections.append(speaker_section)
 
