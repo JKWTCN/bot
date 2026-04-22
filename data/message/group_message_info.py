@@ -30,6 +30,8 @@ class GroupMessageInfo(MessageInfo):
             self.groupId = self.rawMessage["group_id"]
             self.senderId = self.rawMessage["user_id"]
             self.messageId = self.rawMessage["message_id"]
+            _sender = self.rawMessage.get("sender", {})
+            self.senderNickname = _sender.get("card", "") or _sender.get("nickname", "")
             for i in self.rawMessage["message"]:
                 match i["type"]:
                     case "image":

@@ -473,6 +473,8 @@ class VerifyApplication(GroupMessageApplication):
                     else:
                         await welcom_new_no_admin(websocket, user_id, group_id)
                 elif times > 0:
+                    # 撤回当前消息
+                    await delete_msg(websocket, message.messageId)
                     await verify_fail_say(websocket, user_id, group_id, times)
 
                 elif times <= 0:

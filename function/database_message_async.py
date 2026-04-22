@@ -17,28 +17,39 @@ async def GetChatContext(user_id: int, group_id: int, limit: int = 10) -> list:
     - 使用索引加速查询
 
     Args:
-        user_id: 用户ID
+        user_id: 用户ID（保留参数，用于未来扩展）
         group_id: 群组ID
         limit: 消息数量限制
 
     Returns:
         上下文消息列表
     """
+    import json
+    try:
+        with open("static_setting.json", "r", encoding="utf-8") as f:
+            _setting = json.load(f)
+        bot_id = _setting.get("bot_id", 0)
+    except Exception:
+        bot_id = 0
+
     rows = await bot_db_pool.fetchall(
-        """SELECT sender_nickname, raw_message
+        """SELECT user_id, sender_nickname, raw_message
            FROM group_message
-           WHERE group_id = ? AND user_id = ?
+           WHERE group_id = ?
            AND time >= strftime('%s','now','-30 minutes')
            ORDER BY time DESC
            LIMIT ?""",
-        (group_id, user_id, limit)
+        (group_id, limit)
     )
 
     # 将消息转换为适合模型输入的格式
     context_messages = []
-    for nickname, message in reversed(rows):
-        role = "assistant" if nickname == "乐可" else "user"
-        context_messages.append({"role": role, "content": message})
+    for msg_user_id, nickname, message in reversed(rows):
+        if msg_user_id == bot_id:
+            context_messages.append({"role": "assistant", "content": message})
+        else:
+            label = nickname if nickname else str(msg_user_id)
+            context_messages.append({"role": "user", "content": f"[{label}]: {message}"})
 
     return context_messages
 

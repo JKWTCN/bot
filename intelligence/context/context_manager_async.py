@@ -156,12 +156,10 @@ class ContextManager:
             if msg_user_id == bot_user_id:
                 role = 'assistant'
                 content = msg['raw_message']
-            elif msg_user_id == user_id:
-                role = 'user'
-                content = msg['raw_message']
             else:
                 role = 'user'
-                content = f"[用户{msg_user_id}]: {msg['raw_message']}"
+                label = sender_nickname if sender_nickname else str(msg_user_id)
+                content = f"[{label}]: {msg['raw_message']}"
 
             # 估算token数
             msg_tokens = len(content) * 1.5

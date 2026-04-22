@@ -55,6 +55,7 @@ async def chat(
     message_id: int,
     text: str,
     reply_message_id: int = -1,
+    sender_nickname: str = "",
 ):
     """AI聊天功能回复 (深度优化版 - 纯异步)
 
@@ -204,6 +205,7 @@ async def chat(
             user_profile=user_profile,
             memories=relevant_memories,
             context_summary=context_result.get("summary"),
+            current_user_name=sender_nickname,
         )
 
         # 8. 构建消息列表
@@ -245,11 +247,12 @@ async def chat(
             messages.extend(context_messages)
 
     # 如果有图片,使用视觉模型
+    user_content = f"[{sender_nickname}]: {text}" if sender_nickname else text
     if image_path:
         model = "qwen3-vl:8b"
-        messages.append({"role": "user", "content": text, "images": [image_path]})
+        messages.append({"role": "user", "content": user_content, "images": [image_path]})
     else:
-        messages.append({"role": "user", "content": text})
+        messages.append({"role": "user", "content": user_content})
 
     try:
         if load_setting("use_local_ai", True):
@@ -427,6 +430,7 @@ class GroupChatApplication(GroupMessageApplication):
             message.messageId,
             message.plainTextMessage,
             message.replyMessageId,
+            getattr(message, "senderNickname", ""),
         )
 
     def judge(self, message: GroupMessageInfo) -> bool:

@@ -25,7 +25,8 @@ class PromptBuilder:
         base_prompt: str,
         user_profile: Dict,
         memories: List[Dict],
-        context_summary: str | None = None
+        context_summary: str | None = None,
+        current_user_name: str = ""
     ) -> str:
         """
         构建个性化system prompt
@@ -52,6 +53,17 @@ class PromptBuilder:
 
             # 构建个性化部分
             personalized_sections = []
+
+            # 0. 群聊说话者约定 (最高优先级，放在首位)
+            if current_user_name:
+                speaker_section = (
+                    f"## 群聊对话说明\n"
+                    f"你处于群聊环境中。历史消息以 [说话者昵称]: 内容 的格式标注，"
+                    f"不同方括号代表不同的人。"
+                    f"当前正在与你对话的用户是【{current_user_name}】，你要回复的就是他的最新消息。"
+                    f"请严格区分不同人说过的话，不要张冠李戴。"
+                )
+                personalized_sections.append(speaker_section)
 
             # 1. 用户画像部分
             profile_section = self._build_profile_section(user_profile)
