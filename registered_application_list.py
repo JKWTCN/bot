@@ -246,5 +246,15 @@ def initApplications():
 
     RegisterApplication(GroupChatHeatmapApplication())
 
+    # 注册个人发言词云应用
+    from application.my_chat_wordcloud_application import MyChatWordCloudApplication
+
+    RegisterApplication(MyChatWordCloudApplication())
+
+    # 注册群发言词云应用
+    from application.group_chat_wordcloud_application import GroupChatWordCloudApplication
+
+    RegisterApplication(GroupChatWordCloudApplication())
+
     # 注册猜数字游戏应用
     # RegisterApplication(application.guess_number_game.GuessNumberGameApplication())
