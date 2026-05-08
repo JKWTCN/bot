@@ -121,6 +121,12 @@ def clean_message_text(raw_message: str, bot_name: str) -> str:
     text = raw_message
     # 移除 CQ 码
     text = re.sub(r"\[CQ:[^\]]*\]", "", text)
+    # 移除人为添加的标记：图片识别内容、回复、表情、at、纯图片
+    text = re.sub(r"\[图片内容:[^\]]*\]", "", text)
+    text = re.sub(r"\[回复:[^\]]*\]", "", text)
+    text = re.sub(r"\[表情:[^\]]*\]", "", text)
+    text = re.sub(r"\[at:[^\]]*\]", "", text)
+    text = re.sub(r"\[图片\]", "", text)
     # 移除 URL
     text = re.sub(r"https?://\S+", "", text)
     # 移除 bot 名称
@@ -149,6 +155,16 @@ def segment_and_filter(text: str, bot_name: str) -> list:
     return filtered
 
 
+def _is_only_images(raw: str) -> bool:
+    """判断消息是否仅包含图片（无用户实际输入的文字）"""
+    import re as _re
+    # 去掉所有 [图片] 和 [图片内容:...] 后如果为空，说明纯是图片消息
+    text = _re.sub(r"\[图片内容:[^\]]*\]", "", raw)
+    text = _re.sub(r"\[图片\]", "", text)
+    text = _re.sub(r"\[CQ:[^\]]*\]", "", text)
+    return text.strip() == ""
+
+
 def query_user_messages(user_id: int, group_id: int, start_ts: int, end_ts: int, bot_id: int, bot_name: str) -> tuple:
     """查询用户消息，返回 (原始文本拼接, 消息条数)"""
     conn = sqlite3.connect("bot.db", timeout=30.0)
@@ -159,11 +175,13 @@ def query_user_messages(user_id: int, group_id: int, start_ts: int, end_ts: int,
     )
     rows = cur.fetchall()
     conn.close()
-    # 过滤以 bot 名开头的命令消息
+    # 过滤以 bot 名开头的命令消息和纯图片消息
     messages = []
     for (raw,) in rows:
         stripped = raw.strip()
         if stripped.startswith(bot_name):
+            continue
+        if _is_only_images(stripped):
             continue
         messages.append(raw)
     return " ".join(messages), len(messages)
@@ -183,6 +201,8 @@ def query_group_messages(group_id: int, start_ts: int, end_ts: int, bot_id: int,
     for (raw,) in rows:
         stripped = raw.strip()
         if stripped.startswith(bot_name):
+            continue
+        if _is_only_images(stripped):
             continue
         messages.append(raw)
     return " ".join(messages), len(messages)
