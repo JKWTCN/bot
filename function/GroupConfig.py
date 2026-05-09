@@ -26,6 +26,7 @@ default_configs = {
     "cold_group_num_out": 5,  # 多少句触发冷群
     "cold_group_time_out": 300,  # 多久触发冷群
     "group_decrease_reminder": True,  # 退群提醒
+    "group_welcome_enable": True,  # 入群欢迎
     "cat_day_date": -1,  # 猫猫日日期，-1表示不设置
     "cat_day_ignore_admin": True,  # 猫猫日忽略管理员
     "group_member_min": -1,  # 群人数多于多少人开始踢掉没发言的群友，-1表示不设置
@@ -73,6 +74,7 @@ stringOptionType = ["sensitive_words"]
 boolOptionType = [
     "cold_group",
     "group_decrease_reminder",
+    "group_welcome_enable",
     "cat_day_ignore_admin",
     "sensitive_withdrawn",
     "bilibili_parsing",

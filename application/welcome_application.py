@@ -358,12 +358,13 @@ class WelcomeApplication(NoticeMessageApplication):
         else:
             if BotIsAdmin(message.groupId) and get_config("group_joining_verification", message.groupId):
                 await welcome_verify(message.websocket, message.senderId, message.groupId)
-            elif message.groupId == load_setting("main_group_id", 0):
-                await welcome_new(message.websocket, message.senderId, message.groupId)
-            else:
-                await welcom_new_no_admin(
-                    message.websocket, message.senderId, message.groupId
-                )
+            elif get_config("group_welcome_enable", message.groupId):
+                if message.groupId == load_setting("main_group_id", 0):
+                    await welcome_new(message.websocket, message.senderId, message.groupId)
+                else:
+                    await welcom_new_no_admin(
+                        message.websocket, message.senderId, message.groupId
+                    )
         
         
 
@@ -462,16 +463,17 @@ class VerifyApplication(GroupMessageApplication):
                 )
                 if mod:
                     # 通过验证
-                    if group_id == load_setting("admin_group_main", 0):
-                        await ban_new(
-                            websocket,
-                            user_id,
-                            group_id,
-                            60,
-                        )
-                        await welcome_new(websocket, user_id, group_id)
-                    else:
-                        await welcom_new_no_admin(websocket, user_id, group_id)
+                    if get_config("group_welcome_enable", group_id):
+                        if group_id == load_setting("admin_group_main", 0):
+                            await ban_new(
+                                websocket,
+                                user_id,
+                                group_id,
+                                60,
+                            )
+                            await welcome_new(websocket, user_id, group_id)
+                        else:
+                            await welcom_new_no_admin(websocket, user_id, group_id)
                 elif times > 0:
                     # 撤回当前消息
                     await delete_msg(websocket, message.messageId)
@@ -531,19 +533,20 @@ class ManualVerifyApplication(GroupMessageApplication):
                     )
                     if mod:
                         # 通过验证
-                        if BotIsAdmin(group_id):
-                            if group_id == load_setting("main_group_id", 0):
-                                await ban_new(
-                                    websocket,
-                                    at_id,
-                                    group_id,
-                                    60,
-                                )
-                                await welcome_new(websocket, at_id, group_id)
+                        if get_config("group_welcome_enable", group_id):
+                            if BotIsAdmin(group_id):
+                                if group_id == load_setting("main_group_id", 0):
+                                    await ban_new(
+                                        websocket,
+                                        at_id,
+                                        group_id,
+                                        60,
+                                    )
+                                    await welcome_new(websocket, at_id, group_id)
+                                else:
+                                    await welcom_new_no_admin(websocket, at_id, group_id)
                             else:
                                 await welcom_new_no_admin(websocket, at_id, group_id)
-                        else:
-                            await welcom_new_no_admin(websocket, at_id, group_id)
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
