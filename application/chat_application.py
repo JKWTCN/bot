@@ -21,6 +21,7 @@ from data.application.group_message_application import GroupMessageApplication
 from data.application.application_info import ApplicationInfo
 from data.enumerates import ApplicationCostType
 from data.message.group_message_info import GroupMessageInfo
+from function.GroupConfig import get_config
 from function.say import SayRaw, ReplySay
 from function.database_message_async import GetChatContext
 from function.database_group_async import GetGroupName
@@ -447,10 +448,13 @@ class GroupChatApplication(GroupMessageApplication):
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发AI回复
         触发条件:
-        1. 消息包含机器人名字
-        2. 随机5%概率
-        3. @机器人
+        1. 群聊开启了聊天功能
+        2. 消息包含机器人名字
+        3. 随机5%概率
+        4. @机器人
         """
+        if not get_config("enable_chat", message.groupId):
+            return False
         if (
             load_setting("bot_name", "乐可") in message.plainTextMessage
             or random.random() < 0.05

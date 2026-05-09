@@ -150,7 +150,7 @@ class CheckInApplication(GroupMessageApplication):
         )
 
     def judge(self, message: GroupMessageInfo) -> bool:
-        return "签到" in message.plainTextMessage
+        return "签到" in message.plainTextMessage and HasBotName(message.plainTextMessage)
 
 
 # 大清洗功能

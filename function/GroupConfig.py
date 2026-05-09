@@ -48,6 +48,7 @@ default_configs = {
     "guess_number_reward_multiplier": 1.0,  # 积分奖励倍数
     "guess_number_penalty": 20,  # 失败者扣除积分
     "guess_number_enabled": True,  # 是否启用游戏
+    "enable_chat":  True, # 是否启用聊天功能
 }
 
 intOptionType = [
@@ -63,7 +64,6 @@ intOptionType = [
     "sensitive_ban_sec",
     "hate_at_list",
     "level_limit",
-    # 猜数字游戏配置
     "guess_number_max_range",
     "guess_number_max_guesses",
     "guess_number_penalty",
@@ -81,8 +81,8 @@ boolOptionType = [
     "repeat_check",
     "group_joining_verification",
     "simple_steam_notify",
-    # 猜数字游戏配置
     "guess_number_enabled",
+    "enable_chat"
 ]
 
 
