@@ -43,8 +43,13 @@ async def echo(websocket, message):
                                 "image_parsing", groupMessageInfo.groupId
                             ):
                                 # 处理图片消息 - 使用异步版本避免阻塞主线程
-                                from function.image_processor import process_image_message_async
-                                text_message = await process_image_message_async(message, websocket)
+                                from function.image_processor import (
+                                    process_image_message_async,
+                                )
+
+                                text_message = await process_image_message_async(
+                                    message, websocket
+                                )
                                 if text_message is not None:
                                     # 立即处理的情况（已缓存或未开启解析）
                                     write_message(message, text_message)
@@ -63,7 +68,8 @@ async def echo(websocket, message):
                                         f"机器人ID:{groupMessageInfo.senderId},其他机器人不理睬。"
                                     )
                                 return
-                            # if groupMessageInfo.groupId == 755652553:
+                            elif get_config("silent_mode", groupMessageInfo.groupId):
+                                return
                             await schedule.processMessage(groupMessageInfo)
                         # 私聊消息
                         case "private":
@@ -128,6 +134,7 @@ async def main():
 
     # 删除临时文件夹
     import shutil
+
     if os.path.exists("images"):
         shutil.rmtree("images")
     os.makedirs("images", exist_ok=True)
@@ -138,28 +145,43 @@ async def main():
 
     # 初始化数据库 WAL 模式和优化配置
     from database.db_init import init_all_databases
+
     init_all_databases()
 
     from database.db_pool import init_pools, close_pools
+
     await init_pools()
 
     from config.config_cache import config_cache
+
     # 预加载配置
-    _ = await config_cache.get("bot_config", lambda: json.load(open("static_setting.json", "r", encoding="utf-8")))
-    _ = await config_cache.get("intelligence_config", lambda: json.load(open("intelligence_config.json", "r", encoding="utf-8")))
+    _ = await config_cache.get(
+        "bot_config",
+        lambda: json.load(open("static_setting.json", "r", encoding="utf-8")),
+    )
+    _ = await config_cache.get(
+        "intelligence_config",
+        lambda: json.load(open("intelligence_config.json", "r", encoding="utf-8")),
+    )
 
     from intelligence.memory.batch_processor import init_memory_batch_processor
+
     await init_memory_batch_processor()
 
     initApplications()
     # 初始化图片处理数据库
     from function.image_processor import init_database
+
     init_database()
 
     try:
-        async with serve(pro, "0.0.0.0", GetNCWCPort(),
-                        ping_timeout=30,  # 30秒ping超时
-                        close_timeout=10) as server:
+        async with serve(
+            pro,
+            "0.0.0.0",
+            GetNCWCPort(),
+            ping_timeout=30,  # 30秒ping超时
+            close_timeout=10,
+        ) as server:
             await server.serve_forever()
     finally:
         await close_pools()
