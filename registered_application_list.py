@@ -258,3 +258,9 @@ def initApplications():
 
     # 注册猜数字游戏应用
     # RegisterApplication(application.guess_number_game.GuessNumberGameApplication())
+
+    # 注册圣经应用
+    from application.bible_application import BibleManageApplication, BibleApplication
+
+    RegisterApplication(BibleManageApplication())
+    RegisterApplication(BibleApplication())

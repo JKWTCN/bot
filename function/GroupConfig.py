@@ -51,6 +51,7 @@ default_configs = {
     "guess_number_enabled": True,  # 是否启用游戏
     "enable_chat":  True, # 是否启用聊天功能
     "silent_mode": False, # 是否启用安静模式，启用后只会记录消息,不会触发任何功能
+    "bible": {},  # 圣经：关键词→图片路径
 }
 
 intOptionType = [
