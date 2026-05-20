@@ -60,7 +60,7 @@ from function.chat import PrivateChatNoContext
 # Local imports - Tools
 from tools.tools import (
     load_setting, dump_setting, GetNCWCPort, GetNCHSPort, GetOllamaPort,
-    GetNowDay, HasKeyWords, HasAllKeyWords, HasBotName, set_normal_qq_avatar, timestamp_to_date,
+    GetNowDay, HasKeyWords, HasAllKeyWords, HasBotName, set_normal_qq_avatar, set_qq_avatar, timestamp_to_date,
     HasChinese, FindNum, GetDirSizeByUnit, load_static_setting,
     GetSleepSeconds, HasNoneKeyWords, GetLogTime
 )
