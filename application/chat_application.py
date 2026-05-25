@@ -6,6 +6,7 @@ AI聊天应用模块 (深度优化版本)
 3. 使用配置缓存
 4. 智能记忆提取策略
 """
+
 import asyncio
 import json
 import logging
@@ -28,7 +29,6 @@ from function.database_group_async import GetGroupName
 from tools.tools import load_setting, load_static_setting
 
 from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
-
 
 # 创建任务集合跟踪后台任务
 background_tasks = set()
@@ -104,7 +104,10 @@ async def chat(
 
     # 初始化智能模块
     try:
-        from intelligence.profile.profile_manager_async import get_or_create_profile, update_profile
+        from intelligence.profile.profile_manager_async import (
+            get_or_create_profile,
+            update_profile,
+        )
         from intelligence.context.context_manager_async import get_smart_context
         from intelligence.memory.memory_manager_async import retrieve_relevant_memories
         from intelligence.memory.smart_extractor import extract_and_store_memory_smart
@@ -125,11 +128,14 @@ async def chat(
         async def _update_profile_logic():
             """画像更新的实际逻辑"""
             from intelligence.profile.profile_extractor import ProfileExtractor
+
             profile_extractor = ProfileExtractor()
 
             logging.info(f"[后台] 开始更新画像: user_id={user_id}")
             features = profile_extractor.extract_from_message(text, user_id)
-            updates = profile_extractor.merge_with_existing_profile(user_profile, features)
+            updates = profile_extractor.merge_with_existing_profile(
+                user_profile, features
+            )
 
             if updates:
                 await update_profile(user_id, updates)
@@ -192,7 +198,9 @@ async def chat(
             from intelligence.context.summary_generator_async import generate_summary
 
             msg_count = len(context_result.get("messages", []))
-            logging.info(f"[后台] 检查摘要生成: user_id={user_id}, msg_count={msg_count}")
+            logging.info(
+                f"[后台] 检查摘要生成: user_id={user_id}, msg_count={msg_count}"
+            )
 
             if msg_count >= 8:
                 summary = await generate_summary(
@@ -219,7 +227,9 @@ async def chat(
         )
 
         # 8. 构建消息列表
-        messages: list[dict[str, object]] = [{"role": "system", "content": system_prompt}]
+        messages: list[dict[str, object]] = [
+            {"role": "system", "content": system_prompt}
+        ]
         messages.append({"role": "system", "content": target_user_guard})
 
         # 添加智能上下文消息
@@ -230,7 +240,9 @@ async def chat(
         async def increment_familiarity_background():
             try:
                 # 添加超时保护
-                await asyncio.wait_for(increment_familiarity(user_id, delta=0.01), timeout=10.0)
+                await asyncio.wait_for(
+                    increment_familiarity(user_id, delta=0.01), timeout=10.0
+                )
             except asyncio.TimeoutError:
                 logging.warning(f"[后台] 增加熟悉度超时: user_id={user_id}")
             except Exception as e:
@@ -262,7 +274,9 @@ async def chat(
     user_content = f"[{sender_nickname}]: {text}" if sender_nickname else text
     if image_path:
         model = "qwen3-vl:8b"
-        messages.append({"role": "user", "content": user_content, "images": [image_path]})
+        messages.append(
+            {"role": "user", "content": user_content, "images": [image_path]}
+        )
     else:
         messages.append({"role": "user", "content": user_content})
 
@@ -280,14 +294,13 @@ async def chat(
                     model=model,
                     messages=messages,
                     options={"temperature": 0.2},
-                    think=False  # 显式禁用思考模式
+                    think=False,  # 显式禁用思考模式
                 )
 
             # 使用wait_for添加超时保护
             try:
                 response = await asyncio.wait_for(
-                    asyncio.to_thread(_call_ollama),
-                    timeout=60.0  # 60秒超时
+                    asyncio.to_thread(_call_ollama), timeout=60.0  # 60秒超时
                 )
             except asyncio.TimeoutError:
                 logging.error(f"Ollama调用超时 (群: {group_id})")
@@ -295,7 +308,9 @@ async def chat(
 
             logging.info(
                 "(AI)乐可在{}({})说:{}".format(
-                    await GetGroupName(group_id), group_id, response["message"]["content"]
+                    await GetGroupName(group_id),
+                    group_id,
+                    response["message"]["content"],
                 )
             )
 
@@ -330,7 +345,15 @@ async def chat(
                     temperature=0.2,
                     top_p=0.7,
                     max_tokens=8192,
-                    extra_body={"chat_template_kwargs": {"thinking": load_static_setting("ai_thinking", True)}} if load_static_setting("ai_thinking", True) else None,
+                    extra_body=(
+                        {
+                            "chat_template_kwargs": {
+                                "thinking": load_static_setting("ai_thinking", True)
+                            }
+                        }
+                        if load_static_setting("ai_thinking", True)
+                        else None
+                    ),
                     stream=True,
                 )
 
@@ -339,7 +362,9 @@ async def chat(
                 for chunk in completion:
                     if not getattr(chunk, "choices", None):
                         continue
-                    reasoning = getattr(chunk.choices[0].delta, "reasoning_content", None)
+                    reasoning = getattr(
+                        chunk.choices[0].delta, "reasoning_content", None
+                    )
                     if reasoning:
                         think_content += reasoning
                     if chunk.choices and chunk.choices[0].delta.content is not None:
@@ -351,7 +376,7 @@ async def chat(
             try:
                 re_text = await asyncio.wait_for(
                     asyncio.to_thread(_call_openai),
-                    timeout=120.0  # 120秒超时（OpenAI可能需要更长时间）
+                    timeout=120.0,  # 120秒超时（OpenAI可能需要更长时间）
                 )
             except asyncio.TimeoutError:
                 logging.error(f"OpenAI调用超时 (群: {group_id})")
@@ -396,7 +421,7 @@ async def increment_familiarity(user_id: int, delta: float = 0.05) -> bool:
             # 获取当前熟悉度
             cursor = await conn.execute(
                 "SELECT familiarity_level FROM user_profile WHERE user_id = ?",
-                (user_id,)
+                (user_id,),
             )
             result = await cursor.fetchone()
 
@@ -406,11 +431,13 @@ async def increment_familiarity(user_id: int, delta: float = 0.05) -> bool:
 
                 await conn.execute(
                     "UPDATE user_profile SET familiarity_level = ?, updated_at = ? WHERE user_id = ?",
-                    (new_value, int(datetime.now().timestamp()), user_id)
+                    (new_value, int(datetime.now().timestamp()), user_id),
                 )
                 await conn.commit()
 
-                logging.info(f"增加熟悉度: user_id={user_id}, {current:.2f} -> {new_value:.2f}")
+                logging.info(
+                    f"增加熟悉度: user_id={user_id}, {current:.2f} -> {new_value:.2f}"
+                )
                 return True
 
         return False
@@ -430,9 +457,7 @@ class GroupChatApplication(GroupMessageApplication):
                 applicationInfo, 0, True, ApplicationCostType.HIGH_TIME_HIGH_PERFORMANCE
             )
         else:
-            super().__init__(
-                applicationInfo, 0, True, ApplicationCostType.NORMAL
-            )
+            super().__init__(applicationInfo, 0, True, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo):
         await chat(
@@ -450,15 +475,17 @@ class GroupChatApplication(GroupMessageApplication):
         触发条件:
         1. 群聊开启了聊天功能
         2. 消息包含机器人名字
-        3. 随机5%概率
+        3. 随机0.5%概率
         4. @机器人
         """
         if not get_config("enable_chat", message.groupId):
             return False
         if (
-            load_setting("bot_name", "乐可") in message.plainTextMessage
-            or random.random() < 0.05
-            or load_setting("bot_id", 0) in message.atList
-        ):
+            (
+                load_setting("bot_name", "乐可") in message.plainTextMessage
+                or load_setting("bot_id", 0) in message.atList
+            )
+            and get_config("replay_chat", message.groupId)
+        ) or (random.random() < 0.005 and get_config("random_chat", message.groupId)):
             return True
         return False

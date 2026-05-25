@@ -49,8 +49,10 @@ default_configs = {
     "guess_number_reward_multiplier": 1.0,  # 积分奖励倍数
     "guess_number_penalty": 20,  # 失败者扣除积分
     "guess_number_enabled": True,  # 是否启用游戏
-    "enable_chat":  True, # 是否启用聊天功能
-    "silent_mode": False, # 是否启用安静模式，启用后只会记录消息,不会触发任何功能
+    "enable_chat": True,  # 是否启用聊天功能
+    "random_chat": True,  # 是否启用随机聊天，启用后会在群里随机发送消息
+    "replay_chat": True,  # 是否启用回复聊天，启用会回复带机器人名字的消息
+    "silent_mode": False,  # 是否启用安静模式，启用后只会记录消息,不会触发任何功能
     "bible": {},  # 圣经：关键词→图片路径
 }
 
@@ -88,6 +90,8 @@ boolOptionType = [
     "guess_number_enabled",
     "enable_chat",
     "silent_mode",
+    "random_chat",
+    "replay_chat"
 ]
 
 
