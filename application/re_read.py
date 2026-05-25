@@ -2,6 +2,7 @@ from data.application.group_message_application import GroupMessageApplication
 from data.application.application_info import ApplicationInfo
 from data.enumerates import ApplicationCostType
 from data.message.group_message_info import GroupMessageInfo
+from function.GroupConfig import get_config
 from function.say import SayRaw
 import random
 
@@ -17,7 +18,7 @@ class ReReadApplication(GroupMessageApplication):
         await SayRaw(message.websocket, message.groupId, message.rawMessage["message"])
 
     def judge(self, message: GroupMessageInfo) -> bool:
-        if random.random() < 0.01:
+        if random.random() < 0.01 and get_config("enable_repeat", message.groupId):
             return True
         else:
             return False

@@ -54,6 +54,7 @@ default_configs = {
     "replay_chat": True,  # 是否启用回复聊天，启用会回复带机器人名字的消息
     "silent_mode": False,  # 是否启用安静模式，启用后只会记录消息,不会触发任何功能
     "bible": {},  # 圣经：关键词→图片路径
+    "enable_repeat":True, # 是否启用复读机功能
 }
 
 intOptionType = [
@@ -91,7 +92,8 @@ boolOptionType = [
     "enable_chat",
     "silent_mode",
     "random_chat",
-    "replay_chat"
+    "replay_chat",
+    "enable_repeat",
 ]
 
 
