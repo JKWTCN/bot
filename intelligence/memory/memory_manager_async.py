@@ -9,6 +9,7 @@ import logging
 from datetime import datetime
 from typing import Dict, List
 from database.db_pool import intel_db_pool
+from tools.tools import load_chat_ai_model, load_chat_ai_thinking
 
 
 class MemoryManager:
@@ -147,10 +148,10 @@ class MemoryManager:
             # 使用asyncio.to_thread执行同步ollama调用，避免阻塞事件循环
             response = await asyncio.to_thread(
                 lambda: chat(
-                    model='qwen3.5:9b',
+                    model=load_chat_ai_model(),
                     messages=[{'role': 'user', 'content': extraction_prompt}],
                     options={'temperature': 0.3},
-                    think=False  # 显式禁用思考模式
+                    think=load_chat_ai_thinking(),
                 )
             )
 

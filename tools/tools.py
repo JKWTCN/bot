@@ -415,10 +415,45 @@ def load_static_setting(setting_name: str, default_value):
     try:
         with open("static_setting.json", "r", encoding="utf-8") as file:
             setting = json.load(file)
-        return setting[setting_name]
+        return setting.get(setting_name, default_value)
     except Exception as e:
         logging.error(f"读取静态配置文件出错: {e},{traceback.format_exc()}")
         return default_value
+
+
+def load_chat_ai_model(default_value: str = "qwen3.5:9b") -> str:
+    return load_static_setting("chat_ai_model", default_value)
+
+
+def _coerce_bool(value, default_value: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in ("1", "true", "yes", "on")
+    if value is None:
+        return default_value
+    return bool(value)
+
+
+def load_chat_ai_thinking(default_value: bool = False) -> bool:
+    default_value = _coerce_bool(load_static_setting("ai_thinking", default_value))
+    return _coerce_bool(load_static_setting("chat_ai_thinking", default_value))
+
+
+def load_image_ai_model(default_value: str = "qwen3-vl:8b") -> str:
+    return load_static_setting(
+        "image_recognition_model",
+        load_static_setting("image_ai_model", default_value),
+    )
+
+
+def load_image_ai_thinking(default_value: bool = False) -> bool:
+    return _coerce_bool(
+        load_static_setting(
+            "image_recognition_thinking",
+            load_static_setting("image_ai_thinking", default_value),
+        )
+    )
 
 
 def load_setting(setting_name: str, default_value):
@@ -676,13 +711,17 @@ def translationToEnglish(word):
     try:
         import ollama
 
+        model = load_chat_ai_model()
+        thinking = load_chat_ai_thinking()
+
         # 使用ollama包调用
         response = ollama.chat(
-            model='qwen3-vl:8b',
+            model=model,
             messages=[{
                 'role': 'system',
                 'content': f'请帮我把{word}翻译成英文,只输出一个单词的翻译结果,谢谢.'
-            }]
+            }],
+            think=thinking,
         )
 
         data = response['message']['content']

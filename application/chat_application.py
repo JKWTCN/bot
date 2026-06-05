@@ -26,7 +26,14 @@ from function.GroupConfig import get_config
 from function.say import SayRaw, ReplySay
 from function.database_message_async import GetChatContext
 from function.database_group_async import GetGroupName
-from tools.tools import load_setting, load_static_setting
+from tools.tools import (
+    load_chat_ai_model,
+    load_chat_ai_thinking,
+    load_image_ai_model,
+    load_image_ai_thinking,
+    load_setting,
+    load_static_setting,
+)
 
 from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
 
@@ -74,7 +81,8 @@ async def chat(
         text: 传入信息,在ai回复后追加在后面
         reply_message_id: 引用的消息ID,如果有则检查是否包含图片
     """
-    model = "qwen3.5:9b"
+    model = load_chat_ai_model()
+    thinking = load_chat_ai_thinking()
     image_path = None
     target_user_label = sender_nickname if sender_nickname else str(user_id)
     target_user_guard = (
@@ -273,7 +281,8 @@ async def chat(
     # 如果有图片,使用视觉模型
     user_content = f"[{sender_nickname}]: {text}" if sender_nickname else text
     if image_path:
-        model = "qwen3-vl:8b"
+        model = load_image_ai_model()
+        thinking = load_image_ai_thinking()
         messages.append(
             {"role": "user", "content": user_content, "images": [image_path]}
         )
@@ -294,7 +303,7 @@ async def chat(
                     model=model,
                     messages=messages,
                     options={"temperature": 0.2},
-                    think=False,  # 显式禁用思考模式
+                    think=thinking,
                 )
 
             # 使用wait_for添加超时保护
@@ -314,11 +323,8 @@ async def chat(
                 )
             )
 
-            if model != "deepseek-r1:1.5b" and model != "qwen3.5:9b":
-                re_text = response["message"]["content"]
-            else:
-                content = response["message"]["content"]
-                re_text = re.sub(r"<think>[\s\S]*?</think>", "", content).strip()
+            content = response["message"]["content"]
+            re_text = re.sub(r"<think>[\s\S]*?</think>", "", content).strip()
 
             # 检查响应是否为空
             if not re_text:
@@ -330,8 +336,12 @@ async def chat(
             from openai import OpenAI
             from openai.types.chat import ChatCompletionMessageParam
 
-            print(f"使用模型: {load_static_setting('open_ai_model', '')}")
-            logging.info(f"使用模型: {load_static_setting('open_ai_model', '')}")
+            open_ai_model = load_static_setting("open_ai_model", load_chat_ai_model())
+            open_ai_thinking = load_static_setting(
+                "ai_thinking", load_chat_ai_thinking()
+            )
+            print(f"使用模型: {open_ai_model}")
+            logging.info(f"使用模型: {open_ai_model}")
 
             def _call_openai():
                 client = OpenAI(
@@ -340,7 +350,7 @@ async def chat(
                 )
 
                 completion = client.chat.completions.create(
-                    model=load_static_setting("open_ai_model", ""),
+                    model=open_ai_model,
                     messages=cast(list[ChatCompletionMessageParam], messages),
                     temperature=0.2,
                     top_p=0.7,
@@ -348,10 +358,10 @@ async def chat(
                     extra_body=(
                         {
                             "chat_template_kwargs": {
-                                "thinking": load_static_setting("ai_thinking", True)
+                                "thinking": open_ai_thinking
                             }
                         }
-                        if load_static_setting("ai_thinking", True)
+                        if open_ai_thinking
                         else None
                     ),
                     stream=True,

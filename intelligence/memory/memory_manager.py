@@ -10,6 +10,8 @@ import re
 from datetime import datetime
 from typing import Dict, List, Optional
 
+from tools.tools import load_chat_ai_model, load_chat_ai_thinking
+
 
 class MemoryManager:
     """长期记忆管理器"""
@@ -172,10 +174,10 @@ class MemoryManager:
 """
 
             response = chat(
-                model='qwen3.5:9b',
+                model=load_chat_ai_model(),
                 messages=[{'role': 'user', 'content': extraction_prompt}],
                 options={'temperature': 0.3},  # 降低温度以获得更稳定的提取
-                think=False  # 显式禁用思考模式
+                think=load_chat_ai_thinking(),
             )
 
             # 解析结果

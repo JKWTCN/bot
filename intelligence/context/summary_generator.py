@@ -9,6 +9,8 @@ import sqlite3
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
+from tools.tools import load_chat_ai_model, load_chat_ai_thinking
+
 
 class SummaryGenerator:
     """对话摘要生成器"""
@@ -152,10 +154,10 @@ class SummaryGenerator:
 摘要:"""
 
             response = chat(
-                model='qwen3.5:9b',
+                model=load_chat_ai_model(),
                 messages=[{'role': 'user', 'content': prompt}],
                 options={'temperature': 0.5, 'max_tokens': 100},
-                think=False  # 显式禁用思考模式
+                think=load_chat_ai_thinking(),
             )
 
             summary = response['message']['content'].strip()

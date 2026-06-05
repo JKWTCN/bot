@@ -11,7 +11,13 @@ from function.say import SayRaw, ReplySay
 from function.database_message import GetChatContext
 from function.database_group import GetGroupName
 
-from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
+from tools.tools import (
+    GetNCWCPort,
+    GetNCHSPort,
+    GetOllamaPort,
+    load_chat_ai_model,
+    load_chat_ai_thinking,
+)
 
 
 async def miaomiaoTranslation(websocket, user_id: int, group_id: int, message_id: int):
@@ -23,7 +29,8 @@ async def miaomiaoTranslation(websocket, user_id: int, group_id: int, message_id
         group_id (int): _description_
         message_id (int): _description_
     """
-    model = "qwen3-vl:8b"
+    model = load_chat_ai_model()
+    thinking = load_chat_ai_thinking()
 
     # 获取上下文消息
     context_messages = GetChatContext(user_id, group_id)
@@ -55,7 +62,8 @@ async def miaomiaoTranslation(websocket, user_id: int, group_id: int, message_id
         response = ollama.chat(
             model=model,
             messages=base_messages,
-            options={'temperature': 1.0}
+            options={'temperature': 1.0},
+            think=thinking,
         )
 
         # 记录日志
@@ -65,17 +73,9 @@ async def miaomiaoTranslation(websocket, user_id: int, group_id: int, message_id
             )
         )
 
-        if model != "deepseek-r1:1.5b" and model != "qwen3.5:9b":
-            re_text = response['message']['content']
-        else:
-            match = re.findall(
-                r"<think>([\s\S]*)</think>([\s\S]*)",
-                response['message']['content'],
-            )
-            if match:
-                re_text = match[0][1]
-            else:
-                re_text = response['message']['content'].strip()
+        re_text = re.sub(
+            r"<think>[\s\S]*?</think>", "", response['message']['content']
+        ).strip()
     except Exception as e:
         logging.error(f"调用Ollama时出错: {str(e)}")
         re_text = "呜呜不太理解呢喵."

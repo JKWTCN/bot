@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import queue
+import re
 import sqlite3
 import threading
 import traceback
@@ -12,6 +13,8 @@ import requests
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional, Tuple
+
+from tools.tools import load_image_ai_model, load_image_ai_thinking
 
 # 创建任务队列和处理线程
 image_process_queue = queue.Queue()
@@ -201,7 +204,7 @@ def image_to_base64(image_path: str) -> str:
 
 def describe_image(image_path: str, ollama_url: str = "http://localhost:11434") -> Tuple[bool, str]:
     """
-    使用Ollama的qwen3-vl:8b模型描述图片
+    使用static_setting.json中配置的Ollama视觉模型描述图片
 
     参数:
         image_path: 图片文件路径
@@ -213,17 +216,22 @@ def describe_image(image_path: str, ollama_url: str = "http://localhost:11434") 
     try:
         import ollama
 
+        model = load_image_ai_model()
+        thinking = load_image_ai_thinking()
+
         # 使用ollama包调用，图像应该在消息的images字段中
         response = ollama.chat(
-            model='qwen3-vl:8b',
+            model=model,
             messages=[{
                 'role': 'user',
                 'content': '请描述一下子这张图片,不要有多余的话,简练一点.谢谢.',
                 'images': [image_path]
-            }]
+            }],
+            think=thinking,
         )
 
         description = response['message']['content']
+        description = re.sub(r"<think>[\s\S]*?</think>", "", description).strip()
         return True, description
 
     except Exception as e:
