@@ -330,13 +330,11 @@ async def delete_msg(websocket, message_id: int):
     await websocket.send(json.dumps(payload))
 
 
-from application.chat_application import getPrompts
-
-
 def chatNoContext(texts):
     """只处理单句"""
     model = load_chat_ai_model()
     thinking = load_chat_ai_thinking()
+    from application.chat_application import getPrompts
 
     # 构建基础消息结构
     # 加载提示词

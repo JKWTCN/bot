@@ -40,6 +40,21 @@ from tools.tools import GetNCWCPort, GetNCHSPort, GetOllamaPort
 # 创建任务集合跟踪后台任务
 background_tasks = set()
 
+DETAILED_REPLY_KEYWORDS = (
+    "详细",
+    "展开",
+    "分析",
+    "步骤",
+    "解释",
+    "讲讲",
+    "长一点",
+    "完整",
+    "教程",
+    "代码",
+    "方案",
+    "为什么",
+)
+
 
 def create_tracked_task(coro):
     """创建被跟踪的后台任务"""
@@ -47,6 +62,34 @@ def create_tracked_task(coro):
     background_tasks.add(task)
     task.add_done_callback(background_tasks.discard)
     return task
+
+
+def wants_detailed_reply(text: str) -> bool:
+    """判断用户是否明确要求展开说明。"""
+    return any(keyword in text for keyword in DETAILED_REPLY_KEYWORDS)
+
+
+def build_reply_style_guard(text: str) -> str:
+    """构建回复长度和重点约束。"""
+    if wants_detailed_reply(text):
+        return (
+            "回复风格要求: 用户明确要求解释或展开时,可以适度详细,但必须先给结论。"
+            "最多写3个短要点,总长度尽量控制在120字内。"
+            "不要写开场白、背景铺垫或总结。"
+            "保持每句话结尾加'喵'。"
+        )
+
+    return (
+        "回复风格要求: 默认按群聊短回复处理。"
+        "必须严格控制在10-30字,只回答最关键的信息。"
+        "不要解释背景,不要列多个要点,不要输出长段文字。"
+        "保持每句话结尾加'喵'。"
+    )
+
+
+def get_response_token_limit(text: str) -> int:
+    """限制生成预算,不对模型输出做事后裁剪。"""
+    return 160 if wants_detailed_reply(text) else 64
 
 
 def getPrompts() -> str:
@@ -93,6 +136,8 @@ async def chat(
         "不得把其他人的行为、偏好、经历归因给本轮对象。"
         "若需引用他人，请明确写出对方昵称。"
     )
+    reply_style_guard = build_reply_style_guard(text)
+    response_token_limit = get_response_token_limit(text)
 
     # 检查是否引用了图片
     if reply_message_id != -1:
@@ -239,6 +284,7 @@ async def chat(
             {"role": "system", "content": system_prompt}
         ]
         messages.append({"role": "system", "content": target_user_guard})
+        messages.append({"role": "system", "content": reply_style_guard})
 
         # 添加智能上下文消息
         if context_result["messages"]:
@@ -273,6 +319,7 @@ async def chat(
             }
         ]
         messages.append({"role": "system", "content": target_user_guard})
+        messages.append({"role": "system", "content": reply_style_guard})
 
         # 添加上下文消息
         if context_messages:
@@ -302,7 +349,10 @@ async def chat(
                 return chat(
                     model=model,
                     messages=messages,
-                    options={"temperature": 0.2},
+                    options={
+                        "temperature": 0.2,
+                        "num_predict": response_token_limit,
+                    },
                     think=thinking,
                 )
 
@@ -354,7 +404,7 @@ async def chat(
                     messages=cast(list[ChatCompletionMessageParam], messages),
                     temperature=0.2,
                     top_p=0.7,
-                    max_tokens=8192,
+                    max_tokens=response_token_limit,
                     extra_body=(
                         {
                             "chat_template_kwargs": {

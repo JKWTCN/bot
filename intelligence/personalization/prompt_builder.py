@@ -3,6 +3,7 @@
 将用户画像和记忆注入到system prompt中
 """
 
+import ast
 import json
 import logging
 from typing import Dict, List
@@ -41,15 +42,8 @@ class PromptBuilder:
             个性化提示词
         """
         try:
-            # 解析基础prompt
-            try:
-                base_config = json.loads(base_prompt)
-            except:
-                # 如果解析失败,使用默认配置
-                base_config = {
-                    "系统提示": "以傲娇且温柔的语气与用户互动,适当使用颜文字,每句话结尾加'喵'",
-                    "互动方式": "简洁明了的回应"
-                }
+            base_config = self._parse_base_prompt(base_prompt)
+            base_rules = self._build_base_rules(base_config)
 
             # 构建个性化部分
             personalized_sections = []
@@ -84,15 +78,15 @@ class PromptBuilder:
             # 4. 组合最终prompt
             if personalized_sections:
                 personalized_content = "\n\n".join(personalized_sections)
-                final_prompt = f"""{base_config.get("系统提示", "")}
+                final_prompt = f"""{base_rules}
 
 ## 用户个性化信息
 {personalized_content}
 
-请基于以上信息,调整你的回复风格和内容,使其更贴合该用户的特点。
+请基于以上信息,调整你的回复风格和内容,使其更贴合该用户的特点,但不得违反基础回复规则。
 """
             else:
-                final_prompt = base_config.get("系统提示", "")
+                final_prompt = base_rules
 
             logging.debug(f"构建个性化prompt, 长度={len(final_prompt)}")
             return final_prompt
@@ -101,6 +95,36 @@ class PromptBuilder:
             logging.error(f"构建个性化prompt失败: {e}", exc_info=True)
             # 出错时返回基础prompt
             return base_prompt
+
+    def _parse_base_prompt(self, base_prompt: str) -> Dict:
+        """解析基础提示词,兼容JSON和Python dict字符串。"""
+        default_config = {
+            "系统提示": "以傲娇且温柔的语气与用户互动,适当使用颜文字,每句话结尾加'喵'",
+            "互动方式": "回复必须严格控制在 10-30 字,超短回复,每句话结尾加'喵'",
+        }
+
+        for parser in (json.loads, ast.literal_eval):
+            try:
+                parsed = parser(base_prompt)
+                if isinstance(parsed, dict):
+                    return parsed
+            except Exception:
+                continue
+
+        return default_config
+
+    def _build_base_rules(self, base_config: Dict) -> str:
+        """组合人设和基础回复规则。"""
+        system_prompt = base_config.get("系统提示", "")
+        interaction_prompt = base_config.get("互动方式", "")
+
+        rules = []
+        if system_prompt:
+            rules.append(system_prompt)
+        if interaction_prompt:
+            rules.append(f"互动方式: {interaction_prompt}")
+
+        return "\n".join(rules)
 
     def _build_profile_section(self, user_profile: Dict) -> str:
         """
