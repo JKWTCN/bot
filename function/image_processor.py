@@ -177,7 +177,8 @@ def getImageDescriptionByFile(imagePath: str) -> Tuple[bool, str]:
 
 def getImagePathByFile(file: str, url: str) -> str:
     """根据文件ID和URL下载图片并保存到本地"""
-    resp = requests.get(url)
+    resp = requests.get(url, timeout=30)
+    resp.raise_for_status()
     image_data = resp.content
 
     # 保存二进制数据

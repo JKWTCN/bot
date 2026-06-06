@@ -107,7 +107,7 @@ class ContextManager:
         """获取原始消息 (异步版本)"""
         try:
             rows = await bot_db_pool.fetchall(
-                """SELECT time, user_id, sender_nickname, raw_message, group_id
+                """SELECT time, user_id, sender_nickname, raw_message, group_id, message_id
                    FROM group_message
                    WHERE group_id = ?
                    AND time >= strftime('%s', 'now', '-2 hours')
@@ -123,7 +123,8 @@ class ContextManager:
                     'user_id': row[1],
                     'sender_nickname': row[2],
                     'raw_message': row[3],
-                    'group_id': row[4]
+                    'group_id': row[4],
+                    'message_id': row[5]
                 })
 
             return messages
@@ -167,7 +168,8 @@ class ContextManager:
             if total_tokens + msg_tokens <= max_tokens:
                 selected.append({
                     'role': role,
-                    'content': content
+                    'content': content,
+                    'message_id': msg.get('message_id')
                 })
                 total_tokens += msg_tokens
             else:

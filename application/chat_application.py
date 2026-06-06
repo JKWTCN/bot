@@ -14,7 +14,7 @@ import os
 import random
 import re
 import uuid
-from typing import cast
+from typing import Any, cast
 
 import requests
 
@@ -55,6 +55,8 @@ DETAILED_REPLY_KEYWORDS = (
     "为什么",
 )
 
+DIRECT_CONTEXT_IMAGE_LIMIT = 4
+
 
 def create_tracked_task(coro):
     """创建被跟踪的后台任务"""
@@ -92,6 +94,204 @@ def get_response_token_limit(text: str) -> int:
     return 160 if wants_detailed_reply(text) else 64
 
 
+def is_same_local_chat_and_image_model() -> bool:
+    """判断聊天模型是否可直接接收图片上下文。"""
+    if not load_setting("use_local_ai", True):
+        return False
+    return load_chat_ai_model() == load_image_ai_model()
+
+
+def strip_context_metadata(message: dict[str, Any]) -> dict[str, object]:
+    """去掉只在本地用于回查图片的元数据。"""
+    clean_message: dict[str, object] = {
+        "role": message.get("role", "user"),
+        "content": message.get("content", ""),
+    }
+    if message.get("images"):
+        clean_message["images"] = message["images"]
+    return clean_message
+
+
+def strip_image_descriptions(content: str) -> str:
+    """同模型直传图片时,避免继续依赖预识别的图片描述。"""
+    return re.sub(r"\[图片内容:[^\]]*\]", "[图片]", content)
+
+
+def image_segments_from_message(raw_message: dict | None) -> list[dict]:
+    """从 OneBot 消息中取出图片段。"""
+    if not raw_message:
+        return []
+    segments = raw_message.get("message", [])
+    if not isinstance(segments, list):
+        return []
+    return [seg for seg in segments if seg.get("type") == "image"]
+
+
+def safe_temp_image_name(prefix: str, message_id: int | str, index: int, file: str) -> str:
+    """生成临时图片文件名,避免原始 file 字段包含路径分隔符。"""
+    base_name = os.path.basename(file or "image")
+    base_name = re.sub(r"[^A-Za-z0-9_.-]", "_", base_name)[-80:] or "image"
+    return f"{prefix}_{message_id}_{index}_{uuid.uuid4().hex[:8]}_{base_name}"
+
+
+def normalize_image_for_ollama(image_path: str) -> str | None:
+    """校验图片并转换成 Ollama 稳定支持的 JPEG。"""
+    if not os.path.exists(image_path) or os.path.getsize(image_path) == 0:
+        logging.error(f"图片文件不存在或为空: {image_path}")
+        return None
+
+    normalized_path = f"{os.path.splitext(image_path)[0]}_ollama.jpg"
+
+    try:
+        from PIL import Image
+
+        with Image.open(image_path) as img:
+            img.seek(0)
+            if img.mode not in ("RGB", "L"):
+                img = img.convert("RGB")
+            elif img.mode == "L":
+                img = img.convert("RGB")
+            img.save(normalized_path, format="JPEG", quality=92)
+        return normalized_path
+    except Exception as pil_error:
+        logging.warning(f"PIL转换图片失败,尝试OpenCV: {image_path}, error={pil_error}")
+
+    try:
+        import cv2
+        import numpy as np
+
+        image_data = np.fromfile(image_path, dtype=np.uint8)
+        img = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
+        if img is None:
+            logging.error(f"图片无法解码: {image_path}")
+            return None
+        if not cv2.imwrite(normalized_path, img):
+            logging.error(f"图片转换写入失败: {normalized_path}")
+            return None
+        return normalized_path
+    except Exception as cv_error:
+        logging.error(f"转换图片失败: {image_path}, error={cv_error}")
+        return None
+
+
+def fetch_message_segments(message_id: int) -> list[dict]:
+    """通过 NapCat/OneBot get_msg 回取历史消息段。"""
+    payload = {"message_id": message_id}
+    response = requests.post(
+        f"http://localhost:{GetNCHSPort()}/get_msg",
+        json=payload,
+        timeout=10,
+    )
+    data = response.json()
+    if data.get("status") != "ok":
+        return []
+    segments = data.get("data", {}).get("message", [])
+    return segments if isinstance(segments, list) else []
+
+
+async def download_images_from_segments(
+    segments: list[dict],
+    message_id: int | str,
+    prefix: str,
+    temp_image_paths: list[str],
+    remaining_limit: int,
+) -> list[str]:
+    """下载图片段为 Ollama 可读取的临时文件路径。"""
+    if remaining_limit <= 0:
+        return []
+
+    from function.image_processor import getImagePathByFile
+
+    image_paths: list[str] = []
+    for index, segment in enumerate(segments):
+        if len(image_paths) >= remaining_limit:
+            break
+        if segment.get("type") != "image":
+            continue
+
+        data = segment.get("data", {})
+        url = data.get("url")
+        if not url:
+            continue
+
+        file_name = safe_temp_image_name(
+            prefix, message_id, index, str(data.get("file", "image"))
+        )
+        try:
+            raw_image_path = await asyncio.to_thread(getImagePathByFile, file_name, url)
+            temp_image_paths.append(raw_image_path)
+            image_path = await asyncio.to_thread(
+                normalize_image_for_ollama, raw_image_path
+            )
+        except Exception as e:
+            logging.error(f"下载上下文图片失败: message_id={message_id}, error={e}")
+            continue
+
+        if image_path is None:
+            continue
+
+        image_paths.append(image_path)
+        temp_image_paths.append(image_path)
+
+    return image_paths
+
+
+def remove_images_from_messages(messages: list[dict[str, object]]) -> list[dict[str, object]]:
+    """移除图片字段,用于图片加载失败后的文本重试。"""
+    clean_messages: list[dict[str, object]] = []
+    for message in messages:
+        clean_messages.append(
+            {key: value for key, value in message.items() if key != "images"}
+        )
+    return clean_messages
+
+
+async def build_context_messages_for_model(
+    context_messages: list[dict[str, Any]],
+    current_message_id: int,
+    temp_image_paths: list[str],
+    direct_image_context: bool,
+) -> list[dict[str, object]]:
+    """构建实际传给模型的上下文消息。"""
+    if not direct_image_context:
+        return [strip_context_metadata(message) for message in context_messages]
+
+    messages: list[dict[str, object]] = []
+    used_image_count = 0
+    for message in context_messages:
+        message_id = message.get("message_id")
+        if message_id == current_message_id:
+            continue
+
+        clean_message = strip_context_metadata(message)
+        clean_message["content"] = strip_image_descriptions(str(clean_message["content"]))
+
+        if (
+            clean_message.get("role") == "user"
+            and message_id is not None
+            and "[图片" in str(message.get("content", ""))
+            and used_image_count < DIRECT_CONTEXT_IMAGE_LIMIT
+        ):
+            try:
+                segments = await asyncio.to_thread(fetch_message_segments, int(message_id))
+                image_paths = await download_images_from_segments(
+                    image_segments_from_message({"message": segments}),
+                    message_id,
+                    "context",
+                    temp_image_paths,
+                    DIRECT_CONTEXT_IMAGE_LIMIT - used_image_count,
+                )
+                if image_paths:
+                    clean_message["images"] = image_paths
+                    used_image_count += len(image_paths)
+            except Exception as e:
+                logging.error(f"回取上下文图片失败: message_id={message_id}, error={e}")
+
+        messages.append(clean_message)
+
+    return messages
+
+
 def getPrompts() -> str:
     """获取系统提示词"""
     with open("prompts.json", "r", encoding="utf-8") as f:
@@ -107,6 +307,7 @@ async def chat(
     text: str,
     reply_message_id: int = -1,
     sender_nickname: str = "",
+    raw_message: dict | None = None,
 ):
     """AI聊天功能回复 (深度优化版 - 纯异步)
 
@@ -127,6 +328,8 @@ async def chat(
     model = load_chat_ai_model()
     thinking = load_chat_ai_thinking()
     image_path = None
+    temp_image_paths: list[str] = []
+    direct_image_context = is_same_local_chat_and_image_model()
     target_user_label = sender_nickname if sender_nickname else str(user_id)
     target_user_guard = (
         "你正在群聊中回复单个用户。"
@@ -149,8 +352,16 @@ async def chat(
 
             try:
                 file_name = f"reply_{message_id}_{uuid.uuid4().hex[:8]}.image"
-                image_path = getImagePathByFile(file_name, image_url)
-                logging.info(f"检测到引用图片,已下载: {image_path}")
+                raw_reply_image_path = getImagePathByFile(file_name, image_url)
+                temp_image_paths.append(raw_reply_image_path)
+                image_path = await asyncio.to_thread(
+                    normalize_image_for_ollama, raw_reply_image_path
+                )
+                if image_path:
+                    temp_image_paths.append(image_path)
+                    logging.info(f"检测到引用图片,已下载: {image_path}")
+                else:
+                    logging.error(f"引用图片无法转换为模型可读格式: {raw_reply_image_path}")
             except Exception as e:
                 logging.error(f"下载引用图片失败: {e}")
                 image_path = None
@@ -288,7 +499,14 @@ async def chat(
 
         # 添加智能上下文消息
         if context_result["messages"]:
-            messages.extend(context_result["messages"])
+            messages.extend(
+                await build_context_messages_for_model(
+                    context_result["messages"],
+                    message_id,
+                    temp_image_paths,
+                    direct_image_context,
+                )
+            )
 
         # 增加用户熟悉度 (后台任务)
         async def increment_familiarity_background():
@@ -323,18 +541,49 @@ async def chat(
 
         # 添加上下文消息
         if context_messages:
-            messages.extend(context_messages)
+            messages.extend(
+                await build_context_messages_for_model(
+                    context_messages,
+                    message_id,
+                    temp_image_paths,
+                    direct_image_context,
+                )
+            )
 
     # 如果有图片,使用视觉模型
     user_content = f"[{sender_nickname}]: {text}" if sender_nickname else text
+    current_image_paths: list[str] = []
+    if direct_image_context:
+        current_image_paths.extend(
+            await download_images_from_segments(
+                image_segments_from_message(raw_message),
+                message_id,
+                "current",
+                temp_image_paths,
+                DIRECT_CONTEXT_IMAGE_LIMIT,
+            )
+        )
+
     if image_path:
+        current_image_paths.append(image_path)
+
+    if current_image_paths:
         model = load_image_ai_model()
         thinking = load_image_ai_thinking()
         messages.append(
-            {"role": "user", "content": user_content, "images": [image_path]}
+            {"role": "user", "content": user_content, "images": current_image_paths}
         )
     else:
         messages.append({"role": "user", "content": user_content})
+
+    def cleanup_temp_images():
+        for temp_image_path in dict.fromkeys(temp_image_paths):
+            if temp_image_path and os.path.exists(temp_image_path):
+                try:
+                    os.remove(temp_image_path)
+                    logging.info(f"已删除临时图片文件: {temp_image_path}")
+                except Exception as e:
+                    logging.error(f"删除临时图片文件失败: {temp_image_path}, error={e}")
 
     try:
         if load_setting("use_local_ai", True):
@@ -345,10 +594,10 @@ async def chat(
             logging.info(f"使用模型: {model}")
 
             # 在线程池中运行同步的ollama调用
-            def _call_ollama():
+            def _call_ollama(chat_messages):
                 return chat(
                     model=model,
-                    messages=messages,
+                    messages=chat_messages,
                     options={
                         "temperature": 0.2,
                         "num_predict": response_token_limit,
@@ -359,11 +608,31 @@ async def chat(
             # 使用wait_for添加超时保护
             try:
                 response = await asyncio.wait_for(
-                    asyncio.to_thread(_call_ollama), timeout=60.0  # 60秒超时
+                    asyncio.to_thread(_call_ollama, messages),
+                    timeout=60.0,  # 60秒超时
                 )
             except asyncio.TimeoutError:
                 logging.error(f"Ollama调用超时 (群: {group_id})")
+                cleanup_temp_images()
                 return
+            except Exception as image_error:
+                if any(message.get("images") for message in messages):
+                    logging.error(
+                        f"带图片调用AI失败,降级为纯文本重试: {image_error}"
+                    )
+                    try:
+                        response = await asyncio.wait_for(
+                            asyncio.to_thread(
+                                _call_ollama, remove_images_from_messages(messages)
+                            ),
+                            timeout=60.0,
+                        )
+                    except asyncio.TimeoutError:
+                        logging.error(f"Ollama纯文本重试超时 (群: {group_id})")
+                        cleanup_temp_images()
+                        return
+                else:
+                    raise
 
             logging.info(
                 "(AI)乐可在{}({})说:{}".format(
@@ -379,6 +648,7 @@ async def chat(
             # 检查响应是否为空
             if not re_text:
                 logging.warning(f"AI返回空响应，跳过回复 (群: {group_id})")
+                cleanup_temp_images()
                 return
 
         else:
@@ -440,11 +710,13 @@ async def chat(
                 )
             except asyncio.TimeoutError:
                 logging.error(f"OpenAI调用超时 (群: {group_id})")
+                cleanup_temp_images()
                 return
 
             # 检查响应是否为空
             if not re_text:
                 logging.warning(f"AI返回空响应，跳过回复 (群: {group_id})")
+                cleanup_temp_images()
                 return
 
             logging.info(
@@ -462,9 +734,7 @@ async def chat(
         re_text = re_text.replace("\n", "")
 
     # 删除临时图片
-    if image_path and os.path.exists(image_path):
-        os.remove(image_path)
-        logging.info(f"已删除临时图片文件: {image_path}")
+    cleanup_temp_images()
 
     await ReplySay(websocket, group_id, message_id, re_text)
 
@@ -528,6 +798,7 @@ class GroupChatApplication(GroupMessageApplication):
             message.plainTextMessage,
             message.replyMessageId,
             getattr(message, "senderNickname", ""),
+            message.rawMessage,
         )
 
     def judge(self, message: GroupMessageInfo) -> bool:

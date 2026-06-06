@@ -33,7 +33,7 @@ async def GetChatContext(user_id: int, group_id: int, limit: int = 10) -> list:
         bot_id = 0
 
     rows = await bot_db_pool.fetchall(
-        """SELECT user_id, sender_nickname, raw_message
+        """SELECT user_id, sender_nickname, raw_message, message_id
            FROM group_message
            WHERE group_id = ?
            AND time >= strftime('%s','now','-30 minutes')
@@ -44,12 +44,20 @@ async def GetChatContext(user_id: int, group_id: int, limit: int = 10) -> list:
 
     # 将消息转换为适合模型输入的格式
     context_messages = []
-    for msg_user_id, nickname, message in reversed(rows):
+    for msg_user_id, nickname, message, message_id in reversed(rows):
         if msg_user_id == bot_id:
-            context_messages.append({"role": "assistant", "content": message})
+            context_messages.append(
+                {"role": "assistant", "content": message, "message_id": message_id}
+            )
         else:
             label = nickname if nickname else str(msg_user_id)
-            context_messages.append({"role": "user", "content": f"[{label}]: {message}"})
+            context_messages.append(
+                {
+                    "role": "user",
+                    "content": f"[{label}]: {message}",
+                    "message_id": message_id,
+                }
+            )
 
     return context_messages
 
