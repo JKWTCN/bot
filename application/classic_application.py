@@ -13,6 +13,7 @@ from random import choice
 import asyncio
 
 # 使用异步数据库连接池
+from application.bank_application import get_bank_balance, update_bank_balance
 from database.db_pool import bot_db_pool
 
 # Third-party imports
@@ -928,6 +929,17 @@ class AtManagementApplication(GroupMessageApplication):
                     websocket,
                     group_id,
                     f"{get_user_name(at_id,group_id)}({at_id})积分清零喵。",
+                )
+            elif HasKeyWords(raw_message, ["一无所有"]) and IsDeveloper(user_id):
+                change_point(at_id, group_id, 0)
+                if GetMyKohlrabi(at_id, group_id) != 0:
+                    ChangeMyKohlrabi(at_id, group_id, 0)
+                if get_bank_balance(at_id) != 0:
+                    update_bank_balance(at_id, -get_bank_balance(at_id), "withdraw")
+                await SayGroup(
+                    websocket,
+                    group_id,
+                    f"{get_user_name(at_id,group_id)}({at_id})一无所有不也是挺好的喵。",
                 )
 
             elif HasKeyWords(raw_message, ["惩罚取消", "取消惩罚"]) and (
