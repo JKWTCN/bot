@@ -278,7 +278,7 @@ async def verify_fail_say(websocket, user_id: int, group_id: int, times: int):
                 {
                     "type": "text",
                     "data": {
-                        "text": f' 验证码输入错误，你还有{times}次机会喵。如果看不清记得说"乐可，看不清"喵。你的验证码如下:'
+                        "text": f' 验证码输入错误，注意是全大写字符喵,你还有{times}次机会喵。如果看不清记得说"乐可，看不清"喵。你的验证码如下:'
                     },
                 },
                 {

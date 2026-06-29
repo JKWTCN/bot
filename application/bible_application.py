@@ -22,7 +22,8 @@ def _bible_image_dir(group_id: int) -> str:
 
 
 def _extract_keywords(text: str) -> list[str]:
-    return re.findall(r"\(([^)]+)\)", text)
+    # 同时支持英文括号 ( ) 和中文全角括号 （ ）
+    return re.findall(r"[\(（]([^()（）]+)[\)）]", text)
 
 
 class BibleManageApplication(GroupMessageApplication):
