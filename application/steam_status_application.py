@@ -18,6 +18,14 @@ from function.datebase_user import get_user_name
 from function.say import ReplySay, SayGroup, SayGroupImage
 from tools.tools import FindNum, HasAllKeyWords, load_static_setting
 
+import application.steam_achievement as steam_achievement
+from application.steam_achievement import (
+    MAX_ACH_NOTIFICATIONS, ACH_CHECK_INTERVAL,
+    check_new_achievements as _check_new_achievements,
+    clear_achievement_snapshot, save_achievement_snapshot,
+    add_to_blacklist,
+)
+
 # 禁用SSL警告（因为验证被禁用）
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -247,6 +255,7 @@ def create_steam_binding_table():
         last_game_id TEXT DEFAULT '',
         pending_quit INTEGER DEFAULT 0,
         next_poll_time INTEGER DEFAULT 0,
+        last_ach_check_time INTEGER DEFAULT 0,
         PRIMARY KEY (user_id, group_id)
     )
     """)
@@ -261,12 +270,43 @@ def create_steam_binding_table():
         ("last_game_id", "TEXT DEFAULT ''"),
         ("pending_quit", "INTEGER DEFAULT 0"),
         ("next_poll_time", "INTEGER DEFAULT 0"),
+        ("last_ach_check_time", "INTEGER DEFAULT 0"),
     ]:
         try:
             cur.execute(f"ALTER TABLE steam_binding ADD COLUMN {col} {decl}")
             conn.commit()
         except sqlite3.OperationalError:
             pass
+    conn.close()
+
+    # 成就快照表: 记录玩家在某游戏的已解锁成就集合, 用于对比新增
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS steam_achievement_snapshot (
+        user_id INTEGER,
+        group_id INTEGER,
+        steam_id TEXT,
+        appid TEXT,
+        achievements_json TEXT DEFAULT '[]',
+        update_time INTEGER DEFAULT 0,
+        PRIMARY KEY (user_id, group_id, appid)
+    )
+    """)
+    conn.commit()
+    conn.close()
+
+    # 成就黑名单表: 拉取失败次数过多的游戏加入黑名单, 不再查询
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS steam_achievement_blacklist (
+        appid TEXT PRIMARY KEY,
+        reason TEXT DEFAULT '',
+        add_time INTEGER DEFAULT 0
+    )
+    """)
+    conn.commit()
     conn.close()
 
 
@@ -604,6 +644,8 @@ class SteamStatusPushApplication(MetaMessageApplication):
         # 心跳触发频率上限(秒), 仅作为心跳节流, 实际轮询由 next_poll_time 控制
         self.heartbeat_throttle = load_static_setting("steam_heartbeat_throttle", 30)
         self.last_heartbeat_time = 0
+        # 成就拉取失败计数 {(appid, date): count}, 达阈值拉黑
+        self._ach_fail_count = {}
 
     def judge(self, message: MetaMessageInfo) -> bool:
         """判断是否触发应用"""
@@ -628,7 +670,7 @@ class SteamStatusPushApplication(MetaMessageApplication):
             for row in bindings:
                 (user_id, group_id, steam_id, last_status_json,
                  last_check, game_start_time, last_game_id,
-                 pending_quit, next_poll_time) = row
+                 pending_quit, next_poll_time, last_ach_check_time) = row
                 if current_time >= (next_poll_time or 0):
                     due_bindings.append({
                         "user_id": user_id,
@@ -638,6 +680,7 @@ class SteamStatusPushApplication(MetaMessageApplication):
                         "game_start_time": game_start_time or 0,
                         "last_game_id": last_game_id or "",
                         "pending_quit": pending_quit or 0,
+                        "last_ach_check_time": last_ach_check_time or 0,
                     })
 
             if not due_bindings:
@@ -792,7 +835,24 @@ class SteamStatusPushApplication(MetaMessageApplication):
             update_steam_status(user_id, group_id,
                                 json.dumps(current_status, ensure_ascii=False), now_int)
             update_binding_extra(user_id, group_id, next_poll_time=next_poll_time)
+            # 后台初始化新游戏的成就快照(不阻塞推送), 略过初始已知成就
+            if current_gameid and get_config("steam_achievement_notify", group_id):
+                asyncio.create_task(self._init_achievement_snapshot(
+                    group_id, user_id, steam_id, current_gameid, now_int
+                ))
             return
+
+        # 正在游戏中(且游戏未变化): 按间隔检查是否有新成就解锁
+        if is_now_playing and current_gameid:
+            if get_config("steam_achievement_notify", group_id):
+                last_ach_check = b.get("last_ach_check_time", 0)
+                if now_int - last_ach_check >= ACH_CHECK_INTERVAL:
+                    update_binding_extra(user_id, group_id,
+                                         last_ach_check_time=now_int)
+                    await self._check_and_push_achievements(
+                        message, group_id, user_id, steam_id, nickname,
+                        current_gameid, current_game, final=False,
+                    )
 
         # 普通模式: 非游戏的状态变化也通知(在线/离线/忙碌等)
         if not simple_notify:
@@ -816,7 +876,7 @@ class SteamStatusPushApplication(MetaMessageApplication):
         for row in bindings:
             (user_id, group_id, steam_id, last_status_json,
              last_check, game_start_time, last_game_id,
-             pending_quit, next_poll_time) = row
+             pending_quit, next_poll_time, last_ach_check_time) = row
             if not pending_quit:
                 continue
             if now_int - pending_quit < self.QUIT_BUFFER_SEC:
@@ -838,6 +898,13 @@ class SteamStatusPushApplication(MetaMessageApplication):
                 message, group_id, user_id, nickname, steam_id,
                 exited_gameid, exited_game, duration, duration_min,
             )
+            # 成就最终对比(退出瞬间可能解锁成就), 然后清理快照
+            if exited_gameid and get_config("steam_achievement_notify", group_id):
+                await self._check_and_push_achievements(
+                    message, group_id, user_id, steam_id, nickname,
+                    exited_gameid, exited_game, final=True,
+                )
+            clear_achievement_snapshot(user_id, group_id, exited_gameid)
             # 清理退出标记和开始时间
             update_binding_extra(
                 user_id, group_id,
@@ -932,3 +999,90 @@ class SteamStatusPushApplication(MetaMessageApplication):
                     os.remove(tmp_path)
                 except Exception:
                     pass
+
+    # ==================== 成就监控 ====================
+
+    async def _init_achievement_snapshot(self, group_id, user_id, steam_id,
+                                          appid, now_int: int):
+        """开始游戏时初始化成就快照: 记录当前已解锁集合, 不推送"""
+        try:
+            api_key = _get_api_key()
+            if not api_key:
+                return
+            loop = asyncio.get_event_loop()
+            current = await loop.run_in_executor(
+                None, steam_achievement.fetch_player_achievements,
+                api_key, steam_id, appid
+            )
+            if current is not None:
+                save_achievement_snapshot(user_id, group_id, steam_id, appid, current)
+            update_binding_extra(user_id, group_id, last_ach_check_time=now_int)
+        except Exception as e:
+            print(f"[Steam成就] 初始化快照失败 appid={appid}: {e}")
+
+    async def _check_and_push_achievements(self, message, group_id, user_id,
+                                            steam_id, nickname, appid,
+                                            game_en_name, final=False):
+        """对比成就快照, 发现新增则推送
+        final: True=游戏退出时的最终对比
+        """
+        if not get_config("steam_achievement_notify", group_id):
+            return
+        api_key = _get_api_key()
+        if not api_key:
+            return
+
+        # 失败计数(进程内, 按天+appid), 达阈值则拉黑
+        fail_key = (appid, time.strftime('%Y-%m-%d'))
+
+        def on_fail(_appid):
+            cnt = self._ach_fail_count.get(fail_key, 0) + 1
+            self._ach_fail_count[fail_key] = cnt
+            if cnt >= steam_achievement.ACH_FAIL_THRESHOLD:
+                add_to_blacklist(_appid, "当天累计失败达到阈值")
+                print(f"[Steam成就] 游戏 {_appid} 当天失败 {cnt} 次, 加入黑名单")
+
+        try:
+            new_set, current_set, details = await _check_new_achievements(
+                api_key, user_id, group_id, steam_id, appid, on_fail=on_fail
+            )
+        except Exception as e:
+            print(f"[Steam成就] 对比异常 appid={appid}: {e}")
+            return
+
+        if not new_set:
+            return
+
+        # 获取中文名(用于卡片标题)
+        zh_name = await get_chinese_game_name(appid, game_en_name)
+        group_nickname = get_user_name(user_id, group_id)
+
+        # 限制单次推送数量, 多出则省略
+        new_list = list(new_set)
+        to_notify = new_list[:MAX_ACH_NOTIFICATIONS]
+        extra_count = len(new_list) - len(to_notify)
+
+        # 计算总进度
+        unlocked_count = None
+        if current_set is not None and details:
+            unlocked_count = (len(current_set), len(details))
+
+        # 渲染成就卡片
+        img_bytes = None
+        try:
+            from application.steam_status_render import render_achievement_card
+            img_bytes = render_achievement_card(
+                player_name=group_nickname or nickname,
+                game_name=zh_name,
+                new_achievements=to_notify,
+                details=details or {},
+                unlocked_count=unlocked_count,
+            )
+        except Exception as e:
+            print(f"[Steam成就] 渲染卡片失败, 降级文本: {e}")
+
+        text = f"[{group_nickname}({nickname})] 在 {zh_name} 解锁了新成就!"
+        if extra_count > 0:
+            text += f"(另有 {extra_count} 个)"
+        await self._send_image(message.websocket, group_id, img_bytes, text)
+

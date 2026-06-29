@@ -43,6 +43,7 @@ default_configs = {
     "repeat_check": False,  # 复读机灵敏度
     "group_joining_verification": False,  # 入群验证
     "simple_steam_notify": True,  # 简化steam通知
+    "steam_achievement_notify": True,  # steam成就推送开关
     # 猜数字游戏配置
     "guess_number_max_range": 10000,  # 最大数字范围
     "guess_number_max_guesses": 20,  # 最大猜测次数
@@ -88,6 +89,7 @@ boolOptionType = [
     "repeat_check",
     "group_joining_verification",
     "simple_steam_notify",
+    "steam_achievement_notify",
     "guess_number_enabled",
     "enable_chat",
     "silent_mode",
