@@ -265,6 +265,43 @@ async def SayGroup(websocket, group_id: int, text: str):
     await websocket.send(json.dumps(payload))
 
 
+async def SayGroupImage(websocket, group_id: int, image_path: str, text: str = ""):
+    """发送图片(可选附带文字)的群聊消息
+
+    Args:
+        websocket (_type_): 要回复的websocket
+        group_id (int): 群聊id
+        image_path (str): 图片文件路径
+        text (str): 可选, 附带的文字内容
+    """
+    if not os.path.exists(image_path):
+        logging.error(f"错误：图片文件不存在 {image_path}, 降级为纯文本")
+        if text:
+            await SayGroup(websocket, group_id, text)
+        return
+    try:
+        with open(image_path, "rb") as image_file:
+            image_data = image_file.read()
+    except Exception as e:
+        logging.error(f"错误：读取图片文件失败 {image_path}, {e}")
+        if text:
+            await SayGroup(websocket, group_id, text)
+        return
+    image_base64 = base64.b64encode(image_data)
+    message = []
+    if text:
+        message.append({"type": "text", "data": {"text": text}})
+    message.append({"type": "image", "data": {"file": "base64://" + image_base64.decode("utf-8")}})
+    payload = {
+        "action": "send_msg_async",
+        "params": {
+            "group_id": group_id,
+            "message": message,
+        },
+    }
+    await websocket.send(json.dumps(payload))
+
+
 async def SayAndAt(websocket, user_id: int, group_id: int, text: str):
     payload = {
         "action": "send_msg_async",
