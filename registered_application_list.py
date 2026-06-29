@@ -94,6 +94,10 @@ def initApplications():
     RegisterApplication(classic_application.GoodMorningApplication())
     # 注册功能菜单应用
     RegisterApplication(classic_application.FeaturesMenuApplication())
+    # 注册帮助菜单翻页应用
+    RegisterApplication(classic_application.HelpFlipPageApplication())
+    # 注册帮助菜单单功能详情应用
+    RegisterApplication(classic_application.HelpDetailApplication())
     # 注册每日一言应用
     RegisterApplication(classic_application.EveryDayOnePassageApplication())
     # 注册黑名单查询应用

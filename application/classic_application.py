@@ -1834,58 +1834,145 @@ class GoodMorningApplication(GroupMessageApplication):
         )
 
 
-# 功能菜单应用
+# 功能帮助菜单应用(图片版,支持分类 / 翻页 / 详情)
 
 
 class FeaturesMenuApplication(GroupMessageApplication):
+    """功能帮助入口:发送「bot_name + 帮助」查看分类总览,
+    或「bot_name + 帮助 + 分类名」直接进入某分类第一页."""
+
     def __init__(self):
-        applicationInfo = ApplicationInfo("功能菜单", "查看所有可用功能", True)
+        applicationInfo = ApplicationInfo(
+            "功能帮助",
+            "查看所有可用功能(分类 / 翻页 / 详情)",
+            True,
+            trigger="乐可 + 帮助  /  乐可 + 帮助 + 分类名",
+            detail=(
+                "发送「乐可 + 帮助」查看分类总览;\n"
+                "发送「乐可 + 帮助 + 图片」进入对应分类第一页;\n"
+                "在菜单中发送「下一页 / 上一页 / 第N页」翻页;\n"
+                "发送「乐可 + 功能名 + 详细」查看单功能详情与可配置参数。"
+            ),
+            category="其他",
+        )
         super().__init__(applicationInfo, 50, False, ApplicationCostType.NORMAL)
 
     async def process(self, message: GroupMessageInfo) -> None:
-        """动态收集并展示已注册的群消息应用"""
-        # 获取所有群消息应用
-        applications = groupMessageApplicationList.get()
+        """发送分类总览,或某分类第一页."""
+        from function import help_menu
+        from data.application.application_category import AppCategory
 
-        # 过滤出可显示的应用
-        display_apps = [
-            app for app in applications
-            if app.applicationInfo.can_display
-        ]
+        bot_name = load_setting("bot_name", "乐可")
+        text = message.plainTextMessage
 
-        # 构建菜单文本
-        bot_name = load_setting("bot_name", "乐可")  # type: ignore
-        menu_lines = [
-            "===== Bot 功能菜单 =====\n",
-            "【群消息功能】"
-        ]
+        # 尝试匹配分类名:bot_name + 帮助 + <分类关键词>
+        category = None
+        for cat in AppCategory.all_categories():
+            if cat in text:
+                category = cat
+                break
+        if category is None:
+            # 没指定分类 -> 发送分类总览
+            await help_menu.send_category_overview(
+                message.websocket, message.groupId, bot_name
+            )
+            return
 
-        # 添加应用列表
-        for app in display_apps:
-            name = app.applicationInfo.name
-            info = app.applicationInfo.info
-            menu_lines.append(f"• {name} - {info}")
+        # 指定分类 -> 发送该分类第一页
+        ok = await help_menu.send_menu_page(
+            message.websocket, message.groupId, message.senderId,
+            category, 1, bot_name, start_sess=True,
+        )
+        if not ok:
+            await SayGroup(
+                message.websocket, message.groupId,
+                f"{category} 分类下暂时没有可显示的功能喵。",
+            )
 
-        # 添加统计和使用说明
-        menu_lines.extend([
-            f"\n共计 {len(display_apps)} 个功能",
-            f"\n使用方法:发送 \"{bot_name},查看功能菜单\" 查看此菜单"
-        ])
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """触发:同时包含 bot_name 与(帮助/功能菜单/查看功能)."""
+        return HasBotName(message.plainTextMessage) and HasKeyWords(
+            message.plainTextMessage, ["帮助", "功能菜单", "查看功能", "功能列表"]
+        )
 
-        # 发送消息
-        await SayGroup(
-            message.websocket,
-            message.groupId,
-            "\n".join(menu_lines)
+
+class HelpFlipPageApplication(GroupMessageApplication):
+    """帮助菜单翻页:有未过期的翻页会话时,响应 下一页 / 上一页 / 第N页."""
+
+    def __init__(self):
+        applicationInfo = ApplicationInfo(
+            "帮助翻页",
+            "帮助菜单中翻页",
+            False,  # 不出现在帮助列表里
+            trigger="下一页 / 上一页 / 第N页",
+            category="其他",
+        )
+        super().__init__(applicationInfo, 60, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        """执行翻页并发送对应页的菜单图片."""
+        from function import help_menu
+
+        bot_name = load_setting("bot_name", "乐可")
+        kind, num = help_menu.parse_page_command(message.plainTextMessage)
+        target = num if kind == "page" else kind  # 'next' / 'prev' / int
+        new_page = help_menu.flip_session(
+            message.groupId, message.senderId, target
+        )
+        if new_page is None:
+            return  # 无活动会话,静默忽略
+        sess = help_menu.get_session(message.groupId, message.senderId)
+        if sess is None:
+            return
+        await help_menu.send_menu_page(
+            message.websocket, message.groupId, message.senderId,
+            sess.category, new_page, bot_name, start_sess=False,
         )
 
     def judge(self, message: GroupMessageInfo) -> bool:
-        """判断是否触发应用"""
-        bot_name = load_setting("bot_name", "乐可")  # type: ignore
-        # 检查是否同时包含 bot_name 和"功能"关键词
-        return HasAllKeyWords(
-            message.plainTextMessage, [bot_name, "查看功能菜单"]
+        """触发:消息是翻页指令 且 存在该用户的未过期帮助会话."""
+        from function import help_menu
+
+        if help_menu.parse_page_command(message.plainTextMessage) is None:
+            return False
+        return help_menu.get_session(message.groupId, message.senderId) is not None
+
+
+class HelpDetailApplication(GroupMessageApplication):
+    """查看单个功能详情:发送「bot_name + 功能名 + 详细」."""
+
+    def __init__(self):
+        applicationInfo = ApplicationInfo(
+            "功能详情",
+            "查看某个功能的触发方式、说明与可配置参数",
+            False,
+            trigger="乐可 + 功能名 + 详细",
+            category="其他",
         )
+        super().__init__(applicationInfo, 55, False, ApplicationCostType.NORMAL)
+
+    async def process(self, message: GroupMessageInfo) -> None:
+        """匹配功能名并发送详情图片."""
+        from function import help_menu
+
+        bot_name = load_setting("bot_name", "乐可")
+        text = message.plainTextMessage
+        # 去掉 bot_name 与「详细」关键词,剩余作为功能名
+        keyword = text.replace(bot_name, "").replace("详细", "").strip()
+        app = help_menu.find_app_by_name(keyword)
+        if app is None:
+            await SayGroup(
+                message.websocket, message.groupId,
+                f"没有找到名为「{keyword}」的功能喵。",
+            )
+            return
+        await help_menu.send_app_detail(
+            message.websocket, message.groupId, app, bot_name
+        )
+
+    def judge(self, message: GroupMessageInfo) -> bool:
+        """触发:同时包含 bot_name 与「详细」."""
+        return HasBotName(message.plainTextMessage) and "详细" in message.plainTextMessage
 
 
 # 每日一言
