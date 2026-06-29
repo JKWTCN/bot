@@ -6,6 +6,7 @@ import application.carrot_market_application
 import application.chat_application
 import application.hate_at_application
 import application.miao_miao_translation
+import application.pic_mirror_application
 import application.radom_meme
 import application.re_read
 import application.sensitive_words_application
@@ -48,6 +49,8 @@ def initApplications():
     RegisterApplication(
         application.bilibili_parsing_application.BiliBiliParsingApplication()
     )
+    # 注册图片镜像/对称应用
+    RegisterApplication(application.pic_mirror_application.PicMirrorApplication())
     # 入群验证
     RegisterApplication(application.welcome_application.WelcomeApplication())
     RegisterApplication(application.welcome_application.VerifyApplication())

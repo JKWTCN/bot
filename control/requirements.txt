@@ -12,3 +12,4 @@ psutil
 opencv-python
 netifaces2
 pypinyin
+Pillow>=10.0.0
