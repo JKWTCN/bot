@@ -353,7 +353,8 @@ def get_all_steam_bindings():
     cur = conn.cursor()
     cur.execute("""
     SELECT user_id, group_id, steam_id, last_status, last_check_time,
-           game_start_time, last_game_id, pending_quit, next_poll_time
+           game_start_time, last_game_id, pending_quit, next_poll_time,
+           last_ach_check_time
     FROM steam_binding
     """)
     results = cur.fetchall()
@@ -933,7 +934,10 @@ class SteamStatusPushApplication(MetaMessageApplication):
             online_count = await online_task
 
             # 补全文本中的游戏名(切换游戏时拼上结算前缀)
-            text = f"{prefix_text}开始玩 {zh_name}"
+            if prefix_text:
+                text = f"{prefix_text}开始玩 {zh_name}"
+            else:
+                text = f"[{group_nickname}({nickname})] 开始玩 {zh_name}"
 
             from application.steam_status_render import render_start_card
             img_bytes = render_start_card(
@@ -1085,4 +1089,3 @@ class SteamStatusPushApplication(MetaMessageApplication):
         if extra_count > 0:
             text += f"(另有 {extra_count} 个)"
         await self._send_image(message.websocket, group_id, img_bytes, text)
-
