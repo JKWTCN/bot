@@ -4,12 +4,19 @@
 - 使用异步数据库连接池
 - 智能过滤，避免不必要的LLM调用
 """
+import hashlib
 import json
 import logging
+import math
+import re
 from datetime import datetime
-from typing import Dict, List
+from typing import Any, Dict, List
 from database.db_pool import intel_db_pool
 from tools.tools import load_chat_ai_model, load_chat_ai_thinking
+
+
+VECTOR_VERSION = "hash-ngram-v1"
+VECTOR_SIZE = 128
 
 
 class MemoryManager:
@@ -32,38 +39,188 @@ class MemoryManager:
         - 使用索引加速查询
         """
         try:
-            # 获取高重要性记忆
-            rows = await intel_db_pool.fetchall(
-                """SELECT * FROM long_term_memory
-                   WHERE user_id = ?
-                   ORDER BY importance_score DESC, last_accessed_at DESC
-                   LIMIT ?""",
-                (user_id, limit * 3)
+            return await self.search_memories(
+                user_id=user_id,
+                query=current_message,
+                limit=limit,
+                mode="hybrid",
             )
-
-            if not rows:
-                return []
-
-            # 转换为字典并计算相关性
-            memories = []
-            for row in rows:
-                # 将行转换为字典
-                memory = self._row_to_memory(row)
-                relevance = self._calculate_memory_relevance(memory, current_message)
-                memory['relevance'] = relevance
-                memories.append(memory)
-
-            # 按相关性排序
-            memories.sort(key=lambda x: x['relevance'], reverse=True)
-
-            # 更新访问时间
-            await self._update_access_time([m['id'] for m in memories[:limit]])
-
-            return memories[:limit]
 
         except Exception as e:
             logging.error(f"记忆检索失败: {e}")
             return []
+
+    async def search_memories(
+        self,
+        *,
+        user_id: int,
+        query: str = "",
+        limit: int = 5,
+        mode: str = "hybrid",
+        context_type: str | None = None,
+        context_id: int | None = None,
+        person_name: str = "",
+        time_start: int | None = None,
+        time_end: int | None = None,
+    ) -> List[Dict]:
+        """MaiBot-style memory search with lightweight hybrid retrieval."""
+        normalized_mode = mode if mode in {"search", "time", "hybrid", "episode", "aggregate"} else "hybrid"
+        if normalized_mode == "episode":
+            return await self.search_episodes(
+                user_id=user_id,
+                query=query,
+                limit=limit,
+                context_id=context_id,
+                time_start=time_start,
+                time_end=time_end,
+            )
+
+        rows = await intel_db_pool.fetchall(
+            """SELECT
+                   id, user_id, memory_type, content, keywords,
+                   importance_score, is_global, created_at, last_accessed_at,
+                   content_hash, context_type, context_id, updated_at, access_count,
+                   title, content_vector, vector_version, source_message_id,
+                   person_name, memory_scope
+               FROM long_term_memory
+               WHERE (user_id = ? OR memory_scope = 'global')
+               ORDER BY importance_score DESC, updated_at DESC, last_accessed_at DESC
+               LIMIT ?""",
+            (user_id, max(limit * 10, 30)),
+        )
+        memories = [self._row_to_memory(row) for row in rows]
+        memories = self._filter_memory_candidates(
+            memories,
+            context_type=context_type,
+            context_id=context_id,
+            person_name=person_name,
+            time_start=time_start,
+            time_end=time_end,
+        )
+        if normalized_mode == "time" and not (time_start or time_end):
+            memories.sort(key=lambda item: item.get("updated_at") or item.get("created_at") or 0, reverse=True)
+        elif normalized_mode == "aggregate":
+            memories = self._aggregate_memories(memories, query=query, limit=limit)
+        else:
+            for memory in memories:
+                memory["relevance"] = self._calculate_memory_relevance(memory, query)
+            memories.sort(key=lambda x: x.get("relevance", 0), reverse=True)
+
+        selected = memories[: max(1, limit)]
+        await self._update_access_time([m["id"] for m in selected if m.get("id")])
+        return selected
+
+    async def search_episodes(
+        self,
+        *,
+        user_id: int,
+        query: str,
+        limit: int,
+        context_id: int | None = None,
+        time_start: int | None = None,
+        time_end: int | None = None,
+    ) -> List[Dict]:
+        rows = await intel_db_pool.fetchall(
+            """SELECT id, group_id, user_id, person_name, title, summary, keywords,
+                      start_time, end_time, source_message_ids, content_vector,
+                      vector_version, created_at, updated_at, access_count
+               FROM memory_episode
+               WHERE (user_id = ? OR user_id IS NULL OR user_id = 0)
+               ORDER BY end_time DESC, updated_at DESC
+               LIMIT ?""",
+            (user_id, max(limit * 8, 24)),
+        )
+        episodes = [self._row_to_episode(row) for row in rows]
+        filtered: list[dict[str, Any]] = []
+        for episode in episodes:
+            if context_id is not None and episode.get("group_id") not in (None, context_id):
+                continue
+            end_time = int(episode.get("end_time") or 0)
+            if time_start is not None and end_time and end_time < time_start:
+                continue
+            if time_end is not None and end_time and end_time > time_end:
+                continue
+            episode["memory_type"] = "episode"
+            episode["content"] = episode.get("summary", "")
+            episode["relevance"] = self._calculate_memory_relevance(episode, query)
+            filtered.append(episode)
+        filtered.sort(key=lambda item: item.get("relevance", 0), reverse=True)
+        selected = filtered[: max(1, limit)]
+        if selected:
+            ids = [item["id"] for item in selected if item.get("id")]
+            placeholders = ",".join("?" * len(ids))
+            await intel_db_pool.execute(
+                f"UPDATE memory_episode SET access_count = COALESCE(access_count, 0) + 1 WHERE id IN ({placeholders})",
+                ids,
+            )
+        return selected
+
+    async def store_episode_from_messages(
+        self,
+        *,
+        group_id: int,
+        user_id: int,
+        person_name: str,
+        messages: list[dict[str, Any]],
+    ) -> bool:
+        """Store a compact recent-chat episode for later episode retrieval."""
+        clean_messages: list[dict[str, Any]] = []
+        for message in messages[-12:]:
+            content = " ".join(str(message.get("content") or "").split())
+            if not content:
+                continue
+            clean_messages.append(message | {"content": content})
+        if len(clean_messages) < 4:
+            return False
+
+        now = int(datetime.now().timestamp())
+        recent = await intel_db_pool.fetchone(
+            """
+            SELECT id FROM memory_episode
+            WHERE group_id = ? AND updated_at >= ?
+            ORDER BY updated_at DESC LIMIT 1
+            """,
+            (group_id, now - 1800),
+        )
+        if recent:
+            return False
+
+        summary_lines = [str(message.get("content") or "") for message in clean_messages[-8:]]
+        summary = " / ".join(summary_lines)[:800]
+        title = summary[:48]
+        keywords = self._extract_keywords(summary)
+        source_message_ids = [
+            message.get("message_id")
+            for message in clean_messages
+            if message.get("message_id") is not None
+        ]
+        vector = json.dumps(self._build_text_vector(summary), ensure_ascii=False)
+        times = [int(message.get("time") or now) for message in clean_messages]
+        await intel_db_pool.execute(
+            """
+            INSERT INTO memory_episode (
+                group_id, user_id, person_name, title, summary, keywords,
+                start_time, end_time, source_message_ids, content_vector,
+                vector_version, created_at, updated_at, access_count
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+            """,
+            (
+                group_id,
+                user_id,
+                person_name,
+                title,
+                summary,
+                json.dumps(keywords, ensure_ascii=False),
+                min(times) if times else now,
+                max(times) if times else now,
+                json.dumps(source_message_ids, ensure_ascii=False),
+                vector,
+                VECTOR_VERSION,
+                now,
+                now,
+            ),
+        )
+        return True
 
     async def extract_and_store_memory(
         self,
@@ -207,21 +364,51 @@ class MemoryManager:
         """存储单条记忆 (异步版本)"""
         try:
             now = int(datetime.now().timestamp())
+            normalized_content = " ".join(content.strip().split())[:500]
+            content_hash = self._build_content_hash(normalized_content)
+            content_vector = json.dumps(self._build_text_vector(normalized_content), ensure_ascii=False)
 
             await intel_db_pool.execute(
                 """INSERT INTO long_term_memory (
                     user_id, memory_type, content, keywords,
-                    importance_score, is_global, created_at, last_accessed_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                    importance_score, is_global, created_at, last_accessed_at,
+                    content_hash, context_type, context_id, updated_at, access_count,
+                    title, content_vector, vector_version, source_message_id,
+                    person_name, memory_scope
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(user_id, memory_type, content_hash) DO UPDATE SET
+                    keywords = excluded.keywords,
+                    importance_score = MAX(long_term_memory.importance_score, excluded.importance_score),
+                    is_global = excluded.is_global,
+                    last_accessed_at = excluded.last_accessed_at,
+                    context_type = excluded.context_type,
+                    context_id = excluded.context_id,
+                    updated_at = excluded.updated_at,
+                    content_vector = excluded.content_vector,
+                    vector_version = excluded.vector_version,
+                    source_message_id = excluded.source_message_id,
+                    person_name = COALESCE(excluded.person_name, long_term_memory.person_name),
+                    memory_scope = excluded.memory_scope,
+                    access_count = COALESCE(long_term_memory.access_count, 0) + 1""",
                 (
                     user_id,
                     memory_type,
-                    content[:500],
+                    normalized_content,
                     json.dumps(keywords, ensure_ascii=False),
                     min(1.0, importance),
                     1 if is_global else 0,
                     now,
-                    now
+                    now,
+                    content_hash,
+                    context_type,
+                    context_id,
+                    now,
+                    normalized_content[:60],
+                    content_vector,
+                    VECTOR_VERSION,
+                    context_id if context_type == "message" else None,
+                    "",
+                    "person",
                 )
             )
 
@@ -232,9 +419,17 @@ class MemoryManager:
             logging.error(f"记忆存储失败: {e}")
             return False
 
+    def _build_content_hash(self, content: str) -> str:
+        """生成用于长期记忆去重的稳定 hash。"""
+        normalized = " ".join(content.strip().split())
+        return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
     def _calculate_memory_relevance(self, memory: Dict, current_message: str) -> float:
         """计算记忆与当前消息的相关性"""
         relevance = 0.5
+
+        if not current_message:
+            current_message = ""
 
         # 关键词匹配
         memory_keywords = memory.get('keywords', [])
@@ -250,6 +445,16 @@ class MemoryManager:
         importance = memory.get('importance_score', 0.5)
         relevance *= (0.5 + importance)
 
+        # 本地哈希向量相似度
+        query_vector = self._build_text_vector(current_message)
+        memory_vector = self._parse_vector(memory.get("content_vector"))
+        if query_vector and memory_vector:
+            relevance += 0.7 * self._cosine_similarity(query_vector, memory_vector)
+
+        content = str(memory.get("content") or memory.get("summary") or "")
+        if current_message and current_message in content:
+            relevance += 0.25
+
         # 时间衰减
         last_accessed = memory.get('last_accessed_at', 0)
         if last_accessed:
@@ -257,7 +462,71 @@ class MemoryManager:
             time_decay = max(0.5, 1.0 - days_since_access * 0.02)
             relevance *= time_decay
 
-        return min(1.0, relevance)
+        return min(2.0, relevance)
+
+    def _filter_memory_candidates(
+        self,
+        memories: list[Dict],
+        *,
+        context_type: str | None,
+        context_id: int | None,
+        person_name: str,
+        time_start: int | None,
+        time_end: int | None,
+    ) -> list[Dict]:
+        filtered: list[Dict] = []
+        for memory in memories:
+            if context_type and memory.get("context_type") not in (None, "", context_type):
+                continue
+            if context_id is not None:
+                memory_context_id = memory.get("context_id")
+                if memory_context_id not in (None, 0, context_id):
+                    continue
+            if person_name:
+                haystack = " ".join(
+                    str(memory.get(key) or "")
+                    for key in ("person_name", "content", "keywords", "title")
+                )
+                if person_name not in haystack:
+                    continue
+            updated_at = int(memory.get("updated_at") or memory.get("created_at") or 0)
+            if time_start is not None and updated_at and updated_at < time_start:
+                continue
+            if time_end is not None and updated_at and updated_at > time_end:
+                continue
+            filtered.append(memory)
+        return filtered
+
+    def _aggregate_memories(self, memories: list[Dict], *, query: str, limit: int) -> list[Dict]:
+        buckets: dict[str, dict[str, Any]] = {}
+        for memory in memories:
+            memory_type = str(memory.get("memory_type") or "fact")
+            bucket = buckets.setdefault(
+                memory_type,
+                {
+                    "id": -len(buckets) - 1,
+                    "memory_type": f"aggregate:{memory_type}",
+                    "content": "",
+                    "keywords": [],
+                    "importance_score": 0.5,
+                    "updated_at": 0,
+                    "access_count": 0,
+                    "_items": [],
+                },
+            )
+            bucket["_items"].append(memory)
+            bucket["updated_at"] = max(int(bucket.get("updated_at") or 0), int(memory.get("updated_at") or 0))
+        aggregated: list[Dict] = []
+        for bucket in buckets.values():
+            items = sorted(bucket.pop("_items"), key=lambda item: item.get("importance_score") or 0, reverse=True)
+            lines = [str(item.get("content") or "") for item in items[:4] if item.get("content")]
+            if not lines:
+                continue
+            bucket["content"] = "；".join(lines)
+            bucket["relevance"] = self._calculate_memory_relevance(bucket, query)
+            aggregated.append(bucket)
+        aggregated.sort(key=lambda item: item.get("relevance", 0), reverse=True)
+        return aggregated[: max(1, limit)]
 
     async def _update_access_time(self, memory_ids: List[int]) -> None:
         """更新记忆的访问时间 (异步版本)"""
@@ -270,7 +539,8 @@ class MemoryManager:
 
             await intel_db_pool.execute(
                 f"""UPDATE long_term_memory
-                   SET last_accessed_at = ?
+                   SET last_accessed_at = ?,
+                       access_count = COALESCE(access_count, 0) + 1
                    WHERE id IN ({placeholders})""",
                 [now] + memory_ids
             )
@@ -281,8 +551,13 @@ class MemoryManager:
     def _row_to_memory(self, row) -> Dict:
         """将数据库行转换为字典"""
         # 需要从cursor获取列名，这里简化处理
-        columns = ['id', 'user_id', 'memory_type', 'content', 'keywords',
-                  'importance_score', 'is_global', 'created_at', 'last_accessed_at']
+        columns = [
+            'id', 'user_id', 'memory_type', 'content', 'keywords',
+            'importance_score', 'is_global', 'created_at', 'last_accessed_at',
+            'content_hash', 'context_type', 'context_id', 'updated_at',
+            'access_count', 'title', 'content_vector', 'vector_version',
+            'source_message_id', 'person_name', 'memory_scope'
+        ]
         memory = {}
 
         for i, col in enumerate(columns):
@@ -296,6 +571,83 @@ class MemoryManager:
                     memory[col] = value
 
         return memory
+
+    def _row_to_episode(self, row) -> Dict:
+        columns = [
+            "id", "group_id", "user_id", "person_name", "title", "summary",
+            "keywords", "start_time", "end_time", "source_message_ids",
+            "content_vector", "vector_version", "created_at", "updated_at",
+            "access_count",
+        ]
+        episode: dict[str, Any] = {}
+        for index, column in enumerate(columns):
+            if index >= len(row):
+                continue
+            value = row[index]
+            if column in {"keywords", "source_message_ids"}:
+                try:
+                    episode[column] = json.loads(value) if value else []
+                except Exception:
+                    episode[column] = []
+            else:
+                episode[column] = value
+        return episode
+
+    def _build_text_vector(self, text: str) -> list[float]:
+        if not text:
+            return []
+        vector = [0.0] * VECTOR_SIZE
+        tokens = self._tokenize_for_vector(text)
+        if not tokens:
+            return []
+        for token in tokens:
+            digest = hashlib.md5(token.encode("utf-8")).digest()
+            index = int.from_bytes(digest[:2], "big") % VECTOR_SIZE
+            sign = 1.0 if digest[2] % 2 == 0 else -1.0
+            vector[index] += sign
+        norm = math.sqrt(sum(value * value for value in vector))
+        if norm == 0:
+            return []
+        return [round(value / norm, 6) for value in vector]
+
+    def _tokenize_for_vector(self, text: str) -> list[str]:
+        normalized = " ".join(text.lower().split())
+        tokens = re.findall(r"[a-z0-9_]+|[\u4e00-\u9fff]", normalized)
+        grams = list(tokens)
+        compact_cn = "".join(re.findall(r"[\u4e00-\u9fff]", normalized))
+        grams.extend(compact_cn[index:index + 2] for index in range(max(0, len(compact_cn) - 1)))
+        grams.extend(compact_cn[index:index + 3] for index in range(max(0, len(compact_cn) - 2)))
+        return [gram for gram in grams if gram]
+
+    def _extract_keywords(self, text: str, limit: int = 8) -> list[str]:
+        tokens = self._tokenize_for_vector(text)
+        counts: dict[str, int] = {}
+        for token in tokens:
+            if len(token) < 2:
+                continue
+            counts[token] = counts.get(token, 0) + 1
+        return [
+            token
+            for token, _count in sorted(counts.items(), key=lambda item: item[1], reverse=True)[:limit]
+        ]
+
+    def _parse_vector(self, raw_vector) -> list[float]:
+        if isinstance(raw_vector, list):
+            return [float(value) for value in raw_vector]
+        if not raw_vector:
+            return []
+        try:
+            parsed = json.loads(raw_vector)
+            if isinstance(parsed, list):
+                return [float(value) for value in parsed]
+        except Exception:
+            return []
+        return []
+
+    def _cosine_similarity(self, left: list[float], right: list[float]) -> float:
+        if not left or not right or len(left) != len(right):
+            return 0.0
+        return max(0.0, sum(l * r for l, r in zip(left, right)))
 
 
 # 全局单例
@@ -313,3 +665,45 @@ async def retrieve_relevant_memories(user_id: int, current_message: str, limit: 
     """便捷函数：检索相关记忆"""
     manager = get_memory_manager()
     return await manager.retrieve_relevant_memories(user_id, current_message, limit)
+
+
+async def search_memories(
+    *,
+    user_id: int,
+    query: str = "",
+    limit: int = 5,
+    mode: str = "hybrid",
+    context_type: str | None = None,
+    context_id: int | None = None,
+    person_name: str = "",
+    time_start: int | None = None,
+    time_end: int | None = None,
+) -> List[Dict]:
+    manager = get_memory_manager()
+    return await manager.search_memories(
+        user_id=user_id,
+        query=query,
+        limit=limit,
+        mode=mode,
+        context_type=context_type,
+        context_id=context_id,
+        person_name=person_name,
+        time_start=time_start,
+        time_end=time_end,
+    )
+
+
+async def store_episode_from_messages(
+    *,
+    group_id: int,
+    user_id: int,
+    person_name: str,
+    messages: list[dict[str, Any]],
+) -> bool:
+    manager = get_memory_manager()
+    return await manager.store_episode_from_messages(
+        group_id=group_id,
+        user_id=user_id,
+        person_name=person_name,
+        messages=messages,
+    )

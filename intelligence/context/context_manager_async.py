@@ -4,6 +4,7 @@
 """
 import logging
 from database.db_pool import bot_db_pool
+from intelligence.chat_quality.reply_policy import strip_reply_noise
 from intelligence.context.context_weight import ContextWeightCalculator
 from intelligence.context.dynamic_window import DynamicWindowAdjuster
 from typing import Dict, List
@@ -116,13 +117,18 @@ class ContextManager:
                 (group_id, limit * 2)
             )
 
+            bot_user_id = await self._get_bot_user_id()
             messages = []
             for row in reversed(rows):
+                raw_message = str(row[3] or "")
+                cleaned_message = strip_reply_noise(raw_message) or raw_message
+                if not cleaned_message and row[1] != bot_user_id:
+                    continue
                 messages.append({
                     'time': row[0],
                     'user_id': row[1],
                     'sender_nickname': row[2],
-                    'raw_message': row[3],
+                    'raw_message': cleaned_message,
                     'group_id': row[4],
                     'message_id': row[5]
                 })
@@ -188,6 +194,12 @@ class ContextManager:
         except Exception as e:
             logging.warning(f"获取bot_id失败: {e},返回0")
             return 0
+
+    async def _get_bot_user_id(self) -> int:
+        """获取bot的user_id。"""
+        from config.config_cache import get_bot_config
+        config = await get_bot_config()
+        return config.get("bot_id", 0)
 
     async def _get_bot_name(self) -> str:
         """获取bot名称"""

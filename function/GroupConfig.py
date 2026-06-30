@@ -53,6 +53,12 @@ default_configs = {
     "enable_chat": True,  # 是否启用聊天功能
     "random_chat": True,  # 是否启用随机聊天，启用后会在群里随机发送消息
     "replay_chat": True,  # 是否启用回复聊天，启用会回复带机器人名字的消息
+    "emoji_collect": True,  # 是否启用表情包偷取/收藏
+    "emoji_send": True,  # 是否启用模型选择发送表情包
+    "emoji_content_review": True,  # 是否用视觉模型审核表情包内容
+    "emoji_max_size_mb": 8,  # 单个表情包最大大小，0表示不限制
+    "emoji_max_count": 500,  # 表情包库最大注册数量，满后由模型判断是否替换
+    "emoji_candidate_count": 25,  # 发送时给视觉模型选择的候选数量
     "silent_mode": False,  # 是否启用安静模式，启用后只会记录消息,不会触发任何功能
     "bible": {},  # 圣经：关键词→图片路径
     "enable_repeat":True, # 是否启用复读机功能
@@ -74,6 +80,9 @@ intOptionType = [
     "guess_number_max_range",
     "guess_number_max_guesses",
     "guess_number_penalty",
+    "emoji_max_size_mb",
+    "emoji_max_count",
+    "emoji_candidate_count",
 ]
 stringOptionType = ["sensitive_words"]
 boolOptionType = [
@@ -95,6 +104,9 @@ boolOptionType = [
     "silent_mode",
     "random_chat",
     "replay_chat",
+    "emoji_collect",
+    "emoji_send",
+    "emoji_content_review",
     "enable_repeat",
 ]
 

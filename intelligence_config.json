@@ -20,10 +20,31 @@
     "memory": {
         "extraction_interval": 10,
         "max_memories_per_user": 100,
-        "importance_threshold": 0.5
+        "importance_threshold": 0.5,
+        "dedupe_enabled": true
     },
     "personalization": {
         "cache_ttl_seconds": 300,
         "max_context_tokens": 2000
+    },
+    "chat_quality": {
+        "enabled": true,
+        "reply_necessity_threshold": 65,
+        "random_reply_frequency": 1.0,
+        "filter_context_noise": true
+    },
+    "ai_chat": {
+        "enabled": true,
+        "planner_enabled": true,
+        "max_tool_rounds": 2,
+        "enable_cloud_fallback": false,
+        "request_timeout_seconds": 60,
+        "reply_max_tokens": 160,
+        "planner_max_tokens": 300,
+        "memory_query_limit": 5,
+        "context_limit": 14,
+        "history_limit": 20,
+        "expression_learning_enabled": true,
+        "memory_embedding_enabled": true
     }
 }

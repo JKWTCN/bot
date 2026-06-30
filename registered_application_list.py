@@ -4,6 +4,7 @@ import application.at_random_group_friend
 import application.bilibili_parsing_application
 import application.carrot_market_application
 import application.chat_application
+import application.emoji_application
 import application.hate_at_application
 import application.miao_miao_translation
 import application.pic_mirror_application
@@ -29,6 +30,9 @@ def initApplications():
     RegisterApplication(application.chat_application.GroupChatApplication())
     # 注册随机meme应用
     RegisterApplication(application.radom_meme.RadomMemeApplication())
+    # 注册表情包收藏和模型选择发送
+    RegisterApplication(application.emoji_application.EmojiCollectApplication())
+    RegisterApplication(application.emoji_application.EmojiSendApplication())
     # 注册喵喵翻译应用
     RegisterApplication(
         application.miao_miao_translation.MiaoMiaoTranslationApplication()

@@ -1,6 +1,8 @@
 from datetime import datetime
+import contextlib
 import logging
 import os
+import signal
 import traceback
 import json
 import asyncio
@@ -15,7 +17,7 @@ from data.message.request_message_info import RequestMessageInfo
 
 from registered_application_list import initApplications
 from function.GroupConfig import get_config
-from function.database_message import write_message
+from function.database_message_async import write_message
 from function.chat_record import AddChatRecord
 from tools.tools import load_setting
 
@@ -52,10 +54,10 @@ async def echo(websocket, message):
                                 )
                                 if text_message is not None:
                                     # 立即处理的情况（已缓存或未开启解析）
-                                    write_message(message, text_message)
+                                    await write_message(message, text_message)
 
                             else:
-                                write_message(message, groupMessageInfo.readMessage)
+                                await write_message(message, groupMessageInfo.readMessage)
                             if groupMessageInfo.senderId in get_config(
                                 "no_reply_list", groupMessageInfo.groupId
                             ):  # type: ignore
@@ -130,6 +132,42 @@ def setup_logging():
     )
 
 
+def install_stop_signal_handlers(stop_event: asyncio.Event):
+    """注册 SIGINT/SIGTERM 停止信号。"""
+    loop = asyncio.get_running_loop()
+    for stop_signal in (signal.SIGINT, signal.SIGTERM):
+        with contextlib.suppress(NotImplementedError, RuntimeError):
+            loop.add_signal_handler(stop_signal, stop_event.set)
+
+
+async def cancel_pending_tasks():
+    """取消当前任务之外的后台任务,避免事件循环关闭时仍有 pending task。"""
+    current_task = asyncio.current_task()
+    pending_tasks = [
+        task
+        for task in asyncio.all_tasks()
+        if task is not current_task and not task.done()
+    ]
+    if not pending_tasks:
+        return
+
+    for task in pending_tasks:
+        task.cancel()
+
+    await asyncio.gather(*pending_tasks, return_exceptions=True)
+
+
+async def close_server_gracefully(server):
+    """显式关闭 websocket server 并等待底层 close task 完成。"""
+    if server is None:
+        return
+    server.close()
+    try:
+        await asyncio.wait_for(server.wait_closed(), timeout=15.0)
+    except asyncio.TimeoutError:
+        logging.warning("WebSocket server 关闭超时,继续退出")
+
+
 async def main():
 
     # 删除临时文件夹
@@ -173,18 +211,34 @@ async def main():
     from function.image_processor import init_database
 
     init_database()
+    from function.emoji_store import init_emoji_database
+
+    init_emoji_database()
+
+    stop_event = asyncio.Event()
+    install_stop_signal_handlers(stop_event)
+    server = None
 
     try:
-        async with serve(
+        server = await serve(
             pro,
             "0.0.0.0",
             GetNCWCPort(),
             ping_timeout=30,  # 30秒ping超时
             close_timeout=10,
-        ) as server:
-            await server.serve_forever()
+        )
+        logging.info("WebSocket server 已启动,监听端口:%s", GetNCWCPort())
+        await stop_event.wait()
+    except asyncio.CancelledError:
+        logging.info("主任务收到取消信号,开始关闭")
     finally:
+        await close_server_gracefully(server)
+        await cancel_pending_tasks()
         await close_pools()
 
 
-asyncio.run(main())
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass

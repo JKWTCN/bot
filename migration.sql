@@ -28,11 +28,20 @@ CREATE TABLE IF NOT EXISTS long_term_memory (
     importance_score REAL DEFAULT 0.5,
     is_global BOOLEAN DEFAULT 1,
     created_at INTEGER,
-    last_accessed_at INTEGER
+    last_accessed_at INTEGER,
+    content_hash TEXT,
+    context_type TEXT,
+    context_id INTEGER,
+    updated_at INTEGER,
+    access_count INTEGER DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_memory_user ON long_term_memory(user_id);
 CREATE INDEX IF NOT EXISTS idx_memory_importance ON long_term_memory(importance_score DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_long_term_memory_dedupe
+ON long_term_memory(user_id, memory_type, content_hash);
+CREATE INDEX IF NOT EXISTS idx_long_term_memory_context
+ON long_term_memory(context_type, context_id, updated_at DESC);
 
 -- 对话摘要表
 CREATE TABLE IF NOT EXISTS conversation_summary (

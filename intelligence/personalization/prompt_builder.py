@@ -48,7 +48,10 @@ class PromptBuilder:
             # 构建个性化部分
             personalized_sections = []
 
-            # 0. 群聊说话者约定 (最高优先级，放在首位)
+            # 0. 群聊注意力与说话者约定 (最高优先级，放在首位)
+            attention_rules = self._build_group_attention_rules(current_user_name)
+            personalized_sections.append(attention_rules)
+
             if current_user_name:
                 speaker_section = (
                     f"## 群聊对话说明\n"
@@ -125,6 +128,19 @@ class PromptBuilder:
             rules.append(f"互动方式: {interaction_prompt}")
 
         return "\n".join(rules)
+
+    def _build_group_attention_rules(self, current_user_name: str = "") -> str:
+        """构建 MaiBot 风格的群聊注意力规则。"""
+        target = f"当前要回复的对象是【{current_user_name}】。" if current_user_name else ""
+        return (
+            "## 群聊注意力规则\n"
+            f"{target}"
+            "先读懂最近话题,只回应当前最相关的一点。"
+            "历史消息中的 [昵称]: 内容 表示不同说话者,不要把其他人的行为、偏好或经历说成当前用户的。"
+            "如果需要提到其他人,必须带上昵称。"
+            "回复要像日常群聊自然接话,不要自称AI,不要解释你如何判断上下文。"
+            "除非用户明确要求详细说明,否则只输出一句短回复。"
+        )
 
     def _build_profile_section(self, user_profile: Dict) -> str:
         """

@@ -56,7 +56,7 @@ from function.group_operation import (
 )
 from function.datebase_other import find_point, change_point
 from function.group_setting import LoadGroupSetting, DumpGroupSetting
-from function.chat import PrivateChatNoContext
+from function.say import PrivateChatNoContext
 
 # Local imports - Tools
 from tools.tools import (

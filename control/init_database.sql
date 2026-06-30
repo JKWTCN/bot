@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS group_message (
     group_id        INTEGER,
     self_id         INTEGER,
     sub_type        TEXT,
-    message_id      INTEGER
+    message_id      INTEGER,
+    md5             TEXT
 );
 
 

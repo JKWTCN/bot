@@ -373,10 +373,10 @@ def chatNoContext(texts):
     thinking = load_chat_ai_thinking()
     from application.chat_application import getPrompts
 
-    # 构建基础消息结构
-    # 加载提示词
-    with open("../prompts.json", "r", encoding="utf-8") as f:
-        prompts = json.load(f)
+    if isinstance(texts, str):
+        normalized_texts = [texts]
+    else:
+        normalized_texts = list(texts)
 
     base_messages = [
         {
@@ -384,7 +384,7 @@ def chatNoContext(texts):
             "content": getPrompts(),
         }
     ]
-    for text in texts:
+    for text in normalized_texts:
         base_messages.append(
             {
                 "role": "user",
@@ -416,3 +416,8 @@ def chatNoContext(texts):
 
     logging.info("(AI)乐可思考图片结果:{}".format(re_text))
     return re_text
+
+
+def PrivateChatNoContext(texts):
+    """私聊无上下文兼容入口。"""
+    return chatNoContext(texts)

@@ -35,3 +35,4 @@ images/*
 *.db-shm
 *.db-wal
 db/*
+data/emoji
