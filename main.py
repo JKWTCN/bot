@@ -228,6 +228,16 @@ async def main():
             close_timeout=10,
         )
         logging.info("WebSocket server 已启动,监听端口:%s", GetNCWCPort())
+
+        # 启动表情包后台任务：维护（注册缓存）+ 清理（回收未注册缓存）
+        from function.emoji_store import (
+            periodic_emoji_cache_cleanup,
+            periodic_emoji_maintenance,
+        )
+
+        asyncio.create_task(periodic_emoji_maintenance(stop_event))
+        asyncio.create_task(periodic_emoji_cache_cleanup(stop_event))
+
         await stop_event.wait()
     except asyncio.CancelledError:
         logging.info("主任务收到取消信号,开始关闭")
