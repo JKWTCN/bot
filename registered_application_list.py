@@ -2,6 +2,7 @@ import os
 import application.GroupConfigApplication
 import application.at_random_group_friend
 import application.bilibili_parsing_application
+import application.bilibili_dynamic_subscription_application
 import application.carrot_market_application
 import application.chat_application
 import application.emoji_application
@@ -52,6 +53,16 @@ def initApplications():
     # 注册B站解析应用
     RegisterApplication(
         application.bilibili_parsing_application.BiliBiliParsingApplication()
+    )
+    # 注册 B站动态订阅管理与后台推送
+    RegisterApplication(
+        application.bilibili_dynamic_subscription_application.BilibiliDynamicSubscriptionApplication()
+    )
+    RegisterApplication(
+        application.bilibili_dynamic_subscription_application.BilibiliLoginApplication()
+    )
+    RegisterApplication(
+        application.bilibili_dynamic_subscription_application.BilibiliDynamicPushApplication()
     )
     # 注册图片镜像/对称应用
     RegisterApplication(application.pic_mirror_application.PicMirrorApplication())
