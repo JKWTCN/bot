@@ -389,10 +389,13 @@ def update_game_start_time(user_id: int, group_id: int, game_start_time: int):
 
 
 def update_binding_extra(user_id: int, group_id: int, **fields):
-    """更新绑定表的扩展字段(last_game_id / pending_quit / next_poll_time / game_start_time)"""
+    """更新绑定表中允许单独写入的轮询与游戏状态字段。"""
     if not fields:
         return
-    allowed = {"last_game_id", "pending_quit", "next_poll_time", "game_start_time"}
+    allowed = {
+        "last_game_id", "pending_quit", "next_poll_time", "game_start_time",
+        "last_ach_check_time",
+    }
     cols = [k for k in fields.keys() if k in allowed]
     if not cols:
         return
@@ -645,6 +648,9 @@ class SteamStatusPushApplication(MetaMessageApplication):
         # 心跳触发频率上限(秒), 仅作为心跳节流, 实际轮询由 next_poll_time 控制
         self.heartbeat_throttle = load_static_setting("steam_heartbeat_throttle", 30)
         self.last_heartbeat_time = 0
+        # 图片渲染、Steam API 和消息发送都可能超过一个心跳周期。若允许下一次
+        # 心跳并发进入，它会读到尚未提交的旧状态，并再次发送同一条提醒。
+        self._poll_lock = asyncio.Lock()
         # 成就拉取失败计数 {(appid, date): count}, 达阈值拉黑
         self._ach_fail_count = {}
 
@@ -654,6 +660,14 @@ class SteamStatusPushApplication(MetaMessageApplication):
 
     async def process(self, message: MetaMessageInfo):
         """处理心跳消息: 检查到点的绑定并推送状态变化"""
+        # 不排队处理过期心跳：当前轮询结束后，后续新心跳会继续调度。
+        if self._poll_lock.locked():
+            return
+        async with self._poll_lock:
+            await self._process_heartbeat(message)
+
+    async def _process_heartbeat(self, message: MetaMessageInfo):
+        """串行执行一次 Steam 状态轮询。"""
         try:
             current_time = time.time()
 
@@ -686,7 +700,7 @@ class SteamStatusPushApplication(MetaMessageApplication):
 
             if not due_bindings:
                 # 仍有到点前的退出确认需要检查
-                await self._flush_pending_quits(bindings, message, current_time)
+                await self._flush_pending_quits(message, current_time)
                 return
 
             # 按 steam_id 分组, 减少API调用
@@ -721,7 +735,7 @@ class SteamStatusPushApplication(MetaMessageApplication):
                     await self._process_binding(b, current_status, message, now_int)
 
             # 处理到点前可能已经超时的退出确认
-            await self._flush_pending_quits(bindings, message, now_int)
+            await self._flush_pending_quits(message, now_int)
 
         except KeyboardInterrupt:
             print("Steam状态检查被中断")
@@ -780,6 +794,12 @@ class SteamStatusPushApplication(MetaMessageApplication):
         is_switching_game = (was_playing and is_now_playing
                              and last_game != current_game)
 
+        # 先提交本次观测结果，再执行可能较慢的渲染和发送。这样即便发送期间
+        # 收到下一次心跳，也不会把同一个状态变化识别为一条新提醒。
+        update_steam_status(user_id, group_id,
+                            json.dumps(current_status, ensure_ascii=False), now_int)
+        update_binding_extra(user_id, group_id, next_poll_time=next_poll_time)
+
         # 退出游戏: 进入缓冲, 不立即推送
         if is_exiting_game and not pending_quit:
             update_binding_extra(
@@ -787,10 +807,6 @@ class SteamStatusPushApplication(MetaMessageApplication):
                 pending_quit=now_int,
                 last_game_id=str(last_status.get("gameid") or ""),
             )
-            # 仍要刷新状态和下次轮询
-            update_steam_status(user_id, group_id,
-                                json.dumps(current_status, ensure_ascii=False), now_int)
-            update_binding_extra(user_id, group_id, next_poll_time=next_poll_time)
             return
 
         # 重新进入游戏, 且处于退出缓冲中 => 网络波动, 取消退出
@@ -802,9 +818,6 @@ class SteamStatusPushApplication(MetaMessageApplication):
                 game_start_time=now_int,
                 last_game_id=current_gameid,
             )
-            update_steam_status(user_id, group_id,
-                                json.dumps(current_status, ensure_ascii=False), now_int)
-            update_binding_extra(user_id, group_id, next_poll_time=next_poll_time)
             # 简短提示网络波动(可选, 不发图片)
             group_nickname = get_user_name(user_id, group_id)
             await SayGroup(
@@ -833,9 +846,6 @@ class SteamStatusPushApplication(MetaMessageApplication):
                 message, group_id, user_id, nickname, steam_id,
                 current_gameid, current_game, prefix_text=prefix_text,
             )
-            update_steam_status(user_id, group_id,
-                                json.dumps(current_status, ensure_ascii=False), now_int)
-            update_binding_extra(user_id, group_id, next_poll_time=next_poll_time)
             # 后台初始化新游戏的成就快照(不阻塞推送), 略过初始已知成就
             if current_gameid and get_config("steam_achievement_notify", group_id):
                 asyncio.create_task(self._init_achievement_snapshot(
@@ -868,12 +878,10 @@ class SteamStatusPushApplication(MetaMessageApplication):
                     f"[{group_nickname}({nickname})] Steam 状态变化:\n{old_text} -> {new_text}"
                 )
 
-        update_steam_status(user_id, group_id,
-                            json.dumps(current_status, ensure_ascii=False), now_int)
-        update_binding_extra(user_id, group_id, next_poll_time=next_poll_time)
-
-    async def _flush_pending_quits(self, bindings, message, now_int: int):
-        """检查并推送超过缓冲期、确认退出的玩家"""
+    async def _flush_pending_quits(self, message, now_int: int):
+        """根据数据库最新状态检查并推送超过缓冲期的退出玩家。"""
+        # 本轮状态处理可能已取消 pending_quit，不能继续使用轮询开始时的快照。
+        bindings = get_all_steam_bindings()
         for row in bindings:
             (user_id, group_id, steam_id, last_status_json,
              last_check, game_start_time, last_game_id,
@@ -895,6 +903,15 @@ class SteamStatusPushApplication(MetaMessageApplication):
                 duration = 0
             duration_min = duration / 60
 
+            # 先清理退出标记再发送。消息发送可能很慢或在成功后抛出连接异常，
+            # 提前提交可保证后续心跳不会重复领取同一条退出提醒。
+            update_binding_extra(
+                user_id, group_id,
+                pending_quit=0,
+                game_start_time=0,
+                last_game_id="",
+            )
+
             await self._push_end_card(
                 message, group_id, user_id, nickname, steam_id,
                 exited_gameid, exited_game, duration, duration_min,
@@ -906,13 +923,6 @@ class SteamStatusPushApplication(MetaMessageApplication):
                     exited_gameid, exited_game, final=True,
                 )
             clear_achievement_snapshot(user_id, group_id, exited_gameid)
-            # 清理退出标记和开始时间
-            update_binding_extra(
-                user_id, group_id,
-                pending_quit=0,
-                game_start_time=0,
-                last_game_id="",
-            )
 
     async def _push_start_card(self, message, group_id, user_id, nickname,
                                 steam_id, gameid, game_en_name, prefix_text=""):
