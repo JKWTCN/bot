@@ -12,6 +12,7 @@ import application.pic_mirror_application
 import application.radom_meme
 import application.re_read
 import application.sensitive_words_application
+import application.summary_application
 import application.welcome_application
 from schedule.register import RegisterApplication
 import application
@@ -27,6 +28,8 @@ def initApplications():
     # RegisterApplication(SampleGroupMessageApplication())
     # 注册复读应用
     RegisterApplication(application.re_read.ReReadApplication())
+    # 注册“{bot_name},有无省流”图片/聊天记录总结（优先于普通 AI 聊天）
+    RegisterApplication(application.summary_application.SummaryApplication())
     # 注册聊天应用
     RegisterApplication(application.chat_application.GroupChatApplication())
     # 注册随机meme应用

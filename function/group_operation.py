@@ -98,6 +98,46 @@ def get_reply_image_url(message_id: int) -> str | None:
         return None
 
 
+def get_message_data(message_id: int) -> dict | None:
+    """获取 OneBot 消息详情。
+
+    返回值只保留 ``data`` 部分，调用方无需感知 HTTP 层的
+    ``status``/``retcode`` 差异。
+    """
+    try:
+        response = requests.post(
+            f"http://localhost:{GetNCHSPort()}/get_msg",
+            json={"message_id": message_id},
+            timeout=15,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        if payload.get("status") != "ok" or not isinstance(payload.get("data"), dict):
+            return None
+        return payload["data"]
+    except Exception as e:
+        logging.error(f"获取消息详情失败: message_id={message_id}, error={e}")
+        return None
+
+
+def get_forward_message_data(forward_id: str | int) -> dict | None:
+    """展开 OneBot 合并转发消息。"""
+    try:
+        response = requests.post(
+            f"http://localhost:{GetNCHSPort()}/get_forward_msg",
+            json={"message_id": forward_id},
+            timeout=20,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        if payload.get("status") != "ok" or not isinstance(payload.get("data"), dict):
+            return None
+        return payload["data"]
+    except Exception as e:
+        logging.error(f"展开合并转发失败: forward_id={forward_id}, error={e}")
+        return None
+
+
 # 踢人
 async def kick_member(websocket, user_id: int, group_id: int):
     payload = {
