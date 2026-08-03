@@ -2,6 +2,7 @@ import asyncio
 import base64
 import hashlib
 import logging
+import math
 import os
 import secrets
 import time
@@ -11,7 +12,8 @@ from typing import Optional, Tuple
 from urllib.parse import parse_qs, urlparse
 
 import requests
-from PIL import Image, ImageFile, ImageOps, ImageSequence
+import numpy as np
+from PIL import Image, ImageDraw, ImageFile, ImageFilter, ImageOps, ImageSequence
 
 
 @dataclass
@@ -127,6 +129,24 @@ class PicMirrorProcessor:
             "right_to_left": "右对称",
             "top_to_bottom": "上对称",
             "bottom_to_top": "下对称",
+            "mirror_left": "左镜像",
+            "mirror_right": "右镜像",
+            "mirror_top": "上镜像",
+            "mirror_bottom": "下镜像",
+            "four_side_mirror": "四方镜像",
+            "quadrant_symmetry": "四象限对称",
+            "diagonal_main": "主对角线对称",
+            "diagonal_anti": "副对角线对称",
+            "kaleidoscope": "万花筒",
+            "infinite_mirror": "无限镜像",
+            "mirror_tile_horizontal": "镜像拼接",
+            "water_reflection": "水面倒影",
+            "mirror_blend": "镜像融合",
+            "rgb_split": "RGB分离",
+            "polar_planet": "小星球",
+            "polar_tunnel": "极坐标隧道",
+            "animated_mirror": "镜像动画",
+            "random_symmetry": "随机对称",
             "invert": "反色",
         }
         return descriptions.get(mode, mode)
@@ -179,8 +199,15 @@ class PicMirrorProcessor:
     @staticmethod
     def make_output_path(output_dir: Path, source: str, mode: str, input_ext: str) -> Path:
         source_hash = hashlib.sha256(f"{source}_{mode}_{time.time()}_{secrets.token_hex(4)}".encode()).hexdigest()[:12]
-        ext = input_ext if input_ext in PicMirrorFileUtils.SUPPORTED_FORMATS else ".png"
-        return output_dir / f"mirror_{mode}_{source_hash}{ext}"
+        ext = (
+            ".gif"
+            if "animated_mirror" in mode.split("|")
+            else input_ext if input_ext in PicMirrorFileUtils.SUPPORTED_FORMATS else ".png"
+        )
+        safe_mode = "_".join(
+            part.replace(":", "-") for part in mode.split("|")
+        )
+        return output_dir / f"mirror_{safe_mode}_{source_hash}{ext}"
 
     @staticmethod
     async def process_image(
@@ -266,13 +293,42 @@ class PicMirrorProcessor:
         config: PicMirrorConfig,
     ) -> Tuple[bool, str]:
         def process_in_thread() -> Tuple[bool, str]:
+            resolved_mode = PicMirrorProcessor._resolve_random_operations(mode)
             with Image.open(input_path) as img:
                 if not PicMirrorProcessor._check_image_size(img):
                     return False, f"图像尺寸过大，可能存在安全风险: {img.width}x{img.height}像素"
 
                 if img.mode in ("P", "LA"):
                     img = img.convert("RGBA")
-                mirrored = PicMirrorProcessor._apply_mirror(img, mode)
+                if config.enable_compression:
+                    img = PicMirrorProcessor._compress_image(img, config)
+
+                if PicMirrorProcessor._has_operation(resolved_mode, "animated_mirror"):
+                    frames = []
+                    frame_count = 16
+                    for index in range(frame_count):
+                        phase = index / frame_count
+                        frame = PicMirrorProcessor._apply_mirror(
+                            img, resolved_mode, animation_phase=phase
+                        )
+                        frame = PicMirrorProcessor._fit_for_expansion(
+                            frame, 1, 1, max_dimension=1024
+                        )
+                        if config.enable_compression:
+                            frame = PicMirrorProcessor._compress_image(frame, config)
+                        frames.append(frame.convert("RGB"))
+                    frames[0].save(
+                        output_path,
+                        format="GIF",
+                        save_all=True,
+                        append_images=frames[1:],
+                        duration=80,
+                        loop=0,
+                        optimize=True,
+                    )
+                    return True, "镜像动画处理成功"
+
+                mirrored = PicMirrorProcessor._apply_mirror(img, resolved_mode)
 
                 if config.enable_compression:
                     mirrored = PicMirrorProcessor._compress_image(mirrored, config)
@@ -303,12 +359,14 @@ class PicMirrorProcessor:
         config: PicMirrorConfig,
     ) -> Tuple[bool, str]:
         def process_gif_in_thread() -> Tuple[bool, str]:
+            resolved_mode = PicMirrorProcessor._resolve_random_operations(mode)
             original_load_truncated = ImageFile.LOAD_TRUNCATED_IMAGES
             ImageFile.LOAD_TRUNCATED_IMAGES = True
             try:
                 frames = []
                 durations = []
                 has_transparency = False
+                processed_pixels = 0
 
                 with Image.open(input_path) as img:
                     if not PicMirrorProcessor._check_image_size(img):
@@ -331,11 +389,21 @@ class PicMirrorProcessor:
                         frame_copy = frame.copy()
                         if frame_copy.mode != "RGBA":
                             frame_copy = frame_copy.convert("RGBA")
-                        mirrored_frame = PicMirrorProcessor._apply_mirror(frame_copy, mode)
+                        if config.enable_compression:
+                            frame_copy = PicMirrorProcessor._compress_image(
+                                frame_copy, config
+                            )
+                        phase = (frame_count - 1) / max(1, img.n_frames - 1)
+                        mirrored_frame = PicMirrorProcessor._apply_mirror(
+                            frame_copy, resolved_mode, animation_phase=phase
+                        )
                         if config.enable_compression:
                             mirrored_frame = PicMirrorProcessor._compress_image(
                                 mirrored_frame, config
                             )
+                        processed_pixels += mirrored_frame.width * mirrored_frame.height
+                        if processed_pixels > config.max_total_pixels:
+                            return False, "GIF处理后的总像素数过多，可能存在安全风险"
                         frames.append(mirrored_frame)
 
                 if not frames:
@@ -395,9 +463,84 @@ class PicMirrorProcessor:
             return False, f"GIF处理失败: {e}"
 
     @staticmethod
-    def _apply_mirror(image: Image.Image, mode: str) -> Image.Image:
+    def _has_operation(mode: str, operation_name: str) -> bool:
+        return any(
+            operation.split(":", 1)[0] == operation_name
+            for operation in mode.split("|")
+        )
+
+    @staticmethod
+    def _resolve_random_operations(mode: str) -> str:
+        choices = ("left_to_right", "right_to_left", "top_to_bottom", "bottom_to_top")
+        return "|".join(
+            secrets.choice(choices)
+            if operation.split(":", 1)[0] == "random_symmetry"
+            else operation
+            for operation in mode.split("|")
+        )
+
+    @staticmethod
+    def _apply_mirror(
+        image: Image.Image, mode: str, animation_phase: Optional[float] = None
+    ) -> Image.Image:
+        result = image.copy()
+        for operation in mode.split("|"):
+            name, separator, raw_parameter = operation.partition(":")
+            parameter = int(raw_parameter) if separator and raw_parameter.isdigit() else None
+            result = PicMirrorProcessor._apply_operation(
+                result, name, parameter, animation_phase
+            )
+        return result
+
+    @staticmethod
+    def _apply_operation(
+        image: Image.Image,
+        mode: str,
+        parameter: Optional[int] = None,
+        animation_phase: Optional[float] = None,
+    ) -> Image.Image:
         if mode == "invert":
             return PicMirrorProcessor._invert_image(image)
+        if mode == "mirror_left":
+            return PicMirrorProcessor._mirror_at_edge(image, "left")
+        if mode == "mirror_right":
+            return PicMirrorProcessor._mirror_at_edge(image, "right")
+        if mode == "mirror_top":
+            return PicMirrorProcessor._mirror_at_edge(image, "top")
+        if mode == "mirror_bottom":
+            return PicMirrorProcessor._mirror_at_edge(image, "bottom")
+        if mode == "four_side_mirror":
+            return PicMirrorProcessor._four_side_mirror(image)
+        if mode == "quadrant_symmetry":
+            horizontal = PicMirrorProcessor._apply_operation(image, "left_to_right")
+            return PicMirrorProcessor._apply_operation(horizontal, "top_to_bottom")
+        if mode in ("diagonal_main", "diagonal_anti"):
+            return PicMirrorProcessor._diagonal_symmetry(
+                image, anti=mode == "diagonal_anti"
+            )
+        if mode == "kaleidoscope":
+            return PicMirrorProcessor._kaleidoscope(image, parameter or 8)
+        if mode == "infinite_mirror":
+            return PicMirrorProcessor._infinite_mirror(image, parameter or 5)
+        if mode == "mirror_tile_horizontal":
+            return PicMirrorProcessor._mirror_tile(image, parameter or 4)
+        if mode == "water_reflection":
+            return PicMirrorProcessor._water_reflection(image)
+        if mode == "mirror_blend":
+            return PicMirrorProcessor._mirror_blend(image)
+        if mode == "rgb_split":
+            return PicMirrorProcessor._rgb_split(image)
+        if mode in ("polar_planet", "polar_tunnel"):
+            return PicMirrorProcessor._polar_effect(
+                image, tunnel=mode == "polar_tunnel"
+            )
+        if mode == "animated_mirror":
+            return PicMirrorProcessor._animated_mirror(image, animation_phase)
+        if mode == "random_symmetry":
+            random_mode = secrets.choice(
+                ("left_to_right", "right_to_left", "top_to_bottom", "bottom_to_top")
+            )
+            return PicMirrorProcessor._apply_operation(image, random_mode)
 
         width, height = image.size
         result = Image.new(image.mode, (width, height))
@@ -452,6 +595,214 @@ class PicMirrorProcessor:
         return image.copy()
 
     @staticmethod
+    def _four_side_mirror(image: Image.Image) -> Image.Image:
+        image = PicMirrorProcessor._fit_for_expansion(image, 3, 3)
+        width, height = image.size
+        horizontal = ImageOps.mirror(image)
+        vertical = ImageOps.flip(image)
+        corner = ImageOps.flip(horizontal)
+        result = Image.new(image.mode, (width * 3, height * 3))
+        tiles = (
+            (corner, 0, 0),
+            (vertical, width, 0),
+            (corner, width * 2, 0),
+            (horizontal, 0, height),
+            (image, width, height),
+            (horizontal, width * 2, height),
+            (corner, 0, height * 2),
+            (vertical, width, height * 2),
+            (corner, width * 2, height * 2),
+        )
+        for tile, x, y in tiles:
+            result.paste(tile, (x, y))
+        return result
+
+    @staticmethod
+    def _diagonal_symmetry(image: Image.Image, anti: bool) -> Image.Image:
+        width, height = image.size
+        reflected = image.transpose(Image.Transpose.TRANSPOSE)
+        reflected = reflected.resize((width, height), Image.Resampling.LANCZOS)
+        mask = Image.new("L", (width, height), 0)
+        draw = ImageDraw.Draw(mask)
+        if anti:
+            reflected = ImageOps.flip(ImageOps.mirror(reflected))
+            draw.polygon(((0, 0), (width, 0), (0, height)), fill=255)
+        else:
+            draw.polygon(((0, 0), (width, 0), (width, height)), fill=255)
+        return Image.composite(image, reflected, mask)
+
+    @staticmethod
+    def _kaleidoscope(image: Image.Image, segments: int) -> Image.Image:
+        segments = max(2, min(16, segments))
+        size = min(max(image.size), 2048)
+        source = ImageOps.fit(image.convert("RGBA"), (size, size))
+        result = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        center = size / 2
+        radius = math.sqrt(2) * size
+        sector_angle = 360 / segments
+
+        for index in range(segments):
+            start = -90 - sector_angle / 2 + index * sector_angle
+            end = start + sector_angle
+            points = [(center, center)]
+            for angle in np.linspace(start, end, max(3, int(sector_angle) + 2)):
+                radians = math.radians(angle)
+                points.append(
+                    (center + radius * math.cos(radians), center + radius * math.sin(radians))
+                )
+            mask = Image.new("L", (size, size), 0)
+            ImageDraw.Draw(mask).polygon(points, fill=255)
+            tile = ImageOps.mirror(source) if index % 2 else source
+            tile = tile.rotate(index * sector_angle, resample=Image.Resampling.BICUBIC)
+            alpha_mask = Image.composite(
+                tile.getchannel("A"), Image.new("L", tile.size), mask
+            )
+            result.paste(tile, (0, 0), alpha_mask)
+        return result
+
+    @staticmethod
+    def _infinite_mirror(image: Image.Image, depth: int) -> Image.Image:
+        depth = max(1, min(10, depth))
+        result = image.copy()
+        width, height = result.size
+        source = image.copy()
+        for level in range(1, depth + 1):
+            scale = 0.68**level
+            nested_size = (max(1, int(width * scale)), max(1, int(height * scale)))
+            nested = source.resize(nested_size, Image.Resampling.LANCZOS)
+            if level % 2:
+                nested = ImageOps.mirror(nested)
+            position = ((width - nested.width) // 2, (height - nested.height) // 2)
+            if "A" in nested.getbands():
+                result.paste(nested, position, nested.getchannel("A"))
+            else:
+                result.paste(nested, position)
+        return result
+
+    @staticmethod
+    def _mirror_tile(image: Image.Image, repetitions: int) -> Image.Image:
+        repetitions = max(2, min(10, repetitions))
+        image = PicMirrorProcessor._fit_for_expansion(image, repetitions, 1)
+        width, height = image.size
+        result = Image.new(image.mode, (width * repetitions, height))
+        mirrored = ImageOps.mirror(image)
+        for index in range(repetitions):
+            result.paste(image if index % 2 == 0 else mirrored, (index * width, 0))
+        return result
+
+    @staticmethod
+    def _water_reflection(image: Image.Image) -> Image.Image:
+        image = PicMirrorProcessor._fit_for_expansion(image, 1, 2)
+        source = image.convert("RGBA")
+        width, height = source.size
+        reflection = np.array(ImageOps.flip(source))
+        amplitude = max(1, width // 80)
+        for row in range(height):
+            offset = int(math.sin(row / max(3, height / 12)) * amplitude)
+            reflection[row] = np.roll(reflection[row], offset, axis=0)
+        reflected = Image.fromarray(reflection, "RGBA").filter(
+            ImageFilter.GaussianBlur(radius=max(0.5, min(width, height) / 300))
+        )
+        reflected_data = np.array(reflected)
+        fade = np.linspace(0.67, 0, height, dtype=np.float32)[:, None]
+        reflected_data[:, :, 3] = (
+            reflected_data[:, :, 3].astype(np.float32) * fade
+        ).astype(np.uint8)
+        reflected = Image.fromarray(reflected_data, "RGBA")
+        result = Image.new("RGBA", (width, height * 2), (0, 0, 0, 0))
+        result.paste(source, (0, 0))
+        result.paste(reflected, (0, height))
+        return result
+
+    @staticmethod
+    def _mirror_blend(image: Image.Image) -> Image.Image:
+        source = image.convert("RGBA")
+        return Image.blend(source, ImageOps.mirror(source), 0.5)
+
+    @staticmethod
+    def _rgb_split(image: Image.Image) -> Image.Image:
+        source = np.array(image.convert("RGBA"))
+        shift = max(2, source.shape[1] // 40)
+        result = source.copy()
+        result[:, :, 0] = np.roll(source[:, :, 0], -shift, axis=1)
+        result[:, :, 2] = np.roll(source[:, :, 2], shift, axis=1)
+        return Image.fromarray(result, "RGBA")
+
+    @staticmethod
+    def _polar_effect(image: Image.Image, tunnel: bool) -> Image.Image:
+        source = np.array(image.convert("RGBA"))
+        source_height, source_width = source.shape[:2]
+        size = min(max(source_width, source_height), 2048)
+        yy, xx = np.indices((size, size), dtype=np.float32)
+        center = (size - 1) / 2
+        dx = xx - center
+        dy = yy - center
+        radius = np.sqrt(dx * dx + dy * dy)
+        max_radius = max(1.0, center)
+        angle = (np.arctan2(dy, dx) + math.pi) / (2 * math.pi)
+        source_x = np.mod((angle * source_width).astype(np.int32), source_width)
+        radial = np.clip(radius / max_radius, 0, 1)
+        if tunnel:
+            source_y = (radial * (source_height - 1)).astype(np.int32)
+        else:
+            source_y = ((1 - radial) * (source_height - 1)).astype(np.int32)
+        result = source[source_y, source_x].copy()
+        result[radius > max_radius] = (0, 0, 0, 0)
+        return Image.fromarray(result, "RGBA")
+
+    @staticmethod
+    def _animated_mirror(
+        image: Image.Image, animation_phase: Optional[float]
+    ) -> Image.Image:
+        if animation_phase is None:
+            return image.copy()
+        source = image.convert("RGBA")
+        amount = (1 - math.cos(animation_phase * math.tau)) / 2
+        return Image.blend(source, ImageOps.mirror(source), amount)
+
+    @staticmethod
+    def _mirror_at_edge(image: Image.Image, edge: str) -> Image.Image:
+        x_factor = 2 if edge in ("left", "right") else 1
+        y_factor = 2 if edge in ("top", "bottom") else 1
+        image = PicMirrorProcessor._fit_for_expansion(image, x_factor, y_factor)
+        width, height = image.size
+        if edge in ("left", "right"):
+            mirrored = ImageOps.mirror(image)
+            result = Image.new(image.mode, (width * 2, height))
+            if edge == "left":
+                result.paste(mirrored, (0, 0))
+                result.paste(image, (width, 0))
+            else:
+                result.paste(image, (0, 0))
+                result.paste(mirrored, (width, 0))
+            return result
+
+        flipped = ImageOps.flip(image)
+        result = Image.new(image.mode, (width, height * 2))
+        if edge == "top":
+            result.paste(flipped, (0, 0))
+            result.paste(image, (0, height))
+        else:
+            result.paste(image, (0, 0))
+            result.paste(flipped, (0, height))
+        return result
+
+    @staticmethod
+    def _fit_for_expansion(
+        image: Image.Image, x_factor: int, y_factor: int, max_dimension: int = 4096
+    ) -> Image.Image:
+        width, height = image.size
+        scale = min(
+            1.0,
+            max_dimension / max(1, width * x_factor),
+            max_dimension / max(1, height * y_factor),
+        )
+        if scale >= 1:
+            return image
+        size = (max(1, int(width * scale)), max(1, int(height * scale)))
+        return image.resize(size, Image.Resampling.LANCZOS)
+
+    @staticmethod
     def _invert_image(image: Image.Image) -> Image.Image:
         if image.mode == "RGBA":
             rgb = image.convert("RGB")
@@ -493,6 +844,10 @@ class PicMirrorProcessor:
             background.paste(image, mask=alpha)
             return background
 
-        if output_ext != ".png" and image.mode not in ("RGB", "L", "P"):
+        if output_ext not in (".png", ".webp") and image.mode not in (
+            "RGB",
+            "L",
+            "P",
+        ):
             return image.convert("RGB")
         return image

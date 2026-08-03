@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import re
 import time
 from pathlib import Path
 from typing import Optional
@@ -50,19 +51,90 @@ class PicMirrorApplication(GroupMessageApplication):
         "/下对称": "bottom_to_top",
         "下对称": "bottom_to_top",
         "mirror bottom": "bottom_to_top",
+        "/左镜像": "mirror_left",
+        "左镜像": "mirror_left",
+        "mirror edge left": "mirror_left",
+        "/右镜像": "mirror_right",
+        "右镜像": "mirror_right",
+        "mirror edge right": "mirror_right",
+        "/上镜像": "mirror_top",
+        "上镜像": "mirror_top",
+        "mirror edge top": "mirror_top",
+        "/下镜像": "mirror_bottom",
+        "下镜像": "mirror_bottom",
+        "mirror edge bottom": "mirror_bottom",
+        "/四方镜像": "four_side_mirror",
+        "四方镜像": "four_side_mirror",
+        "four-way mirror": "four_side_mirror",
+        "/四象限": "quadrant_symmetry",
+        "四象限": "quadrant_symmetry",
+        "四象限对称": "quadrant_symmetry",
+        "quadrant symmetry": "quadrant_symmetry",
+        "/主对角对称": "diagonal_main",
+        "主对角对称": "diagonal_main",
+        "主对角线对称": "diagonal_main",
+        "/副对角对称": "diagonal_anti",
+        "副对角对称": "diagonal_anti",
+        "副对角线对称": "diagonal_anti",
+        "/万花筒": "kaleidoscope",
+        "万花筒": "kaleidoscope",
+        "kaleidoscope": "kaleidoscope",
+        "/无限镜像": "infinite_mirror",
+        "无限镜像": "infinite_mirror",
+        "infinite mirror": "infinite_mirror",
+        "/水平拼接": "mirror_tile_horizontal",
+        "水平拼接": "mirror_tile_horizontal",
+        "镜像拼接": "mirror_tile_horizontal",
+        "mirror tile": "mirror_tile_horizontal",
+        "/倒影": "water_reflection",
+        "倒影": "water_reflection",
+        "水面倒影": "water_reflection",
+        "water reflection": "water_reflection",
+        "/镜像融合": "mirror_blend",
+        "镜像融合": "mirror_blend",
+        "mirror blend": "mirror_blend",
+        "/色差": "rgb_split",
+        "色差": "rgb_split",
+        "rgb分离": "rgb_split",
+        "rgb split": "rgb_split",
+        "/星球": "polar_planet",
+        "星球": "polar_planet",
+        "小星球": "polar_planet",
+        "little planet": "polar_planet",
+        "/隧道": "polar_tunnel",
+        "隧道": "polar_tunnel",
+        "极坐标隧道": "polar_tunnel",
+        "polar tunnel": "polar_tunnel",
+        "/镜像动画": "animated_mirror",
+        "镜像动画": "animated_mirror",
+        "animated mirror": "animated_mirror",
+        "/随机对称": "random_symmetry",
+        "随机对称": "random_symmetry",
+        "random symmetry": "random_symmetry",
         "/反色": "invert",
         "反色": "invert",
         "颜色反转": "invert",
         "invert": "invert",
         "mirror invert": "invert",
     }
-    HELP_COMMANDS = {"/对称帮助", "对称帮助", "/镜像帮助", "镜像帮助", "mirror help"}
+    HELP_COMMANDS = {
+        "/对称帮助",
+        "对称帮助",
+        "/镜像帮助",
+        "镜像帮助",
+        "mirror help",
+    }
+    PARAMETERIZED_MODES = {
+        "kaleidoscope": (8, 2, 16),
+        "infinite_mirror": (5, 1, 10),
+        "mirror_tile_horizontal": (4, 2, 10),
+    }
     RATE_LIMIT_WINDOW_SECONDS = 60
 
     def __init__(self):
         application_info = ApplicationInfo(
             "图片镜像功能",
-            "触发:左对称/右对称/上对称/下对称/反色，可带图片、回复图片或@用户头像",
+            "图片对称、边缘镜像、万花筒、倒影、色差、镜像动画等趣味效果",
         )
         super().__init__(
             application_info,
@@ -165,11 +237,38 @@ class PicMirrorApplication(GroupMessageApplication):
         if not command_text:
             return None
 
-        normalized = command_text.lower()
-        for command, mode in self.COMMANDS.items():
-            if self._matches_command(normalized, command.lower()):
-                return mode
-        return None
+        remaining = command_text.lower().strip()
+        operations = []
+        commands = sorted(self.COMMANDS.items(), key=lambda item: len(item[0]), reverse=True)
+        delimiters = "".join(self.COMMAND_DELIMITERS)
+
+        while remaining:
+            remaining = remaining.lstrip(delimiters)
+            matched = next(
+                (
+                    (command, mode)
+                    for command, mode in commands
+                    if self._matches_command(remaining, command.lower())
+                ),
+                None,
+            )
+            if not matched:
+                break
+
+            command, mode = matched
+            remaining = remaining[len(command) :].lstrip(delimiters)
+            if mode in self.PARAMETERIZED_MODES:
+                default, minimum, maximum = self.PARAMETERIZED_MODES[mode]
+                number_match = re.match(r"^(\d+)(?:$|[\s,，、;；])", remaining)
+                value = default
+                if number_match:
+                    value = max(minimum, min(maximum, int(number_match.group(1))))
+                    remaining = remaining[number_match.end(1) :].lstrip(delimiters)
+                operations.append(f"{mode}:{value}")
+            else:
+                operations.append(mode)
+
+        return "|".join(operations) if operations else None
 
     def _is_help(self, command_text: str) -> bool:
         normalized = command_text.lower()
@@ -272,7 +371,14 @@ class PicMirrorApplication(GroupMessageApplication):
 
     def _help_text(self) -> str:
         return (
-            "图片镜像功能：\n"
-            "左对称 / 右对称 / 上对称 / 下对称 / 反色\n"
-            "用法：发送指令并带图片，或回复一张图片发送指令，或发送“左对称 @群友”处理头像。"
+            "图片趣味处理：\n"
+            "对称（以图像中线为轴）：左对称 / 右对称 / 上对称 / 下对称\n"
+            "镜像（以图像边缘为轴）：左镜像 / 右镜像 / 上镜像 / 下镜像\n"
+            "扩展：四方镜像 / 四象限 / 主对角对称 / 副对角对称\n"
+            "趣味：万花筒 8 / 无限镜像 5 / 水平拼接 4 / 倒影 / 镜像融合\n"
+            "特效：色差 / 星球 / 隧道 / 镜像动画 / 随机对称 / 反色\n"
+            "可按顺序组合，例如“右镜像 色差”。"
+            "数字参数超出范围时会自动限制。\n"
+            "用法：指令带图片、回复图片，"
+            "或使用“随机对称 @群友”处理头像。"
         )
