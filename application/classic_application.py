@@ -3756,8 +3756,10 @@ class SeeYouAgain(GroupMessageApplication):
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断是否触发应用"""
         return (
-            HasKeyWords(message.plainTextMessage, [load_setting("bot_name", "乐可")])
-            and HasKeyWords(message.plainTextMessage, ["再也不见", "重开"])
+            re.fullmatch(
+                rf"{re.escape(load_setting('bot_name', '乐可'))}\s*[,，]\s*(?:再也不见|重开)",
+                message.plainTextMessage.strip(),
+            ) is not None
             and BotIsAdmin(message.groupId)
         )
 

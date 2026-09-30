@@ -38,7 +38,7 @@
         "planner_enabled": true,
         "max_tool_rounds": 2,
         "enable_cloud_fallback": false,
-        "request_timeout_seconds": 60,
+        "request_timeout_seconds": 180,
         "reply_max_tokens": 160,
         "planner_max_tokens": 300,
         "memory_query_limit": 5,
