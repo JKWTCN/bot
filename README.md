@@ -37,7 +37,10 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -U pip
 pip install -r control/requirements.txt
+python -m playwright install chromium
 ```
+
+Linux 的浏览器系统依赖、中文字体及排名样式配置见 [HTML 排名图片](docs/ranking_render.md)。
 
 3. 准备配置文件
 

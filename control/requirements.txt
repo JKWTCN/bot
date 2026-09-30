@@ -5,7 +5,6 @@ numpy
 matplotlib
 tushare
 plottable
-requests_html
 lxml_html_clean
 yagmail
 psutil
@@ -16,3 +15,5 @@ Pillow>=10.0.0
 qrcode>=7.4
 ollama
 aiosqlite
+
+playwright>=1.50,<2

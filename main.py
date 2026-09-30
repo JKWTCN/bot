@@ -243,6 +243,9 @@ async def main():
         logging.info("主任务收到取消信号,开始关闭")
     finally:
         await close_server_gracefully(server)
+        from function.ranking_render import close_ranking_renderer
+
+        await close_ranking_renderer()
         await cancel_pending_tasks()
         await close_pools()
 

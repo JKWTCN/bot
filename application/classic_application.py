@@ -49,6 +49,7 @@ from function.datebase_user import (
 )
 from function.GroupConfig import manage_config, GroupConfigError, get_config
 from function.ranking import update_value, Ranking
+from function.ranking_render import render_ranking_base64
 from function.database_group import GetGroupName, GetAllGroupId, GetAllGroupMemberId
 from function.group_operation import (
     kick_member, ban_new, GetGroupMessageSenderId,
@@ -2156,8 +2157,9 @@ def GetBShock():
 def GetDogeCoinV2():
 
     try:
-        s = HTMLSession()
-        response = s.get("https://www.528btc.com/coin/2993/binance-doge-usdt-usd")
+        response = requests.get(
+            "https://www.528btc.com/coin/2993/binance-doge-usdt-usd", timeout=15
+        )
         # print(response.text)
         # with open("tmp.html", "w", encoding="utf-8") as f:
         #     f.write(response.text)
@@ -2993,21 +2995,16 @@ class PersonalStatisticsApplication(GroupMessageApplication):
 
 
 # 群友水群次数表格
-def ShowTableByBase64(data, title: str = "水群排名"):
-    plt.rcParams["font.sans-serif"] = load_static_setting(
-        "font", ["Unifont"]
-    )  # 设置字体
-    plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
-    table = pd.DataFrame(data)
-    fig, ax = plt.subplots()
-    table = table.set_index("排名")
-    Table(table)
-    plt.title(title)
-    plt.savefig("figs/chat_table.png", dpi=460)
-    plt.close()
-    with open("figs/chat_table.png", "rb") as image_file:
-        image_data = image_file.read()
-    return base64.b64encode(image_data)
+async def ShowTableByBase64(data, title: str = "水群排名"):
+    value_column = next(key for key in data if key not in ("排名", "昵称", "QQ"))
+    heading, _, period_description = title.partition("\n")
+    subtitle = period_description or {
+        "今日次数": "今日发言榜", "生涯次数": "生涯发言榜",
+    }.get(value_column, value_column.removesuffix("次数") + "发言榜")
+    return await render_ranking_base64(
+        data, title=heading, rank_column="排名", value_column=value_column,
+        subtitle=subtitle,
+    )
 
 
 # 统计生涯水群次数
@@ -3019,10 +3016,9 @@ async def GetLifeChatRecord(websocket, group_id: int):
         (group_id,),
     )
     data = cur.fetchall()
+    conn.close()
     num: int = 0
-    if len(data) == 0:
-        return
-    elif len(data) <= 20:
+    if len(data) <= 20:
         num = len(data)
     else:
         num = 20
@@ -3045,7 +3041,7 @@ async def GetLifeChatRecord(websocket, group_id: int):
         {
             "type": "image",
             "data": {
-                "file": "base64://" + ShowTableByBase64(table_list).decode("utf-8")
+                "file": "base64://" + (await ShowTableByBase64(table_list)).decode("utf-8")
             },
         }
     )
@@ -3064,10 +3060,9 @@ async def GetNowChatRecord(websocket, group_id: int):
         ),
     )
     data = cur.fetchall()
+    conn.close()
     num: int = 0
-    if len(data) == 0:
-        return
-    elif len(data) <= 20:
+    if len(data) <= 20:
         num = len(data)
     else:
         num = 20
@@ -3090,7 +3085,7 @@ async def GetNowChatRecord(websocket, group_id: int):
         {
             "type": "image",
             "data": {
-                "file": "base64://" + ShowTableByBase64(table_list).decode("utf-8")
+                "file": "base64://" + (await ShowTableByBase64(table_list)).decode("utf-8")
             },
         }
     )
@@ -3126,9 +3121,7 @@ async def GetPeriodChatRecord(websocket, group_id: int, start_time: int, title: 
     conn.close()
 
     num: int = 0
-    if len(data) == 0:
-        return
-    elif len(data) <= 20:
+    if len(data) <= 20:
         num = len(data)
     else:
         num = 20
@@ -3158,7 +3151,7 @@ async def GetPeriodChatRecord(websocket, group_id: int, start_time: int, title: 
             "type": "image",
             "data": {
                 "file": "base64://"
-                + ShowTableByBase64(table_list, chart_title).decode("utf-8")
+                + (await ShowTableByBase64(table_list, chart_title)).decode("utf-8")
             },
         }
     )
@@ -3232,21 +3225,11 @@ def find_points_ranking():
 
 
 # 群友积分统计表格
-def ShowRankingByBase64(data):
-    plt.rcParams["font.sans-serif"] = load_static_setting(
-        "font", ["Unifont"]
-    )  # 设置字体
-    plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
-    table = pd.DataFrame(data)
-    fig, ax = plt.subplots()
-    table = table.set_index("积分排名")
-    Table(table)
-    plt.title("积分排名")
-    plt.savefig("figs/point_table.png", dpi=460)
-    plt.close()
-    with open("figs/point_table.png", "rb") as image_file:
-        image_data = image_file.read()
-    return base64.b64encode(image_data)
+async def ShowRankingByBase64(data):
+    return await render_ranking_base64(
+        data, title="积分排名", rank_column="积分排名", value_column="值",
+        subtitle="本群积分榜", unit="分",
+    )
 
 
 def find_value(type: int, group_id: int):
@@ -3283,8 +3266,8 @@ async def ranking_point_payload(websocket, group_id: int):
             num = len(true_points_list)
         else:
             num = 10
-        while j < num:
-            res, user_info = get_user_info(points_list[i].user_id, group_id)
+        while j < num and i < len(true_points_list):
+            res, user_info = get_user_info(true_points_list[i].user_id, group_id)
             if res:
                 name = ""
                 # print(user_info.card)
@@ -3293,16 +3276,16 @@ async def ranking_point_payload(websocket, group_id: int):
                 else:
                     name = user_info.nickname
                 data_list["积分排名"].append(j + 1)
-                data_list["QQ"].append(points_list[i].user_id)
+                data_list["QQ"].append(true_points_list[i].user_id)
                 data_list["昵称"].append(name)
-                data_list["值"].append(points_list[i].point)
+                data_list["值"].append(true_points_list[i].point)
                 j += 1
             i += 1
     payload["params"]["message"].append(
         {
             "type": "image",
             "data": {
-                "file": "base64://" + ShowRankingByBase64(data_list).decode("utf-8")
+                "file": "base64://" + (await ShowRankingByBase64(data_list)).decode("utf-8")
             },
         }
     )

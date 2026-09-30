@@ -1,11 +1,8 @@
-import base64
 from enum import Enum
 import sqlite3
 import time
 
-from matplotlib import pyplot as plt
-import pandas as pd
-from plottable import Table
+from function.ranking_render import render_ranking_base64
 
 from function.datebase_user import get_user_info, is_in_group
 
@@ -111,23 +108,12 @@ def find_points_ranking():
         return (True, points_list)
 
 
-from tools.tools import load_static_setting
-
-
 # 群友积分统计表格
-def ShowRankingByBase64(data):
-    plt.rcParams["font.sans-serif"] = load_static_setting("font", ["Unifont"])
-    plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
-    table = pd.DataFrame(data)
-    fig, ax = plt.subplots()
-    table = table.set_index("积分排名")
-    Table(table)
-    plt.title("积分排名")
-    plt.savefig("figs/point_table.png", dpi=460)
-    plt.close()
-    with open("figs/point_table.png", "rb") as image_file:
-        image_data = image_file.read()
-    return base64.b64encode(image_data)
+async def ShowRankingByBase64(data):
+    return await render_ranking_base64(
+        data, title="积分排名", rank_column="积分排名", value_column="值",
+        subtitle="本群积分榜", unit="分",
+    )
 
 
 # 积分排名
@@ -152,8 +138,8 @@ async def ranking_point_payload(websocket, group_id: int):
             num = len(true_points_list)
         else:
             num = 10
-        while j < num:
-            res, user_info = get_user_info(points_list[i].user_id, group_id)
+        while j < num and i < len(true_points_list):
+            res, user_info = get_user_info(true_points_list[i].user_id, group_id)
             if res:
                 name = ""
                 # print(user_info.card)
@@ -162,16 +148,16 @@ async def ranking_point_payload(websocket, group_id: int):
                 else:
                     name = user_info.nickname
                 data_list["积分排名"].append(j + 1)
-                data_list["QQ"].append(points_list[i].user_id)
+                data_list["QQ"].append(true_points_list[i].user_id)
                 data_list["昵称"].append(name)
-                data_list["值"].append(points_list[i].point)
+                data_list["值"].append(true_points_list[i].point)
                 j += 1
             i += 1
     payload["params"]["message"].append(
         {
             "type": "image",
             "data": {
-                "file": "base64://" + ShowRankingByBase64(data_list).decode("utf-8")
+                "file": "base64://" + (await ShowRankingByBase64(data_list)).decode("utf-8")
             },
         }
     )

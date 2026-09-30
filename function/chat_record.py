@@ -1,34 +1,18 @@
-import base64
 import hashlib
 import sqlite3
 from tools.tools import GetNowDay
-import matplotlib.pyplot as plt
-from plottable import Table
-import pandas as pd
 import json
 
-from tools.tools import load_static_setting
-
-# 导入线程池包装器，避免数据库锁定
-from database.sync_wrapper import run_in_thread_sync
+from function.ranking_render import render_ranking_base64
 
 
 # 群友水群次数表格
-def ShowTableByBase64(data):
-    plt.rcParams["font.sans-serif"] = load_static_setting(
-        "font", ["Unifont"]
-    )  # 设置字体
-    plt.rcParams["axes.unicode_minus"] = False  # 正常显示负号
-    table = pd.DataFrame(data)
-    fig, ax = plt.subplots()
-    table = table.set_index("排名")
-    Table(table)
-    plt.title("水群排名")
-    plt.savefig("figs/chat_table.png", dpi=460)
-    plt.close()
-    with open("figs/chat_table.png", "rb") as image_file:
-        image_data = image_file.read()
-    return base64.b64encode(image_data)
+async def ShowTableByBase64(data):
+    value_column = "今日次数" if "今日次数" in data else "生涯次数"
+    return await render_ranking_base64(
+        data, title="水群排名", rank_column="排名", value_column=value_column,
+        subtitle="今日发言榜" if value_column == "今日次数" else "生涯发言榜",
+    )
 
 
 # 统计生涯水群次数
@@ -47,10 +31,9 @@ async def GetLifeChatRecord(websocket, group_id: int):
         },
     }
     data = cur.fetchall()
+    conn.close()
     num: int = 0
-    if len(data) == 0:
-        await websocket.send(json.dumps(payload))
-    elif len(data) <= 20:
+    if len(data) <= 20:
         num = len(data)
     else:
         num = 20
@@ -68,7 +51,7 @@ async def GetLifeChatRecord(websocket, group_id: int):
         {
             "type": "image",
             "data": {
-                "file": "base64://" + ShowTableByBase64(table_list).decode("utf-8")
+                "file": "base64://" + (await ShowTableByBase64(table_list)).decode("utf-8")
             },
         }
     )
@@ -87,6 +70,7 @@ async def GetNowChatRecord(websocket, group_id: int):
         ),
     )
     data = cur.fetchall()
+    conn.close()
     num: int = 0
     payload = {
         "action": "send_msg_async",
@@ -95,9 +79,7 @@ async def GetNowChatRecord(websocket, group_id: int):
             "message": [],
         },
     }
-    if len(data) == 0:
-        await websocket.send(json.dumps(payload))
-    elif len(data) <= 20:
+    if len(data) <= 20:
         num = len(data)
     else:
         num = 20
@@ -115,7 +97,7 @@ async def GetNowChatRecord(websocket, group_id: int):
         {
             "type": "image",
             "data": {
-                "file": "base64://" + ShowTableByBase64(table_list).decode("utf-8")
+                "file": "base64://" + (await ShowTableByBase64(table_list)).decode("utf-8")
             },
         }
     )
