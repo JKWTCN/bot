@@ -1,5 +1,7 @@
 import asyncio
+from contextlib import closing
 import json
+import math
 import os
 import re
 import sqlite3
@@ -16,7 +18,7 @@ from data.message.meta_message_info import MetaMessageInfo
 from function.GroupConfig import get_config
 from function.datebase_user import get_user_name
 from function.say import ReplySay, SayGroup, SayGroupImage
-from tools.tools import FindNum, HasAllKeyWords, load_static_setting
+from tools.tools import FindNum, HasAllKeyWords, GetNCHSPort, load_static_setting
 
 import application.steam_achievement as steam_achievement
 from application.steam_achievement import (
@@ -44,14 +46,14 @@ def _get_smart_intervals():
     """读取智能轮询各档间隔(秒)
     依次为: [游戏中, 12分钟内, 12分钟~3小时, 3小时~24小时, 24~48小时, 超过48小时]
     """
-    raw = load_static_setting("steam_smart_poll_intervals", "60,180,300,600,1200,1800")
+    raw = load_static_setting("steam_smart_poll_intervals", "5,5,30,60,300,600")
     if isinstance(raw, str):
         parts = [int(x.strip()) for x in raw.split(",") if x.strip()]
     else:
         parts = list(raw)
     if len(parts) < 6:
-        parts = parts + [60, 180, 300, 600, 1200, 1800][len(parts):]
-    return parts[:6]
+        parts = parts + [5, 5, 30, 60, 300, 600][len(parts):]
+    return [max(5, int(value)) for value in parts[:6]]
 
 
 def _get_poll_mode():
@@ -62,7 +64,7 @@ def _get_poll_mode():
 
 def _get_fixed_interval():
     """读取固定轮询间隔(秒)"""
-    return load_static_setting("steam_fixed_poll_interval", 60)
+    return max(5, int(load_static_setting("steam_fixed_poll_interval", 5)))
 
 
 def get_steam_status(steam_ids: list):
@@ -411,6 +413,76 @@ def update_binding_extra(user_id: int, group_id: int, **fields):
     conn.close()
 
 
+def reset_steam_tracking(user_id, group_id):
+    """离群后保留绑定，原子清理状态和成就基线，回群时重新采样。"""
+    with closing(sqlite3.connect(DB_PATH)) as conn, conn:
+        conn.execute(
+            "UPDATE steam_binding SET last_status=NULL, last_check_time=0, "
+            "game_start_time=0, last_game_id='', pending_quit=0, "
+            "next_poll_time=0, last_ach_check_time=0 WHERE user_id=? AND group_id=?",
+            (user_id, group_id),
+        )
+        conn.execute(
+            "DELETE FROM steam_achievement_snapshot WHERE user_id=? AND group_id=?",
+            (user_id, group_id),
+        )
+
+
+def get_active_steam_bindings(bindings):
+    """先向 OneBot 确认 bot 所在群及实际成员；查询失败时暂停该群。"""
+    def fetch_list(action, **params):
+        response = requests.post(
+            f"http://localhost:{GetNCHSPort()}/{action}",
+            json=params, timeout=10,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        if (payload.get("status") != "ok" or payload.get("retcode") != 0
+                or not isinstance(payload.get("data"), list)):
+            raise ValueError(f"OneBot {action} 未返回有效名单")
+        return payload["data"]
+
+    try:
+        groups = {int(group["group_id"]) for group in fetch_list("get_group_list")}
+    except Exception as exc:
+        print(f"[Steam] 无法确认 bot 所在群，本轮暂停: {exc}")
+        return []
+
+    by_group = {}
+    for row in bindings:
+        by_group.setdefault(int(row[1]), []).append(row)
+    active = []
+    for group_id, rows in by_group.items():
+        members = set()
+        if group_id in groups:
+            try:
+                members = {
+                    int(member["user_id"]) for member in fetch_list(
+                        "get_group_member_list", group_id=group_id, no_cache=True,
+                    )
+                }
+            except Exception as exc:
+                print(f"[Steam] 无法确认群 {group_id} 成员，本轮暂停: {exc}")
+                continue
+        for row in rows:
+            if int(row[0]) in members:
+                active.append(row)
+            elif row[3] or row[5] or row[6] or row[7]:
+                # 保留绑定，回群后以新状态为基线，避免补发离群期间的提醒。
+                reset_steam_tracking(row[0], row[1])
+    return active
+
+
+def calc_poll_budget_interval(bindings) -> int:
+    """按去重后的有效用户数和最坏重试次数，为状态轮询预留日预算。"""
+    users = len({row[2] for row in bindings})
+    batches = math.ceil(users / 100)
+    # 默认留 2 万次给成就、在线人数和手动查询；这不是全局配额计数器。
+    budget = max(1, min(80000, int(load_static_setting("steam_status_daily_budget", 80000))))
+    retries = max(1, int(_get_retry_times()))
+    return max(5, math.ceil(batches * 86400 * retries / budget))
+
+
 # ==================== 状态码映射 ====================
 
 STEAM_STATUS_MAP = {
@@ -646,7 +718,8 @@ class SteamStatusPushApplication(MetaMessageApplication):
         super().__init__(applicationInfo, 5, True, ApplicationCostType.NORMAL)
         create_steam_binding_table()
         # 心跳触发频率上限(秒), 仅作为心跳节流, 实际轮询由 next_poll_time 控制
-        self.heartbeat_throttle = load_static_setting("steam_heartbeat_throttle", 30)
+        self.heartbeat_throttle = max(5, int(load_static_setting("steam_heartbeat_throttle", 5)))
+        self._budget_interval = 5
         self.last_heartbeat_time = 0
         # 图片渲染、Steam API 和消息发送都可能超过一个心跳周期。若允许下一次
         # 心跳并发进入，它会读到尚未提交的旧状态，并再次发送同一条提醒。
@@ -680,7 +753,13 @@ class SteamStatusPushApplication(MetaMessageApplication):
             if not bindings:
                 return
 
-            # 只挑选到点的绑定进行查询
+            bindings = await asyncio.to_thread(get_active_steam_bindings, bindings)
+            if not bindings:
+                return
+            self._budget_interval = calc_poll_budget_interval(bindings)
+            active_pairs = {(row[0], row[1]) for row in bindings}
+
+            # 只挑选到点的有效绑定进行查询
             due_bindings = []
             for row in bindings:
                 (user_id, group_id, steam_id, last_status_json,
@@ -700,7 +779,7 @@ class SteamStatusPushApplication(MetaMessageApplication):
 
             if not due_bindings:
                 # 仍有到点前的退出确认需要检查
-                await self._flush_pending_quits(message, current_time)
+                await self._flush_pending_quits(message, current_time, active_pairs)
                 return
 
             # 按 steam_id 分组, 减少API调用
@@ -709,7 +788,10 @@ class SteamStatusPushApplication(MetaMessageApplication):
                 steam_id_map.setdefault(b["steam_id"], []).append(b)
 
             all_steam_ids = list(steam_id_map.keys())
-            status_list = await get_steam_status_async(all_steam_ids)
+            status_list = []
+            # GetPlayerSummaries 每次最多接受 100 个 SteamID。
+            for offset in range(0, len(all_steam_ids), 100):
+                status_list.extend(await get_steam_status_async(all_steam_ids[offset:offset + 100]))
 
             # 构建状态映射
             status_map = {}
@@ -735,7 +817,7 @@ class SteamStatusPushApplication(MetaMessageApplication):
                     await self._process_binding(b, current_status, message, now_int)
 
             # 处理到点前可能已经超时的退出确认
-            await self._flush_pending_quits(message, now_int)
+            await self._flush_pending_quits(message, now_int, active_pairs)
 
         except KeyboardInterrupt:
             print("Steam状态检查被中断")
@@ -763,7 +845,9 @@ class SteamStatusPushApplication(MetaMessageApplication):
         is_now_playing = is_playing(current_game)
 
         # 计算下次轮询时间
-        next_interval = calc_next_poll_interval_sec(current_status, now_int)
+        next_interval = max(
+            self._budget_interval, calc_next_poll_interval_sec(current_status, now_int),
+        )
         next_poll_time = now_int + next_interval
 
         # 首次记录: 不通知, 只记录
@@ -878,10 +962,14 @@ class SteamStatusPushApplication(MetaMessageApplication):
                     f"[{group_nickname}({nickname})] Steam 状态变化:\n{old_text} -> {new_text}"
                 )
 
-    async def _flush_pending_quits(self, message, now_int: int):
+    async def _flush_pending_quits(self, message, now_int: int, active_pairs=None):
         """根据数据库最新状态检查并推送超过缓冲期的退出玩家。"""
         # 本轮状态处理可能已取消 pending_quit，不能继续使用轮询开始时的快照。
         bindings = get_all_steam_bindings()
+        if active_pairs is None:
+            bindings = await asyncio.to_thread(get_active_steam_bindings, bindings)
+        else:
+            bindings = [row for row in bindings if (row[0], row[1]) in active_pairs]
         for row in bindings:
             (user_id, group_id, steam_id, last_status_json,
              last_check, game_start_time, last_game_id,
