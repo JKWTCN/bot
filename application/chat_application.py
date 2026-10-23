@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+import asyncio
 import logging
 import random
 from typing import Any
@@ -24,6 +25,7 @@ from intelligence.chat_quality.reply_policy import (
     should_reply_random_candidate,
 )
 from tools.tools import load_setting
+from intelligence.chat_quality.random_chat import RandomChatLimiter, candidate_kind
 
 
 def getPrompts() -> str:
@@ -33,12 +35,15 @@ def getPrompts() -> str:
     return str(prompts)
 
 
-def load_chat_quality_config() -> dict[str, Any]:
+def load_chat_quality_config(group_id: int | None = None) -> dict[str, Any]:
     try:
         with open("intelligence_config.json", "r", encoding="utf-8") as f:
             config = json.load(f)
         chat_quality = config.get("chat_quality", {})
-        return chat_quality if isinstance(chat_quality, dict) else {}
+        if not isinstance(chat_quality, dict):
+            return {}
+        overrides = chat_quality.get("group_overrides", {}).get(str(group_id), {})
+        return {**chat_quality, **overrides}
     except Exception as exc:
         logging.warning("读取聊天质量配置失败,使用默认值: %s", exc)
         return {}
@@ -98,12 +103,40 @@ class GroupChatApplication(GroupMessageApplication):
             True,
             ApplicationCostType.HIGH_TIME_HIGH_PERFORMANCE,
         )
+        self.random_limiter = RandomChatLimiter()
 
     async def process(self, message: GroupMessageInfo):
+        trigger = getattr(message, "_ai_chat_trigger", "direct")
+        if trigger == "quoted":
+            from function.group_operation import get_message_data
+
+            quoted = await asyncio.to_thread(get_message_data, message.replyMessageId)
+            sender = (quoted or {}).get("sender") or {}
+            bot_id = getattr(message, "botId", load_setting("bot_id", 0))
+            is_bot_reply = bool(bot_id) and str(sender.get("user_id", "")) == str(bot_id)
+            # Some adapters include the group ID; never accept a different group.
+            if quoted and quoted.get("group_id") is not None:
+                is_bot_reply = is_bot_reply and str(quoted["group_id"]) == str(message.groupId)
+            if not is_bot_reply:
+                if not self._judge_random(message, load_chat_quality_config(message.groupId)):
+                    return
+                trigger = "random"
+        sent = False
+        try:
+            sent = bool(await self._process_chat(message))
+        finally:
+            if trigger == "random":
+                self.random_limiter.finish(message.groupId, sent=sent)
+                logging.info("随机聊天结果: group=%s message=%s sent=%s",
+                             message.groupId, message.messageId, sent)
+
+    async def _process_chat(self, message: GroupMessageInfo):
         try:
             result = await handle_group_chat(message)
         except Exception as exc:
             logging.error("AI聊天应用处理失败: %s", exc, exc_info=True)
+            if getattr(message, "_ai_chat_trigger", "") == "random":
+                return False
             await ReplySay(
                 message.websocket,
                 message.groupId,
@@ -130,8 +163,10 @@ class GroupChatApplication(GroupMessageApplication):
                 result.target_message_id or message.messageId,
                 result.text,
             )
+        return True
 
     def judge(self, message: GroupMessageInfo) -> bool:
+        message._ai_chat_trigger = "direct"
         if not get_config("enable_chat", message.groupId):
             return False
 
@@ -143,8 +178,48 @@ class GroupChatApplication(GroupMessageApplication):
         ):
             return True
 
+        chat_quality = load_chat_quality_config(message.groupId)
+        if (chat_quality.get("random_chat_policy", {}).get("enabled", False)
+                and chat_quality["random_chat_policy"].get("reply_to_bot", True)
+                and get_config("replay_chat", message.groupId)
+                and message.replyMessageId != -1):
+            message._ai_chat_trigger = "quoted"
+            return True
+        return self._judge_random(message, chat_quality)
+
+    def _judge_random(self, message: GroupMessageInfo, chat_quality: dict) -> bool:
+        policy = chat_quality.get("random_chat_policy", {})
+        if policy.get("enabled", False):
+            if not get_config("random_chat", message.groupId):
+                return False
+            kind = candidate_kind(message.plainTextMessage)
+            if not kind:
+                logging.debug("随机聊天跳过无效内容: group=%s message=%s", message.groupId, message.messageId)
+                return False
+            # Questions need 50 points; meaningful statements retain their 40-point base.
+            threshold = int(policy.get("question_threshold", 50) if kind == "question"
+                            else policy.get("normal_threshold", 40))
+            score = should_reply_random_candidate(
+                message.plainTextMessage, bot_name=load_setting("bot_name", "乐可"),
+                trigger_threshold=threshold,
+                effective_frequency=float(chat_quality.get("random_reply_frequency", 1.0)),
+            )
+            probability = float(policy.get("question_probability", 0.20) if kind == "question"
+                                else policy.get("normal_probability", 0.03))
+            if score.score < threshold or random.random() >= probability:
+                logging.debug("随机聊天未选中: group=%s kind=%s probability=%.3f %s",
+                              message.groupId, kind, probability, score.detail)
+                return False
+            if not self.random_limiter.reserve(message.groupId, policy):
+                logging.info("随机聊天限流: group=%s message=%s", message.groupId, message.messageId)
+                return False
+            message._ai_chat_trigger = "random"
+            logging.info("随机聊天候选通过: group=%s user=%s kind=%s probability=%.3f %s",
+                         message.groupId, message.senderId, kind, probability, score.detail)
+            return True
+
+        bot_name = load_setting("bot_name", "乐可")
         if random.random() < 0.005 and get_config("random_chat", message.groupId):
-            chat_quality = load_chat_quality_config()
             threshold = int(
                 chat_quality.get(
                     "reply_necessity_threshold",

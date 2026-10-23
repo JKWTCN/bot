@@ -31,7 +31,22 @@
         "enabled": true,
         "reply_necessity_threshold": 65,
         "random_reply_frequency": 1.0,
-        "filter_context_noise": true
+        "filter_context_noise": true,
+        "group_overrides": {
+            "765698568": {
+                "random_chat_policy": {
+                    "enabled": true,
+                    "reply_to_bot": true,
+                    "question_probability": 0.20,
+                    "normal_probability": 0.03,
+                    "question_threshold": 50,
+                    "normal_threshold": 40,
+                    "cooldown_seconds": 90,
+                    "window_seconds": 600,
+                    "max_replies_per_window": 3
+                }
+            }
+        }
     },
     "ai_chat": {
         "enabled": true,
