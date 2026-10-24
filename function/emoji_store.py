@@ -504,7 +504,7 @@ def _prepare_model_image(path: Path, image_format: str) -> tuple[Path, str]:
 
 
 async def _call_vlm(prompt: str, image_path: Path) -> str:
-    from ollama import chat
+    from config.ollama_control import ollama_chat as chat
 
     def _call() -> str:
         response = chat(
@@ -520,7 +520,7 @@ async def _call_vlm(prompt: str, image_path: Path) -> str:
 
 
 async def _call_text_llm(prompt: str) -> str:
-    from ollama import chat
+    from config.ollama_control import ollama_chat as chat
 
     def _call() -> str:
         response = chat(

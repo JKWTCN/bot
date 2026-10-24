@@ -219,7 +219,12 @@ async def build_context_and_profile(turn: ChatTurn) -> tuple[dict[str, Any], lis
 
 async def handle_chat_turn(turn: ChatTurn) -> ReplyResult | None:
     config = await load_ai_chat_config()
-    if not config.enabled:
+    from config.ai_control import ai_enabled
+    from config.ollama_control import ollama_enabled
+
+    if not config.enabled or not ai_enabled():
+        return None
+    if not ollama_enabled() and not config.enable_cloud_fallback:
         return None
 
     temp_image_paths: list[str] = []

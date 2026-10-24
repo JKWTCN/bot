@@ -709,13 +709,13 @@ def get_user_reg_time(user_id: int) -> int:
 def translationToEnglish(word):
     """翻译中文成英文"""
     try:
-        import ollama
+        from config.ollama_control import ollama_chat
 
         model = load_chat_ai_model()
         thinking = load_chat_ai_thinking()
 
         # 使用ollama包调用
-        response = ollama.chat(
+        response = ollama_chat(
             model=model,
             messages=[{
                 'role': 'system',

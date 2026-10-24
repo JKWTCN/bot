@@ -215,13 +215,13 @@ def describe_image(image_path: str, ollama_url: str = "http://localhost:11434") 
         (是否成功, 模型生成的图片描述或错误信息)
     """
     try:
-        import ollama
+        from config.ollama_control import ollama_chat
 
         model = load_image_ai_model()
         thinking = load_image_ai_thinking()
 
         # 使用ollama包调用，图像应该在消息的images字段中
-        response = ollama.chat(
+        response = ollama_chat(
             model=model,
             messages=[{
                 'role': 'user',

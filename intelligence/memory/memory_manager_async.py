@@ -270,8 +270,12 @@ class MemoryManager:
 
     async def _extract_memories_with_llm(self, message: str, user_id: int) -> List[Dict]:
         """使用LLM从消息中提取记忆"""
+        from config.ollama_control import ollama_enabled
+
+        if not ollama_enabled():
+            return []
         try:
-            from ollama import chat
+            from config.ollama_control import ollama_chat as chat
             import asyncio
 
             extraction_prompt = f"""分析以下对话,提取值得长期记忆的重要信息。

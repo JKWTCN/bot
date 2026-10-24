@@ -45,6 +45,14 @@ class ChatLLMClient:
         max_tokens: int | None = None,
         use_image_model: bool = False,
     ) -> LLMResult:
+        from config.ai_control import require_ai_enabled
+        from config.ollama_control import ollama_enabled
+
+        require_ai_enabled()
+        if not ollama_enabled() and self.config.enable_cloud_fallback:
+            return await self._generate_openai_compatible(
+                messages, temperature=temperature, max_tokens=max_tokens,
+            )
         try:
             return await self._generate_ollama(
                 messages,
@@ -54,6 +62,7 @@ class ChatLLMClient:
             )
         except Exception as exc:
             logging.error("Ollama 调用失败: %s", exc, exc_info=True)
+            require_ai_enabled()
             if self.config.enable_cloud_fallback:
                 return await self._generate_openai_compatible(
                     messages,
@@ -70,7 +79,7 @@ class ChatLLMClient:
         max_tokens: int | None,
         use_image_model: bool,
     ) -> LLMResult:
-        from ollama import chat
+        from config.ollama_control import ollama_chat as chat
 
         model = load_image_ai_model() if use_image_model else load_chat_ai_model()
         thinking = load_image_ai_thinking() if use_image_model else load_chat_ai_thinking()
@@ -103,6 +112,9 @@ class ChatLLMClient:
         temperature: float,
         max_tokens: int | None,
     ) -> LLMResult:
+        from config.ai_control import require_ai_enabled
+
+        require_ai_enabled()
         from openai import OpenAI
 
         model = load_static_setting("open_ai_model", load_chat_ai_model())
@@ -118,6 +130,7 @@ class ChatLLMClient:
         ]
 
         def _call() -> str:
+            require_ai_enabled()
             client = OpenAI(base_url=base_url, api_key=api_key)
             completion = client.chat.completions.create(
                 model=model,

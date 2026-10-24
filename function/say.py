@@ -393,10 +393,10 @@ def chatNoContext(texts):
         )
 
     try:
-        import ollama
+        from config.ollama_control import ollama_chat
 
         print(f"使用模型: {model}, 消息: {base_messages}")
-        response = ollama.chat(
+        response = ollama_chat(
             model=model,
             messages=base_messages,
             options={'temperature': 1.0},

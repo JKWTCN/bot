@@ -65,7 +65,8 @@ python main.py
 - `ollama_port`：本地 Ollama 端口
 - `debug_mode`：调试日志开关
 - `group_list`：启用群列表
-- `use_local_ai`：是否优先使用本地 AI
+- `use_ai`：AI 总开关；`false` 禁止本项目所有本地及联网 AI 调用（包括云端回退），`true` 允许 AI 功能。缺省为 `true`，每次调用读取，修改后无需重启。
+- `use_local_ai`：Ollama 开关，仅在 `use_ai=true` 时生效；`false` 禁止 Ollama 调用，云端是否可用仍由 `ai_chat.enable_cloud_fallback` 决定。
 - `gambling_limit`、`defense_times`、`timeout`：功能相关阈值
 
 ### 2) static_setting.json（静态配置）
