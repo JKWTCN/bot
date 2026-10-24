@@ -1,6 +1,7 @@
 """Lightweight VLM-judged emoji collection and selection."""
 
 from __future__ import annotations
+from config.ai_control import ai_enabled
 
 import asyncio
 import base64
@@ -277,6 +278,8 @@ async def register_cached_emoji(record: EmojiRecord) -> bool:
     Returns:
         bool: 是否成功注册为可发送表情。失败时记录保持未注册，等待下次重试。
     """
+    if not ai_enabled():
+        return False
     image_format = record.image_format
     if image_format not in {"jpg", "jpeg", "png", "gif", "webp"}:
         logging.warning(f"缓存表情包格式不支持,跳过注册: {record.file_name}")

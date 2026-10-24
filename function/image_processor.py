@@ -1,3 +1,4 @@
+from config.ai_control import ai_enabled
 import base64
 import hashlib
 import io
@@ -214,6 +215,8 @@ def describe_image(image_path: str, ollama_url: str = "http://localhost:11434") 
     返回:
         (是否成功, 模型生成的图片描述或错误信息)
     """
+    if not ai_enabled():
+        return False, ""
     try:
         from config.ollama_control import ollama_chat
 

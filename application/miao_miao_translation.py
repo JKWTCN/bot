@@ -1,3 +1,4 @@
+from config.ai_control import AIDisabledError, ai_enabled
 import logging
 import re
 import string
@@ -29,6 +30,8 @@ async def miaomiaoTranslation(websocket, user_id: int, group_id: int, message_id
         group_id (int): _description_
         message_id (int): _description_
     """
+    if not ai_enabled():
+        return
     model = load_chat_ai_model()
     thinking = load_chat_ai_thinking()
 
@@ -76,6 +79,8 @@ async def miaomiaoTranslation(websocket, user_id: int, group_id: int, message_id
         re_text = re.sub(
             r"<think>[\s\S]*?</think>", "", response['message']['content']
         ).strip()
+    except AIDisabledError:
+        return
     except Exception as e:
         logging.error(f"调用Ollama时出错: {str(e)}")
         re_text = "呜呜不太理解呢喵."
@@ -130,6 +135,8 @@ class MiaoMiaoTranslationApplication(GroupMessageApplication):
 
     def judge(self, message: GroupMessageInfo) -> bool:
         """判断消息是否符合喵喵翻译条件:纯文本,而且全部由喵组成。"""
+        if not ai_enabled():
+            return False
         if (
             CheckAllMiao(message.plainTextMessage)
             and len(message.imageFileList) == 0

@@ -5,6 +5,7 @@
 """
 
 from __future__ import annotations
+from config.ai_control import AIDisabledError, ai_enabled
 
 import json
 import asyncio
@@ -60,6 +61,8 @@ async def chat(
     raw_message: dict | None = None,
 ):
     """旧接口兼容: 生成 AI 回复并发送引用回复。"""
+    if not ai_enabled():
+        return
     turn = ChatTurn(
         websocket=websocket,
         user_id=user_id,
@@ -72,6 +75,8 @@ async def chat(
     )
     try:
         result = await handle_chat_turn(turn)
+    except AIDisabledError:
+        return
     except Exception as exc:
         logging.error("AI聊天运行失败: %s", exc, exc_info=True)
         await ReplySay(websocket, group_id, message_id, "呜呜不太理解呢喵.")
@@ -131,8 +136,12 @@ class GroupChatApplication(GroupMessageApplication):
                              message.groupId, message.messageId, sent)
 
     async def _process_chat(self, message: GroupMessageInfo):
+        if not ai_enabled():
+            return
         try:
             result = await handle_group_chat(message)
+        except AIDisabledError:
+            return
         except Exception as exc:
             logging.error("AI聊天应用处理失败: %s", exc, exc_info=True)
             if getattr(message, "_ai_chat_trigger", "") == "random":
@@ -166,6 +175,8 @@ class GroupChatApplication(GroupMessageApplication):
         return True
 
     def judge(self, message: GroupMessageInfo) -> bool:
+        if not ai_enabled():
+            return False
         message._ai_chat_trigger = "direct"
         if not get_config("enable_chat", message.groupId):
             return False

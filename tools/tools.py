@@ -1,3 +1,4 @@
+from config.ai_control import ai_enabled
 import datetime
 import logging
 import string
@@ -708,6 +709,8 @@ def get_user_reg_time(user_id: int) -> int:
 
 def translationToEnglish(word):
     """翻译中文成英文"""
+    if not ai_enabled():
+        return word
     try:
         from config.ollama_control import ollama_chat
 

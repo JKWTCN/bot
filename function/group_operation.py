@@ -1,3 +1,4 @@
+from config.ai_control import ai_enabled
 import json
 import logging
 import sqlite3
@@ -169,6 +170,8 @@ async def replyImageMessage(
     websocket, group_id: int, message_id: int, need_replay_message_id: int, text: str
 ):
     """强制回复图片消息"""
+    if not ai_enabled():
+        return
     imageInfo = ""
     try:
         # 连接数据库

@@ -11,6 +11,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
+from config.ai_control import AIDisabledError
 from intelligence.chat_quality.random_chat import RandomChatLimiter, candidate_kind
 from intelligence.chat_quality.reply_policy import (
     REPLY_NECESSITY_TRIGGER_SCORE, should_reply_random_candidate,
@@ -24,7 +25,7 @@ def chat_namespace():
     nodes = [node for node in tree.body
              if getattr(node, 'name', '') in ('GroupChatApplication', 'load_chat_quality_config')]
     ns = dict(
-        Any=object, GroupMessageApplication=object, GroupMessageInfo=object,
+        AIDisabledError=AIDisabledError, ai_enabled=lambda: True, Any=object, GroupMessageApplication=object, GroupMessageInfo=object,
         RandomChatLimiter=RandomChatLimiter, candidate_kind=candidate_kind,
         should_reply_random_candidate=should_reply_random_candidate,
         REPLY_NECESSITY_TRIGGER_SCORE=REPLY_NECESSITY_TRIGGER_SCORE,

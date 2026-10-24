@@ -1,4 +1,5 @@
 """VLM-judged emoji collection and sending applications."""
+from config.ai_control import ai_enabled
 
 import logging
 import re
@@ -97,6 +98,8 @@ class EmojiSendApplication(GroupMessageApplication):
         )
 
     def judge(self, message: GroupMessageInfo) -> bool:
+        if not ai_enabled():
+            return False
         if not get_config("emoji_send", message.groupId):
             return False
         if message.imageFileList:
@@ -104,12 +107,16 @@ class EmojiSendApplication(GroupMessageApplication):
         return HasKeyWords(message.plainTextMessage, list(EMOJI_SEND_KEYWORDS))
 
     async def process(self, message: GroupMessageInfo):
+        if not ai_enabled():
+            return
         context_texts = await self._get_recent_context(message)
         selection = await select_emoji_for_context(
             group_id=message.groupId,
             context_texts=context_texts,
             request_text=self._build_request_text(message.plainTextMessage),
         )
+        if not ai_enabled():
+            return
         if selection.record is None:
             await ReplySay(message.websocket, message.groupId, message.messageId, selection.error)
             return

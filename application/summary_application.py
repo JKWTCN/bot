@@ -1,6 +1,7 @@
 """回复“{bot_name},有无省流”时，总结被引用的图片或聊天记录。"""
 
 from __future__ import annotations
+from config.ai_control import AIDisabledError, ai_enabled
 
 import asyncio
 import logging
@@ -288,6 +289,8 @@ class SummaryApplication(GroupMessageApplication):
         )
 
     def judge(self, message: GroupMessageInfo) -> bool:
+        if not ai_enabled():
+            return False
         bot_name = str(load_setting("bot_name", "乐可"))
         return (
             message.replyMessageId != -1
@@ -296,11 +299,12 @@ class SummaryApplication(GroupMessageApplication):
         )
 
     async def process(self, message: GroupMessageInfo):
+        if not ai_enabled():
+            return
         temp_image_paths: list[str] = []
         try:
             config = await load_ai_chat_config()
             if not config.enabled:
-                await self._reply(message, "AI 聊天功能未开启。")
                 return
 
             replied = await asyncio.to_thread(get_message_data, message.replyMessageId)
@@ -390,6 +394,8 @@ class SummaryApplication(GroupMessageApplication):
                 use_image_model=bool(model_image_paths),
             )
             await self._reply(message, result.content.strip())
+        except AIDisabledError:
+            return
         except Exception as exc:
             logging.error("AI 省流总结失败: %s", exc, exc_info=True)
             await self._reply(message, "省流失败了，请稍后再试。")

@@ -66,6 +66,31 @@ class AIControlTests(unittest.TestCase):
         self.assertEqual(asyncio.run(client.generate([])), 'cloud reply')
         client._generate_ollama.assert_not_called()
 
+    def test_disabled_features_return_without_sending_or_processing(self):
+        targets = [
+            ('application/chat_application.py', '_process_chat'),
+            ('application/summary_application.py', 'process'),
+            ('application/emoji_application.py', 'process'),
+            ('application/classic_application.py', 'process'),
+            ('application/miao_miao_translation.py', 'miaomiaoTranslation'),
+            ('function/group_operation.py', 'replyImageMessage'),
+        ]
+        root = Path(__file__).resolve().parents[1]
+        for filename, name in targets:
+            with self.subTest(filename=filename):
+                tree = ast.parse((root / filename).read_text())
+                if filename.endswith('classic_application.py'):
+                    tree = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'PrivateChatApplication')
+                elif filename.endswith('emoji_application.py'):
+                    tree = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'EmojiSendApplication')
+                node = next(n for n in ast.walk(tree) if isinstance(n, ast.AsyncFunctionDef) and n.name == name)
+                namespace = {'ai_enabled': lambda: False}
+                exec(compile(ast.Module(body=[node], type_ignores=[]), filename, 'exec',
+                             flags=__import__('__future__').annotations.compiler_flag), namespace)
+                # No dependencies are supplied: touching any processing/sending path fails.
+                args = [object()] * len(node.args.args)
+                self.assertIsNone(asyncio.run(namespace[name](*args)))
+
     def test_live_toggle_and_unreadable_settings(self):
         self.configure(use_ai=True, use_local_ai=True)
         self.assertTrue(ollama_enabled())

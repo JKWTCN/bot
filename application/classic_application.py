@@ -1,3 +1,4 @@
+from config.ai_control import ai_enabled
 # Standard library imports
 import base64
 from datetime import datetime, date, timedelta
@@ -4697,6 +4698,8 @@ class PrivateChatApplication(PrivateMessageApplication):
         )
 
     async def process(self, message: PrivateMesssageInfo) -> None:
+        if not ai_enabled():
+            return
         await SayPrivte(
             message.websocket,
             message.senderId,
@@ -4705,6 +4708,8 @@ class PrivateChatApplication(PrivateMessageApplication):
 
     def judge(self, message: PrivateMesssageInfo) -> bool:
         """判断是否触发应用"""
+        if not ai_enabled():
+            return False
         # 私聊应用处理所有文本消息，但忽略空消息
         return message.isPainTextMessage and message.plainTextMessage.strip() != ""
 

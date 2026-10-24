@@ -1,3 +1,4 @@
+from config.ai_control import ai_enabled
 import base64
 import json
 import logging
@@ -369,6 +370,8 @@ async def delete_msg(websocket, message_id: int):
 
 def chatNoContext(texts):
     """只处理单句"""
+    if not ai_enabled():
+        return ""
     model = load_chat_ai_model()
     thinking = load_chat_ai_thinking()
     from application.chat_application import getPrompts
