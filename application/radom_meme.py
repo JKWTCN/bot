@@ -7,14 +7,14 @@ import random
 import re
 from pathlib import Path
 
-import requests
 from PIL import Image
 from data.application.group_message_application import GroupMessageApplication
 from data.application.application_info import ApplicationInfo
 from data.enumerates import ApplicationCostType
 from data.message.group_message_info import GroupMessageInfo
 from function.say import SayGroup
-from tools.tools import FindNum, GetNCHSPort, HasAllKeyWords, load_setting
+from function.group_message_guard import send_group_request
+from tools.tools import FindNum, HasAllKeyWords, load_setting
 from tools.file_list_cache import file_cache
 
 
@@ -95,15 +95,11 @@ def _read_meme_image(path: str) -> dict:
     }
 
 
-def _send_meme_request(action: str, params: dict):
+def _send_meme_request(action: str, params: dict) -> bool:
     """使用有返回值的 HTTP 接口，避免把 WebSocket 写入成功当作发送成功。"""
-    response = requests.post(
-        f"http://localhost:{GetNCHSPort()}/{action}",
-        json=params,
-        timeout=(5, 30),
-    )
-    response.raise_for_status()
-    result = response.json()
+    result = send_group_request(action, params)
+    if result is None:
+        return False
     if (
         not isinstance(result, dict)
         or result.get("status") != "ok"
@@ -116,6 +112,7 @@ def _send_meme_request(action: str, params: dict):
         "梗图发送接口成功: action=%s group_id=%s message_id=%s",
         action, params.get("group_id"), result["data"]["message_id"],
     )
+    return True
 
 
 async def _send_meme_images(group_id: int, items: list) -> int:
@@ -125,11 +122,13 @@ async def _send_meme_images(group_id: int, items: list) -> int:
     while pending:
         batch = pending.pop()
         try:
-            await asyncio.to_thread(
+            sent = await asyncio.to_thread(
                 _send_meme_request,
                 "send_group_msg",
                 {"group_id": group_id, "message": [image for _, image in batch]},
             )
+            if not sent:
+                break
         except Exception as error:
             if isinstance(error, _MemeAPIError) and error.image_failure:
                 if len(batch) == 1:
@@ -197,7 +196,7 @@ async def SendMemeMergeForwarding(websocket, group_id: int, nums: int) -> int:
             for image in images
         ]
         try:
-            await asyncio.to_thread(
+            sent = await asyncio.to_thread(
                 _send_meme_request,
                 "send_forward_msg",
                 {
@@ -219,7 +218,7 @@ async def SendMemeMergeForwarding(websocket, group_id: int, nums: int) -> int:
                 group_id, actual_nums, sent_count, actual_nums - sent_count,
             )
             return sent_count
-        return len(items)
+        return len(items) if sent else 0
     except Exception:
         logging.exception("梗图发送失败: group_id=%s", group_id)
         await SayGroup(websocket, group_id, "图片发送失败了喵。")

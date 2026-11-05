@@ -5,7 +5,7 @@ import logging
 import os
 import re
 
-import requests
+from function.group_message_guard import send_group_request
 
 
 # 图片回复
@@ -37,14 +37,13 @@ async def SayImgReply(
 
 from tools.tools import (
     GetNCWCPort,
-    GetNCHSPort,
     GetOllamaPort,
     load_chat_ai_model,
     load_chat_ai_thinking,
 )
 
 
-def SayGroupReturnMessageId(groupId: int, text: str):
+def SayGroupReturnMessageId(groupId: int, text: str) -> int | None:
     """发送群消息并返回消息ID
 
     Args:
@@ -52,16 +51,15 @@ def SayGroupReturnMessageId(groupId: int, text: str):
         text (str): 消息内容
 
     Returns:
-        int: 消息ID
+        int | None: 消息ID；机器人不在群内或无法确认时返回 None
     """
     payload = {
         "group_id": groupId,
         "message": [{"type": "text", "data": {"text": text}}],
     }
-    response = requests.post(
-        f"http://localhost:{GetNCHSPort()}/send_group_msg", json=payload
-    )
-    data = response.json()
+    data = send_group_request("send_group_msg", payload)
+    if data is None:
+        return None
     return data["data"]["message_id"]
 
 

@@ -1200,6 +1200,8 @@ async def pick_drifting_bottles_radom(websocket, user_id: int, group_id: int):
                 + f"\n{timestamp_to_date(comment[3])}({GetGroupName(comment[1])}){get_user_name(comment[0],comment[1])}:{comment[2]}"
             )
         messageId = SayGroupReturnMessageId(group_id, text)
+        if messageId is None:
+            return
         write_bottles_uuid_message_id(messageId, row[0], group_id)
         cur.execute(
             "UPDATE drifting_bottles SET pick_times = pick_times + 1 WHERE uuid = ?;",

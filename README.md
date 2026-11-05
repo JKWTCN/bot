@@ -18,7 +18,7 @@
 ## 运行环境
 
 - Python 3.10 及以上（建议 3.11）
-- 可访问 OneBot11 WebSocket 服务（例如 NapCat）
+- 可访问 OneBot11 WebSocket 服务（例如 NapCat），并开启同一账号的本机 HTTP 服务，用于发送前检查群列表
 - 可选：本地或远端 AI 服务（OpenAI 兼容或 Ollama）
 
 ## 快速开始
@@ -61,7 +61,7 @@ python main.py
 常用键位（示例）：
 
 - `napcat_wclient_port`：OneBot11 WebSocket 客户端端口（默认常见为 27431）
-- `napcat_hserver_port`：NapCat HTTP 服务端口
+- `napcat_hserver_port`：NapCat HTTP 服务端口（默认 27433）；发送前检查使用此服务获取群列表，结果缓存 60 秒
 - `ollama_port`：本地 Ollama 端口
 - `debug_mode`：调试日志开关
 - `group_list`：启用群列表
@@ -134,6 +134,8 @@ bot/
 - 无法连接 WebSocket：确认 OneBot11 已启动，且端口与 `setting.json` 保持一致
 - 启动即报依赖错误：确认已安装 `control/requirements.txt`，并在正确虚拟环境中运行
 - 功能不触发：确认对应群号在 `group_list`，且未被配置规则拦截
+- 所有群消息（含图片、合并转发和群签到）共用 60 秒的群列表缓存，过期后按需调用 `get_group_list`（`no_cache=true`），并发发送只刷新一次。收到机器人本人的 `group_decrease`（含被踢）、`group_increase` 通知时立即更新对应群；其他成员的进退群不会改变机器人在群状态。通知优先于正在查询的名单结果，连接的 lifecycle/connect 事件会清空缓存。机器人已离群时直接跳过；缓存过期后若查询失败，也跳过发送，并等待 5 秒再重试。重新入群或接口恢复后可自动恢复发送，无需重启。漏收通知时由缓存过期刷新纠正；检查和发送之间若恰好离群，仍可能收到 QQ 的发送失败回执。
+- 群消息发送回执明确返回 QQ `result=110`（或直接返回 `retcode=110`）时，也立即将对应群标记为已离群，后续发送直接跳过。HTTP 响应和 WebSocket 回执共用此处理；兼容错误信息中 `EventRet` 包装的 QQ 错误码。WebSocket 通过唯一 `echo` 关联目标群，回执交给应用前恢复原有 `echo`；待回执记录保留最多 5 分钟、4096 条。图片传输错误、超时及其他错误码不会触发移除，重新入群通知或缓存过期刷新可恢复发送。
 - 智能相关报错：检查 `intelligence_config.json` 和 `bot_intelligence.db` 权限
 - 图片/资源发送失败：检查 `meme_path`、`res/`、`figs/` 文件读写权限
 - 梗图多连优先使用合并转发；接口报错或超时后，自动将同一批图片放在一条普通群消息中发送。此功能通过 `napcat_hserver_port` 指定的本机 HTTP 服务检查发送结果，请确保该服务已开启。若合并转发实际已发送但响应超时，回退可能造成重复发送。

@@ -19,12 +19,16 @@ from registered_application_list import initApplications
 from function.GroupConfig import get_config
 from function.database_message_async import write_message
 from function.chat_record import AddChatRecord
+from function.group_message_guard import GroupCheckedWebSocket, update_group_membership
 from tools.tools import load_setting
 
 
 async def echo(websocket, message):
     try:
         message = json.loads(message)
+        if isinstance(websocket, GroupCheckedWebSocket):
+            websocket.handle_response(message)
+        update_group_membership(message)
         if not load_setting("debug_mode", False):
             print(f"收到消息: {message}")  # 打印接收到的消息内容
         else:
@@ -92,9 +96,10 @@ async def echo(websocket, message):
 
 async def pro(websocket):
     """WebSocket连接处理函数（带异常处理）"""
+    outgoing = GroupCheckedWebSocket(websocket)
     try:
         async for message in websocket:
-            await echo(websocket, message)
+            await echo(outgoing, message)
     except ConnectionClosed as e:
         logging.warning(f"WebSocket连接关闭: {e}")
     except Exception as e:
